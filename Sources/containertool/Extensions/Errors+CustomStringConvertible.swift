@@ -18,7 +18,6 @@ extension HTTPClientError: Swift.CustomStringConvertible {
     /// A human-readable string representing an underlying HTTP protocol error
     public var description: String {
         switch self {
-        case .nonHTTPResponse: return "Registry response was not valid HTTP"
         case .unexpectedStatusCode(let status, _, _):
             return "Registry returned an unexpected HTTP error code: \(status)"
         case .unexpectedContentType(let contentType):

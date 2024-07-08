@@ -13,15 +13,12 @@
 //===----------------------------------------------------------------------===//
 
 import Foundation
+import HTTPTypes
 
 #if canImport(CryptoKit)
 import CryptoKit
 #else
 import Crypto
-#endif
-
-#if canImport(FoundationNetworking)
-import FoundationNetworking
 #endif
 
 /// Calculates the digest of a blob of data.
@@ -45,16 +42,19 @@ extension RegistryClient {
         // Response will include a 'Location' header telling us where to PUT the blob data.
         let httpResponse = try await executeRequestThrowing(
             .post(registryURLForPath("/v2/\(repository)/blobs/uploads/")),
-            expectingStatus: 202,  // expected response code for a two-shot upload
-            decodingErrors: [404]
+            expectingStatus: .accepted,  // expected response code for a "two-shot" upload
+            decodingErrors: [.notFound]
         )
 
-        guard let location = httpResponse.response.value(forHTTPHeaderField: "Location") else {
+        guard let location = httpResponse.response.headerFields[.location] else {
             throw HTTPClientError.missingResponseHeader("Location")
         }
         return URLComponents(string: location)
     }
 }
+
+// The spec says that Docker- prefix headers are no longer to be used, but also specifies that the registry digest is returned in this header.
+extension HTTPField.Name { static let dockerContentDigest = Self("Docker-Content-Digest")! }
 
 public extension RegistryClient {
     func blobExists(repository: String, digest: String) async throws -> Bool {
@@ -67,7 +67,7 @@ public extension RegistryClient {
                 decodingErrors: [404]
             )
             return true
-        } catch HTTPClientError.unexpectedStatusCode(status: 404, _, _) { return false }
+        } catch HTTPClientError.unexpectedStatusCode(status: .notFound, _, _) { return false }
     }
 
     /// Fetches an unstructured blob of data from the registry.
@@ -141,14 +141,14 @@ public extension RegistryClient {
             // All blob uploads have Content-Type: application/octet-stream on the wire, even if mediatype is different
             .put(uploadURL, contentType: "application/octet-stream"),
             uploading: data,
-            expectingStatus: 201,
-            decodingErrors: [400, 404]
+            expectingStatus: .created,
+            decodingErrors: [.badRequest, .notFound]
         )
 
         // The registry could compute a different digest and we should use its value
         // as the canonical digest for linking blobs.   If the registry sends a digest we
         // should check that it matches our locally-calculated digest.
-        if let serverDigest = httpResponse.response.value(forHTTPHeaderField: "Docker-Content-Digest") {
+        if let serverDigest = httpResponse.response.headerFields[.dockerContentDigest] {
             assert(digest == serverDigest)
         }
         return .init(mediaType: mediaType, digest: digest, size: Int64(data.count))

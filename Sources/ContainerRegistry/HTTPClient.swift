@@ -16,16 +16,17 @@ import Foundation
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
+import HTTPTypes
+import HTTPTypesFoundation
 
 // HEAD does not include a response body so if an error is thrown, data will be nil
 public enum HTTPClientError: Error {
-    case nonHTTPResponse(URLResponse)
-    case unexpectedStatusCode(status: Int, response: HTTPURLResponse, data: Data?)
+    case unexpectedStatusCode(status: HTTPResponse.Status, response: HTTPResponse, data: Data?)
     case unexpectedContentType(String)
     case missingContentType
     case missingResponseHeader(String)
-    case authenticationChallenge(challenge: String, request: URLRequest, response: HTTPURLResponse)
-    case unauthorized(request: URLRequest, response: HTTPURLResponse)
+    case authenticationChallenge(challenge: String, request: HTTPRequest, response: HTTPResponse)
+    case unauthorized(request: HTTPRequest, response: HTTPResponse)
 }
 
 /// HTTPClient is an abstract HTTP client interface capable of uploads and downloads.
@@ -34,20 +35,21 @@ public protocol HTTPClient {
     /// - Parameters:
     ///   - request: The HTTP request to execute.
     ///   - expectingStatus: The HTTP status code expected if the request is successful.
-    /// - Returns: An asynchronously-delivered tuple that contains the raw response body as a Data instance, and a HTTPURLResponse.
+    /// - Returns: An asynchronously-delivered tuple that contains the raw response body as a Data instance, and a HTTPResponse.
     /// - Throws: If the server response is unexpected or indicates that an error occurred.
-    func executeRequestThrowing(_ request: URLRequest, expectingStatus: Int) async throws -> (Data, HTTPURLResponse)
+    func executeRequestThrowing(_ request: HTTPRequest, expectingStatus: HTTPResponse.Status) async throws -> (
+        Data, HTTPResponse
+    )
 
     /// Execute an HTTP request uploading a request body.
     /// - Parameters:
     ///   - request: The HTTP request to execute.
     ///   - uploading: The request body to upload.
     ///   - expectingStatus: The HTTP status code expected if the request is successful.
-    /// - Returns: An asynchronously-delivered tuple that contains the raw response body as a Data instance, and a HTTPURLResponse.
+    /// - Returns: An asynchronously-delivered tuple that contains the raw response body as a Data instance, and a HTTPResponse.
     /// - Throws: If the server response is unexpected or indicates that an error occurred.
-    func executeRequestThrowing(_ request: URLRequest, uploading: Data, expectingStatus: Int) async throws -> (
-        Data, HTTPURLResponse
-    )
+    func executeRequestThrowing(_ request: HTTPRequest, uploading: Data, expectingStatus: HTTPResponse.Status)
+        async throws -> (Data, HTTPResponse)
 }
 
 extension URLSession: HTTPClient {
@@ -57,62 +59,53 @@ extension URLSession: HTTPClient {
     ///   - response: The response from the registry.
     ///   - responseData: The raw response body data returned by the registry.
     ///   - successfulStatus: The successful HTTP response expected from this request.
-    /// - Returns: An HTTPURLResponse representing the response, if the response was valid.
+    /// - Returns: An HTTPResponse representing the response, if the response was valid.
     /// - Throws: If the server response is unexpected or indicates that an error occurred.
     func validateAPIResponseThrowing(
-        request: URLRequest,
-        response: URLResponse,
+        request: HTTPRequest,
+        response: HTTPResponse,
         responseData: Data,
-        expectingStatus successfulStatus: Int
-    ) throws -> HTTPURLResponse {
-        guard let httpResponse = response as? HTTPURLResponse else { throw HTTPClientError.nonHTTPResponse(response) }
-
+        expectingStatus successfulStatus: HTTPResponse.Status
+    ) throws -> HTTPResponse {
         // Convert errors into exceptions
-        guard httpResponse.statusCode == successfulStatus else {
-            // If the response includes an authentication challenge the client can try again
-            if httpResponse.statusCode == 401 {
-                if let authChallenge = httpResponse.value(forHTTPHeaderField: "WWW-Authenticate") {
+        guard response.status == successfulStatus else {
+            // If the response includes an authentication challenge the client can try again,
+            // presenting the challenge response.
+            if response.status == .unauthorized {
+                if let authChallenge = response.headerFields[.wwwAuthenticate] {
                     throw HTTPClientError.authenticationChallenge(
                         challenge: authChallenge.trimmingCharacters(in: .whitespacesAndNewlines),
                         request: request,
-                        response: httpResponse
+                        response: response
                     )
                 }
             }
 
             // Content-Type should always be set, but there may be registries which don't set it.   If it is not present, the HTTP standard allows
             // clients to guess the content type, or default to `application/octet-stream'.
-            guard let _ = httpResponse.value(forHTTPHeaderField: "Content-Type") else {
+            guard let _ = response.headerFields[.contentType] else {
                 throw HTTPClientError.missingResponseHeader("Content-Type")
             }
 
             // A HEAD request has no response body and cannot be decoded
-            if request.httpMethod == "HEAD" {
-                throw HTTPClientError.unexpectedStatusCode(
-                    status: httpResponse.statusCode,
-                    response: httpResponse,
-                    data: nil
-                )
+            if request.method == .head {
+                throw HTTPClientError.unexpectedStatusCode(status: response.status, response: response, data: nil)
             }
-            throw HTTPClientError.unexpectedStatusCode(
-                status: httpResponse.statusCode,
-                response: httpResponse,
-                data: responseData
-            )
+            throw HTTPClientError.unexpectedStatusCode(status: response.status, response: response, data: responseData)
         }
 
-        return httpResponse
+        return response
     }
 
     /// Execute an HTTP request with no request body.
     /// - Parameters:
     ///   - request: The HTTP request to execute.
     ///   - success: The HTTP status code expected if the request is successful.
-    /// - Returns: An asynchronously-delivered tuple that contains the raw response body as a Data instance, and a HTTPURLResponse.
+    /// - Returns: An asynchronously-delivered tuple that contains the raw response body as a Data instance, and a HTTPResponse.
     /// - Throws: If the server response is unexpected or indicates that an error occurred.
-    public func executeRequestThrowing(_ request: URLRequest, expectingStatus success: Int) async throws -> (
-        Data, HTTPURLResponse
-    ) {
+    public func executeRequestThrowing(_ request: HTTPRequest, expectingStatus success: HTTPResponse.Status)
+        async throws -> (Data, HTTPResponse)
+    {
         let (responseData, urlResponse) = try await data(for: request)
         let httpResponse = try validateAPIResponseThrowing(
             request: request,
@@ -128,11 +121,13 @@ extension URLSession: HTTPClient {
     ///   - request: The HTTP request to execute.
     ///   - payload: The request body to upload.
     ///   - success: The HTTP status code expected if the request is successful.
-    /// - Returns: An asynchronously-delivered tuple that contains the raw response body as a Data instance, and a HTTPURLResponse.
+    /// - Returns: An asynchronously-delivered tuple that contains the raw response body as a Data instance, and a HTTPResponse.
     /// - Throws: If the server response is unexpected or indicates that an error occurred.
-    public func executeRequestThrowing(_ request: URLRequest, uploading payload: Data, expectingStatus success: Int)
-        async throws -> (Data, HTTPURLResponse)
-    {
+    public func executeRequestThrowing(
+        _ request: HTTPRequest,
+        uploading payload: Data,
+        expectingStatus success: HTTPResponse.Status
+    ) async throws -> (Data, HTTPResponse) {
         let (responseData, urlResponse) = try await upload(for: request, from: payload)
         let httpResponse = try validateAPIResponseThrowing(
             request: request,
@@ -144,8 +139,8 @@ extension URLSession: HTTPClient {
     }
 }
 
-extension URLRequest {
-    /// Constructs a URLRequest pre-configured with method, url and content types.
+extension HTTPRequest {
+    /// Constructs a HTTPRequest pre-configured with method, url and content types.
     /// - Parameters:
     ///   - method: HTTP method to use: "GET", "PUT" etc
     ///   - url: The URL on which to operate.
@@ -153,22 +148,22 @@ extension URLRequest {
     ///   - contentType: The content-type of the request's body data, if any.
     ///   - authorization: Authorization credentials for this request.
     init(
-        method: String,
+        method: HTTPRequest.Method,
         url: URL,
         accepting: [String] = [],
         contentType: String? = nil,
         withAuthorization authorization: String? = nil
     ) {
         self.init(url: url)
-        httpMethod = method
-        if let contentType { addValue(contentType, forHTTPHeaderField: "Content-Type") }
-        for acceptContentType in accepting { addValue(acceptContentType, forHTTPHeaderField: "Accept") }
+        self.method = method
+        if let contentType { headerFields[.contentType] = contentType }
+        if accepting.count > 0 { headerFields[values: .accept] = accepting }
 
         // The URLSession documentation warns not to do this:
         //    https://developer.apple.com/documentation/foundation/urlsessionconfiguration/1411532-httpadditionalheaders#discussion
         // However this is the best option when URLSession does not support the server's authentication scheme:
         //    https://developer.apple.com/forums/thread/89811
-        if let authorization { addValue(authorization, forHTTPHeaderField: "Authorization") }
+        if let authorization { headerFields[.authorization] = authorization }
     }
 
     static func get(
@@ -176,8 +171,8 @@ extension URLRequest {
         accepting: [String] = [],
         contentType: String? = nil,
         withAuthorization authorization: String? = nil
-    ) -> URLRequest {
-        .init(method: "GET", url: url, accepting: accepting, contentType: contentType, withAuthorization: authorization)
+    ) -> HTTPRequest {
+        .init(method: .get, url: url, accepting: accepting, contentType: contentType, withAuthorization: authorization)
     }
 
     static func head(
@@ -185,14 +180,8 @@ extension URLRequest {
         accepting: [String] = [],
         contentType: String? = nil,
         withAuthorization authorization: String? = nil
-    ) -> URLRequest {
-        .init(
-            method: "HEAD",
-            url: url,
-            accepting: accepting,
-            contentType: contentType,
-            withAuthorization: authorization
-        )
+    ) -> HTTPRequest {
+        .init(method: .head, url: url, accepting: accepting, contentType: contentType, withAuthorization: authorization)
     }
 
     static func put(
@@ -200,8 +189,8 @@ extension URLRequest {
         accepting: [String] = [],
         contentType: String? = nil,
         withAuthorization authorization: String? = nil
-    ) -> URLRequest {
-        .init(method: "PUT", url: url, accepting: accepting, contentType: contentType, withAuthorization: authorization)
+    ) -> HTTPRequest {
+        .init(method: .put, url: url, accepting: accepting, contentType: contentType, withAuthorization: authorization)
     }
 
     static func post(
@@ -209,13 +198,7 @@ extension URLRequest {
         accepting: [String] = [],
         contentType: String? = nil,
         withAuthorization authorization: String? = nil
-    ) -> URLRequest {
-        .init(
-            method: "POST",
-            url: url,
-            accepting: accepting,
-            contentType: contentType,
-            withAuthorization: authorization
-        )
+    ) -> HTTPRequest {
+        .init(method: .post, url: url, accepting: accepting, contentType: contentType, withAuthorization: authorization)
     }
 }

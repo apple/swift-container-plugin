@@ -16,7 +16,7 @@ import Foundation
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
-
+import HTTPTypes
 import Basics
 
 enum RegistryClientError: Error {
@@ -138,10 +138,10 @@ extension RegistryClient {
     /// A plain Data version of this function is required because Data is Decodable and decodes from base64.
     /// Plain blobs are not encoded in the registry, so trying to decode them will fail.
     public func executeRequestThrowing(
-        _ request: URLRequest,
-        expectingStatus success: Int = 200,
-        decodingErrors errors: [Int]
-    ) async throws -> (data: Data, response: HTTPURLResponse) {
+        _ request: HTTPRequest,
+        expectingStatus success: HTTPResponse.Status = .ok,
+        decodingErrors errors: [HTTPResponse.Status]
+    ) async throws -> (data: Data, response: HTTPResponse) {
         do {
             let authenticatedRequest = auth?.auth(for: request) ?? request
             return try await client.executeRequestThrowing(authenticatedRequest, expectingStatus: success)
@@ -167,10 +167,10 @@ extension RegistryClient {
     /// - Returns: An asynchronously-delivered tuple that contains the raw response body as a Data instance, and a HTTPURLResponse.
     /// - Throws: If the server response is unexpected or indicates that an error occurred.
     public func executeRequestThrowing<Response: Decodable>(
-        _ request: URLRequest,
-        expectingStatus success: Int = 200,
-        decodingErrors errors: [Int]
-    ) async throws -> (data: Response, response: HTTPURLResponse) {
+        _ request: HTTPRequest,
+        expectingStatus success: HTTPResponse.Status = .ok,
+        decodingErrors errors: [HTTPResponse.Status]
+    ) async throws -> (data: Response, response: HTTPResponse) {
         let (data, httpResponse) = try await executeRequestThrowing(
             request,
             expectingStatus: success,
@@ -192,11 +192,11 @@ extension RegistryClient {
     /// A plain Data version of this function is required because Data is Encodable and encodes to base64.
     /// Accidentally encoding data blobs will cause digests to fail and runtimes to be unable to run the images.
     public func executeRequestThrowing(
-        _ request: URLRequest,
+        _ request: HTTPRequest,
         uploading payload: Data,
-        expectingStatus success: Int,
-        decodingErrors errors: [Int]
-    ) async throws -> (data: Data, response: HTTPURLResponse) {
+        expectingStatus success: HTTPResponse.Status,
+        decodingErrors errors: [HTTPResponse.Status]
+    ) async throws -> (data: Data, response: HTTPResponse) {
         do {
             let authenticatedRequest = auth?.auth(for: request) ?? request
             return try await client.executeRequestThrowing(
@@ -231,11 +231,11 @@ extension RegistryClient {
     /// - Returns: An asynchronously-delivered tuple that contains the raw response body as a Data instance, and a HTTPURLResponse.
     /// - Throws: If the server response is unexpected or indicates that an error occurred.
     public func executeRequestThrowing<Body: Encodable>(
-        _ request: URLRequest,
+        _ request: HTTPRequest,
         uploading payload: Body,
-        expectingStatus success: Int,
-        decodingErrors errors: [Int]
-    ) async throws -> (data: Data, response: HTTPURLResponse) {
+        expectingStatus success: HTTPResponse.Status,
+        decodingErrors errors: [HTTPResponse.Status]
+    ) async throws -> (data: Data, response: HTTPResponse) {
         try await executeRequestThrowing(
             request,
             uploading: try encoder.encode(payload),
