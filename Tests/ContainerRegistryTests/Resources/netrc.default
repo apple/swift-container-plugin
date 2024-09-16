@@ -1,0 +1,16 @@
+machine hub.example.com
+  login swift
+  password password
+
+machine another.example.com
+  login anotherlogin
+  password anotherpassword
+
+machine hub.example.com
+  login swift2
+  password password2
+
+default
+  login defaultlogin
+  password defaultpassword
+
