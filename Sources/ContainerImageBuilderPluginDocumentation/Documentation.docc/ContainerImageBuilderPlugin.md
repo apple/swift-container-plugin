@@ -18,6 +18,8 @@ The ContainerImageBuilder plugin is a Swift Package Manager command plugin which
 The plugin requires Swift 6.0 and runs on macOS and Linux.
 The plugin does not require a container runtime to be installed locally in order to build an image.
 
+Try one of the [Examples](../../../Examples)
+
 ## Install a Swift SDK for cross-compilation on macOS
 
 If you are running on macOS, you can use a [Swift SDK](https://github.com/apple/swift-evolution/blob/main/proposals/0387-cross-compilation-destinations.md) to cross-compile your server executable for Linux.   Either:
@@ -29,7 +31,7 @@ Check that the SDK is available.   In this case we have installed the Swift Stat
 
 ```shell
 % swift sdk list
-swift-6.0-DEVELOPMENT-SNAPSHOT-2024-07-02-a_static-linux-0.0.1
+swift-6.0.1-RELEASE_static-linux-0.0.1
 ```
 
 > Note: To use the Static Linux SDK on macOS, you must [install the open source Swift toolchain from swift.org](https://www.swift.org/documentation/articles/static-linux-getting-started.html#installing-the-sdk)
