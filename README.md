@@ -47,3 +47,5 @@ Trying to pull registry.example.com/myservice@sha256:a3f75d0932d052dd9d448a1c904
 Swift Container Plugin requires Swift 6.0 and runs on macOS and Linux.   It does not require a local container runtime to be installed in order to build an image.
 
 Learn more about setting up your project in the [ContainerImageBuilder plugin documentation](Sources/ContainerImageBuilderPluginDocumentation/Documentation.docc/ContainerImageBuilderPlugin.md).
+
+Take a look at the [Examples](Examples).
