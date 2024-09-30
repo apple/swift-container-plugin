@@ -1,3 +1,5 @@
+// swift-tools-version: 6.0
+
 //===----------------------------------------------------------------------===//
 //
 // This source file is part of the SwiftContainerPlugin open source project
@@ -12,15 +14,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
-import Vapor
+import PackageDescription
 
-let myos = ProcessInfo.processInfo.operatingSystemVersionString
+let package = Package(
+    name: "hello-world",
+    platforms: [.macOS(.v14)],
+    dependencies: [
+        .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.1.0"),
+        .package(url: "https://github.com/apple/swift-container-plugin", from: "0.1.0"),
+    ],
+    targets: [
+        .executableTarget(name: "hello-world", dependencies: [.product(name: "Hummingbird", package: "hummingbird")])
+    ]
 
-let app = try Application(.detect())
-app.http.server.configuration.hostname = "0.0.0.0"
-defer { app.shutdown() }
-
-app.get { _ in "Hello World, from Vapor on \(myos)\n" }
-
-try app.run()
+)
