@@ -20,7 +20,7 @@ The plugin does not require a container runtime to be installed locally in order
 
 Try one of the [Examples](../../../Examples)
 
-## Install a Swift SDK for cross-compilation on macOS
+### Install a Swift SDK for cross-compilation on macOS
 
 If you are running on macOS, you can use a [Swift SDK](https://github.com/apple/swift-evolution/blob/main/proposals/0387-cross-compilation-destinations.md) to cross-compile your server executable for Linux.   Either:
 
@@ -36,7 +36,7 @@ swift-6.0.1-RELEASE_static-linux-0.0.1
 
 > Note: To use the Static Linux SDK on macOS, you must [install the open source Swift toolchain from swift.org](https://www.swift.org/documentation/articles/static-linux-getting-started.html#installing-the-sdk)
 
-## Add the plugin to your project
+### Add the plugin to your project
 
 Swift Container Plugin is distributed as a Swift Package Manager package.   Use the `swift package` command to add it to your project:
 
@@ -59,7 +59,7 @@ Check that `ContainerImageBuilder` is now available in Swift Package Manager:
 ‘build-container-image’ (plugin ‘ContainerImageBuilder’ in package ‘swift-container-plugin)
 ```
 
-## Add your registry credentials to .netrc
+### Add your registry credentials to .netrc
 
 Many registries require authentication in order to push images, or even pull them.   The plugin can read your registry credentials from a `.netrc` file in your home directory.   You can add a netrc record for each registry you need to use:
 
@@ -69,7 +69,7 @@ machine registry.example.com
   password mypassword
 ```
 
-## Build and package your service
+### Build and package your service
 
 `build-container-image` takes care of building your service, packaging it in a container image and uploading it to a container registry, all in one command:
 
@@ -110,7 +110,7 @@ registry.example.com/myservice@sha256:a3f75d0932d052dd9d448a1c9040b16f9f2c2ed919
 
 When it finishes, ContainerImageBuilder prints a reference identifying the new image.   Any standard container runtime can use the reference to pull and run your service.
 
-## Run your service
+### Run your service
 
 For example, you could use `podman` to run the service locally, making it available on port 8080:
 
