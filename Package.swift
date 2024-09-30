@@ -88,5 +88,5 @@ let package = Package(
             resources: [.process("Resources")]
         ),
     ],
-    swiftLanguageVersions: [.version("6")]
+    swiftLanguageModes: [.v6]
 )
