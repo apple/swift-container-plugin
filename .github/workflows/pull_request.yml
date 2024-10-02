@@ -13,3 +13,7 @@ jobs:
             docs_check_container_image: "swift:6.0-noble"
             license_header_check_project_name: "SwiftContainerPlugin"
             shell_check_container_image: "swift:6.0-noble"
+
+    swift-6-language-mode:
+        name: Swift 6 Language Mode
+        uses: apple/swift-nio/.github/workflows/swift_6_language_mode.yml@main
