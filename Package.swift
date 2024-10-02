@@ -43,7 +43,8 @@ let package = Package(
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "Crypto", package: "swift-crypto", condition: .when(platforms: [.linux])),
                 .target(name: "ContainerRegistry"), .target(name: "VendorCNIOExtrasZlib"),
-            ]
+            ],
+            swiftSettings: [.swiftLanguageMode(.v5)]
         ),
         .target(
             // Vendored from https://github.com/apple/swift-nio-extras
