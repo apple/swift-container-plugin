@@ -61,3 +61,14 @@ function from SwiftNIO Extras.
     * https://www.apache.org/licenses/LICENSE-2.0
   * HOMEPAGE:
     * https://github.com/swift-server/swift-nio-extras
+
+-------------------------------------------------------------------------------
+
+This product contains samples of how to use Swift Container Plugin with the
+following other projects:
+
+  * Vapor
+    * LICENSE (MIT License):
+      * https://mit-license.org
+    * HOMEPAGE:
+      * https://github.com/vapor/vapor
