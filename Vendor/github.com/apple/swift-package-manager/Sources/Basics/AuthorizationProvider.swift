@@ -78,7 +78,7 @@ public final class NetrcAuthorizationProvider: AuthorizationProvider {
 
     private static func load(_ path: URL) throws -> Netrc? {
         do {
-            let content = try? String(contentsOf: path)
+            let content = try? String(contentsOf: path, encoding: .utf8)
             return try NetrcParser.parse(content ?? "")
         } catch NetrcError.machineNotFound {
             // Thrown by parse() if .netrc is empty.
