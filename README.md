@@ -2,6 +2,8 @@
 
 Publish container images using Swift Package Manager.
 
+Learn more about Swift Container Plugin in the [lightning talk](https://www.youtube.com/watch?v=9AaINsCfZzw) from [ServerSide.Swift 2024](https://www.serversideswift.info/speakers/euan-harris/).
+
 ## Overview
 
 Swift Container Plugin provides a Swift Package Manager command plugin and utilities to make it easy to build container images for servers written in Swift.
