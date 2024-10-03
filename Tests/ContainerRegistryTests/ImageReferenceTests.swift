@@ -27,7 +27,7 @@ struct ReferenceTestCase {
 }
 
 class ReferenceTests: XCTestCase {
-    var tests = [
+    let tests = [
         // A reference which does not contain a '/' is always interpreted as a repository name
         // in the default registry.
         ReferenceTestCase(
