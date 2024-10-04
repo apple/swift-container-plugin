@@ -24,11 +24,11 @@ public extension RegistryClient {
                 contentType: "application/vnd.oci.image.manifest.v1+json"
             ),
             uploading: manifest,
-            expectingStatus: 201,
-            decodingErrors: [404]
+            expectingStatus: .created,
+            decodingErrors: [.notFound]
         )
 
-        guard let location = httpResponse.response.value(forHTTPHeaderField: "Location") else {
+        guard let location = httpResponse.response.headerFields[.location] else {
             throw HTTPClientError.missingResponseHeader("Location")
         }
         return location
@@ -46,7 +46,7 @@ public extension RegistryClient {
                     "application/vnd.docker.distribution.manifest.v2+json",
                 ]
             ),
-            decodingErrors: [404]
+            decodingErrors: [.notFound]
         )
         .data
     }
@@ -63,7 +63,7 @@ public extension RegistryClient {
                     "application/vnd.docker.distribution.manifest.list.v2+json",
                 ]
             ),
-            decodingErrors: [404]
+            decodingErrors: [.notFound]
         )
         .data
     }

@@ -14,10 +14,8 @@
 
 import Basics
 import Foundation
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
 import RegexBuilder
+import HTTPTypes
 
 struct BearerTokenResponse: Codable {
     /// An opaque Bearer token that clients should supply to
@@ -130,7 +128,7 @@ public struct AuthHandler {
     }
 
     /// Get locally-configured credentials, such as netrc or username/password, for a request
-    func localCredentials(for request: URLRequest) -> String? {
+    func localCredentials(for request: HTTPRequest) -> String? {
         guard let requestURL = request.url else { return nil }
 
         if let netrcEntry = auth?.httpAuthorizationHeader(for: requestURL) { return netrcEntry }
@@ -149,7 +147,7 @@ public struct AuthHandler {
     /// In future it could provide cached responses from previous challenges.
     /// - Parameter request: The request to authorize.
     /// - Returns: The request, with an appropriate authorization header added, or nil if no credentials are available.
-    public func auth(for request: URLRequest) -> URLRequest? { nil }
+    public func auth(for request: HTTPRequest) -> HTTPRequest? { nil }
 
     /// Add authorization to an HTTP rquest in response to a challenge from the server.
     /// - Parameters:
@@ -158,13 +156,13 @@ public struct AuthHandler {
     ///   - client: An HTTP client, used to retrieve tokens if necessary.
     /// - Returns: The request, with an appropriate authorization header added, or nil if no credentials are available.
     /// - Throws: If an error occurs while retrieving a credential.
-    public func auth(for request: URLRequest, withChallenge challenge: String, usingClient client: HTTPClient)
-        async throws -> URLRequest?
+    public func auth(for request: HTTPRequest, withChallenge challenge: String, usingClient client: HTTPClient)
+        async throws -> HTTPRequest?
     {
         if challenge.lowercased().starts(with: "basic") {
             guard let authHeader = localCredentials(for: request) else { return nil }
             var request = request
-            request.addValue(authHeader, forHTTPHeaderField: "Authorization")
+            request.headerFields[.authorization] = authHeader
             return request
 
         } else if challenge.lowercased().starts(with: "bearer") {
@@ -176,15 +174,15 @@ public struct AuthHandler {
                 challenge.dropFirst("bearer".count).trimmingCharacters(in: .whitespacesAndNewlines)
             )
             guard let challengeURL = parsedChallenge.url else { return nil }
-            var req = URLRequest(url: challengeURL)
-            if let credentials = localCredentials(for: req) {
-                req.addValue("\(credentials)", forHTTPHeaderField: "Authorization")
+            var tokenRequest = HTTPRequest(url: challengeURL)
+            if let credentials = localCredentials(for: tokenRequest) {
+                tokenRequest.headerFields[.authorization] = credentials
             }
 
-            let (data, _) = try await client.executeRequestThrowing(req, expectingStatus: 200)
+            let (data, _) = try await client.executeRequestThrowing(tokenRequest, expectingStatus: .ok)
             let tokenResponse = try JSONDecoder().decode(BearerTokenResponse.self, from: data)
             var request = request
-            request.addValue("Bearer \(tokenResponse.token)", forHTTPHeaderField: "Authorization")
+            request.headerFields[.authorization] = "Bearer \(tokenResponse.token)"
             return request
 
         } else {

@@ -26,12 +26,15 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/apple/swift-crypto.git", "1.0.0"..<"4.0.0"),
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
+        .package(url: "https://github.com/apple/swift-http-types.git", from: "1.2.0"),
     ],
     targets: [
         .target(
             name: "ContainerRegistry",
             dependencies: [
                 .product(name: "Crypto", package: "swift-crypto", condition: .when(platforms: [.linux])),
+                .product(name: "HTTPTypes", package: "swift-http-types"),
+                .product(name: "HTTPTypesFoundation", package: "swift-http-types"),
                 .target(
                     name: "Basics"  // AuthorizationProvider
                 ),

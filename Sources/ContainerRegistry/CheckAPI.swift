@@ -20,8 +20,11 @@ public extension RegistryClient {
         // The registry may require authentication on this endpoint.
         // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#determining-support
         do {
-            return try await executeRequestThrowing(.get(registryURLForPath("/v2/")), decodingErrors: [401, 404]).data
-                == EmptyObject()
-        } catch HTTPClientError.unexpectedStatusCode(status: 404, _, _) { return false }
+            return try await executeRequestThrowing(
+                .get(registryURLForPath("/v2/")),
+                decodingErrors: [.unauthorized, .notFound]
+            )
+            .data == EmptyObject()
+        } catch HTTPClientError.unexpectedStatusCode(status: .notFound, _, _) { return false }
     }
 }
