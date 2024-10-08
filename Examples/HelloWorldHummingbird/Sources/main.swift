@@ -13,14 +13,13 @@
 //===----------------------------------------------------------------------===//
 
 import Foundation
-import Vapor
+import Hummingbird
 
 let myos = ProcessInfo.processInfo.operatingSystemVersionString
 
-let app = try Application(.detect())
-app.http.server.configuration.hostname = "0.0.0.0"
-defer { app.shutdown() }
+let router = Router()
+router.get { request, _ -> String in "Hello World, from Hummingbird on \(myos)\n" }
 
-app.get { _ in "Hello World, from Vapor on \(myos)\n" }
+let app = Application(router: router, configuration: .init(address: .hostname("0.0.0.0", port: 8080)))
 
-try app.run()
+try await app.runService()
