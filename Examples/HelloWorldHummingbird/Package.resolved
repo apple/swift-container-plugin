@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-async-algorithms.git",
       "state" : {
-        "revision" : "6ae9a051f76b81cc668305ceed5b0e0a7fd93d20",
-        "version" : "1.0.1"
+        "revision" : "5c8bd186f48c16af0775972700626f0b74588278",
+        "version" : "1.0.2"
       }
     },
     {
@@ -87,8 +87,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-distributed-tracing.git",
       "state" : {
-        "revision" : "11c756c5c4d7de0eeed8595695cadd7fa107aa19",
-        "version" : "1.1.1"
+        "revision" : "6483d340853a944c96dbcc28b27dd10b6c581703",
+        "version" : "1.1.2"
       }
     },
     {
@@ -141,8 +141,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio-http2.git",
       "state" : {
-        "revision" : "b5f7062b60e4add1e8c343ba4eb8da2e324b3a94",
-        "version" : "1.34.0"
+        "revision" : "eaa71bb6ae082eee5a07407b1ad0cbd8f48f9dca",
+        "version" : "1.34.1"
       }
     },
     {
@@ -159,8 +159,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio-transport-services.git",
       "state" : {
-        "revision" : "38ac8221dd20674682148d6451367f89c2652980",
-        "version" : "1.21.0"
+        "revision" : "dbace16f126fdcd80d58dc54526c561ca17327d7",
+        "version" : "1.22.0"
       }
     },
     {
