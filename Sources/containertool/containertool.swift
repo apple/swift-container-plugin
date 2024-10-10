@@ -60,7 +60,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
     func run() async throws {
         let baseimage = try ImageReference(fromString: from, defaultRegistry: defaultRegistry)
-        var destination_image = try ImageReference(fromString: repository)
+        var destination_image = try ImageReference(fromString: repository, defaultRegistry: defaultRegistry)
 
         let authProvider: AuthorizationProvider?
         if !netrc {
