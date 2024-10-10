@@ -1,6 +1,6 @@
 version: 1
 builder:
   configs:
-  - documentation_targets:
-    - containertool
-    - ContainerImageBuilderPlugin
+    - documentation_targets:
+        - containertool
+        - ContainerImageBuilderPlugin
