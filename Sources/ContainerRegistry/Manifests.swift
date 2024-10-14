@@ -14,6 +14,7 @@
 
 public extension RegistryClient {
     func putManifest(repository: String, reference: String, manifest: ImageManifest) async throws -> String {
+        // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pushing-manifests
         precondition(repository.count > 0, "repository must not be an empty string")
         precondition(reference.count > 0, "reference must not be an empty string")
 
@@ -21,7 +22,7 @@ public extension RegistryClient {
             // All blob uploads have Content-Type: application/octet-stream on the wire, even if mediatype is different
             .put(
                 registryURLForPath("/v2/\(repository)/manifests/\(reference)"),
-                contentType: "application/vnd.oci.image.manifest.v1+json"
+                contentType: manifest.mediaType ?? "application/vnd.oci.image.manifest.v1+json"
             ),
             uploading: manifest,
             expectingStatus: .created,
@@ -35,6 +36,7 @@ public extension RegistryClient {
     }
 
     func getManifest(repository: String, reference: String) async throws -> ImageManifest {
+        // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pulling-manifests
         precondition(repository.count > 0, "repository must not be an empty string")
         precondition(reference.count > 0, "reference must not be an empty string")
 
