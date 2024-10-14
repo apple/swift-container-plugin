@@ -18,7 +18,7 @@ public extension RegistryClient {
         precondition(repository.count > 0, "repository must not be an empty string")
         return try await executeRequestThrowing(
             .get(registryURLForPath("/v2/\(repository)/tags/list")),
-            decodingErrors: [404]
+            decodingErrors: [.notFound]
         )
         .data
     }
