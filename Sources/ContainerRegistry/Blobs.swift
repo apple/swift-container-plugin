@@ -64,7 +64,7 @@ public extension RegistryClient {
         do {
             let _ = try await executeRequestThrowing(
                 .head(registryURLForPath("/v2/\(repository)/blobs/\(digest)")),
-                decodingErrors: [404]
+                decodingErrors: [.notFound]
             )
             return true
         } catch HTTPClientError.unexpectedStatusCode(status: .notFound, _, _) { return false }
@@ -83,7 +83,7 @@ public extension RegistryClient {
 
         return try await executeRequestThrowing(
             .get(registryURLForPath("/v2/\(repository)/blobs/\(digest)"), accepting: ["application/octet-stream"]),
-            decodingErrors: [404]
+            decodingErrors: [.notFound]
         )
         .data
     }
@@ -106,7 +106,7 @@ public extension RegistryClient {
 
         return try await executeRequestThrowing(
             .get(registryURLForPath("/v2/\(repository)/blobs/\(digest)"), accepting: ["application/octet-stream"]),
-            decodingErrors: [404]
+            decodingErrors: [.notFound]
         )
         .data
     }
