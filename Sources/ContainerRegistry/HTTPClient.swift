@@ -81,12 +81,6 @@ extension URLSession: HTTPClient {
                 }
             }
 
-            // Content-Type should always be set, but there may be registries which don't set it.   If it is not present, the HTTP standard allows
-            // clients to guess the content type, or default to `application/octet-stream'.
-            guard let _ = response.headerFields[.contentType] else {
-                throw HTTPClientError.missingResponseHeader("Content-Type")
-            }
-
             // A HEAD request has no response body and cannot be decoded
             if request.method == .head {
                 throw HTTPClientError.unexpectedStatusCode(status: response.status, response: response, data: nil)
