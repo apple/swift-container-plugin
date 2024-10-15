@@ -29,10 +29,14 @@ public extension RegistryClient {
             decodingErrors: [.notFound]
         )
 
-        guard let location = httpResponse.response.headerFields[.location] else {
-            throw HTTPClientError.missingResponseHeader("Location")
-        }
-        return location
+        // The distribution spec says the response MUST contain a Location header
+        // providing a URL from which the saved manifest can be downloaded.
+        // However some registries return URLs which cannot be fetched, and
+        // ECR does not set this header at all.
+        // If the header is not present, create a suitable value.
+        // https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pulling-manifests
+        return try httpResponse.response.headerFields[.location]
+            ?? registryURLForPath("/v2/\(repository)/manifests/\(manifest.digest)").absoluteString
     }
 
     func getManifest(repository: String, reference: String) async throws -> ImageManifest {
