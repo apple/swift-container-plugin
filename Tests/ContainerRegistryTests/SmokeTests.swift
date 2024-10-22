@@ -19,7 +19,7 @@ import XCTest
 class SmokeTests: XCTestCase {
     // These are basic tests to exercise the main registry operations.
     // The tests assume that a fresh, empty registry instance is available at
-    // http://$REGISTRY_HOST:$REGSITRY_PORT
+    // http://$REGISTRY_HOST:$REGISTRY_PORT
 
     var client: RegistryClient!
     let registryHost = ProcessInfo.processInfo.environment["REGISTRY_HOST"] ?? "localhost"
