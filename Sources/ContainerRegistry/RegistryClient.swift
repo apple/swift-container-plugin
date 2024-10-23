@@ -50,6 +50,7 @@ public struct RegistryClient {
 
     /// Authentication handler
     var auth: AuthHandler?
+    var authChallenge: AuthChallenge
 
     var encoder: JSONEncoder
     var decoder: JSONDecoder
@@ -92,7 +93,7 @@ public struct RegistryClient {
         self.decoder = decoder ?? JSONDecoder()
 
         // Verify that we can talk to the registry
-        _ = try await checkAPI()
+        self.authChallenge = try await RegistryClient.checkAPI(client: self.client, registryURL: self.registryURL)
     }
 
     /// Creates a new RegistryClient, constructing a suitable URLSession-based client.
@@ -142,15 +143,14 @@ extension RegistryClient {
         var method: HTTPRequest.Method  // HTTP method
         var repository: String  // Repository path on the registry
         var destination: Destination  // Destination of the operation: can be a subpath or remote URL
+        var actions: [String]  // Actions required by this operation
         var accepting: [String] = []  // Acceptable response types
         var contentType: String? = nil  // Request data type
 
         func url(relativeTo registry: URL) -> URL {
             switch destination {
             case .url(let url): return url
-            case .subpath(let path):
-                let subpath = registry.distributionEndpoint(forRepository: repository, andEndpoint: path)
-                return subpath
+            case .subpath(let path): return registry.distributionEndpoint(forRepository: repository, andEndpoint: path)
             }
         }
 
@@ -166,6 +166,7 @@ extension RegistryClient {
                 method: .get,
                 repository: repository,
                 destination: .subpath(path),
+                actions: ["pull"],
                 accepting: accepting,
                 contentType: contentType
             )
@@ -182,6 +183,7 @@ extension RegistryClient {
                 method: .get,
                 repository: repository,
                 destination: .url(url),
+                actions: ["pull"],
                 accepting: accepting,
                 contentType: contentType
             )
@@ -198,6 +200,7 @@ extension RegistryClient {
                 method: .head,
                 repository: repository,
                 destination: .subpath(path),
+                actions: ["pull"],
                 accepting: accepting,
                 contentType: contentType
             )
@@ -215,6 +218,7 @@ extension RegistryClient {
                 method: .put,
                 repository: repository,
                 destination: .url(url),
+                actions: ["push", "pull"],
                 accepting: accepting,
                 contentType: contentType
             )
@@ -231,6 +235,7 @@ extension RegistryClient {
                 method: .put,
                 repository: repository,
                 destination: .subpath(path),
+                actions: ["push", "pull"],
                 accepting: accepting,
                 contentType: contentType
             )
@@ -247,6 +252,7 @@ extension RegistryClient {
                 method: .post,
                 repository: repository,
                 destination: .subpath(path),
+                actions: ["push", "pull"],
                 accepting: accepting,
                 contentType: contentType
             )
@@ -268,22 +274,25 @@ extension RegistryClient {
         expectingStatus success: HTTPResponse.Status = .ok,
         decodingErrors errors: [HTTPResponse.Status]
     ) async throws -> (data: Data, response: HTTPResponse) {
+        let authorization = try await auth?
+            .auth(
+                registry: registryURL,
+                repository: operation.repository,
+                actions: operation.actions,
+                withScheme: authChallenge,
+                usingClient: client
+            )
+
         let request = HTTPRequest(
             method: operation.method,
             url: operation.url(relativeTo: registryURL),
             accepting: operation.accepting,
-            contentType: operation.contentType
+            contentType: operation.contentType,
+            withAuthorization: authorization
         )
 
         do {
-            let authenticatedRequest = auth?.auth(for: request) ?? request
-            return try await client.executeRequestThrowing(authenticatedRequest, expectingStatus: success)
-        } catch HTTPClientError.authenticationChallenge(let challenge, let request, let response) {
-            guard
-                let authenticatedRequest = try await auth?
-                    .auth(for: request, withChallenge: challenge, usingClient: client)
-            else { throw HTTPClientError.unauthorized(request: request, response: response) }
-            return try await client.executeRequestThrowing(authenticatedRequest, expectingStatus: success)
+            return try await client.executeRequestThrowing(request, expectingStatus: success)
         } catch HTTPClientError.unexpectedStatusCode(let status, _, let .some(responseData))
             where errors.contains(status)
         {
@@ -330,30 +339,25 @@ extension RegistryClient {
         expectingStatus success: HTTPResponse.Status,
         decodingErrors errors: [HTTPResponse.Status]
     ) async throws -> (data: Data, response: HTTPResponse) {
+        let authorization = try await auth?
+            .auth(
+                registry: registryURL,
+                repository: operation.repository,
+                actions: operation.actions,
+                withScheme: authChallenge,
+                usingClient: client
+            )
+
         let request = HTTPRequest(
             method: operation.method,
             url: operation.url(relativeTo: registryURL),
             accepting: operation.accepting,
-            contentType: operation.contentType
+            contentType: operation.contentType,
+            withAuthorization: authorization
         )
 
         do {
-            let authenticatedRequest = auth?.auth(for: request) ?? request
-            return try await client.executeRequestThrowing(
-                authenticatedRequest,
-                uploading: payload,
-                expectingStatus: success
-            )
-        } catch HTTPClientError.authenticationChallenge(let challenge, let request, let response) {
-            guard
-                let authenticatedRequest = try await auth?
-                    .auth(for: request, withChallenge: challenge, usingClient: client)
-            else { throw HTTPClientError.unauthorized(request: request, response: response) }
-            return try await client.executeRequestThrowing(
-                authenticatedRequest,
-                uploading: payload,
-                expectingStatus: success
-            )
+            return try await client.executeRequestThrowing(request, uploading: payload, expectingStatus: success)
         } catch HTTPClientError.unexpectedStatusCode(let status, _, let .some(responseData))
             where errors.contains(status)
         {

@@ -12,23 +12,29 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Foundation
+
 public extension RegistryClient {
-    /// Returns a boolean value indicating whether the registry supports v2 of the distribution specification.
-    /// - Returns: `true` if the registry supports the distribution specification, otherwise `false`.
-    func checkAPI() async throws -> Bool {
+    /// Checks whether the registry supports v2 of the distribution specification.
+    /// - Returns: an `true` if the registry supports the distribution specification.
+    /// - Throws: if the registry does not support the distribution specification.
+    static func checkAPI(client: HTTPClient, registryURL: URL) async throws -> AuthChallenge {
         // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#determining-support
+
         // The registry indicates that it supports the v2 protocol by returning a 200 OK response.
         // Many registries also set `Content-Type: application/json` and return empty JSON objects,
         // but this is not required and some do not.
         // The registry may require authentication on this endpoint.
+
         do {
             // Using the bare HTTP client because this is the only endpoint which does not include a repository path
-            let _ = try await executeRequestThrowing(
-                .get("", url: registryURL.distributionEndpoint),
-                expectingStatus: .ok,
-                decodingErrors: [.unauthorized, .notFound]
+            // and to avoid RegistryClient's auth handling
+            let _ = try await client.executeRequestThrowing(
+                .get(registryURL.distributionEndpoint, withAuthorization: nil),
+                expectingStatus: .ok
             )
-            return true
-        } catch HTTPClientError.unexpectedStatusCode(status: .notFound, _, _) { return false }
+            return .none
+
+        } catch HTTPClientError.authenticationChallenge(let challenge, _, _) { return .init(challenge: challenge) }
     }
 }

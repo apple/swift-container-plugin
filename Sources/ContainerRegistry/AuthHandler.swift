@@ -110,6 +110,22 @@ func parseChallenge(_ s: String) throws -> BearerChallenge {
     return res
 }
 
+public enum AuthChallenge: Equatable {
+    case none
+    case basic(String)
+    case bearer(String)
+
+    init(challenge: String) {
+        if challenge.lowercased().starts(with: "basic") {
+            self = .basic(challenge)
+        } else if challenge.lowercased().starts(with: "bearer") {
+            self = .bearer(challenge)
+        } else {
+            self = .none
+        }
+    }
+}
+
 /// AuthHandler manages provides credentials for HTTP requests
 public struct AuthHandler {
     var username: String?
@@ -127,11 +143,9 @@ public struct AuthHandler {
         self.auth = auth
     }
 
-    /// Get locally-configured credentials, such as netrc or username/password, for a request
-    func localCredentials(for request: HTTPRequest) -> String? {
-        guard let requestURL = request.url else { return nil }
-
-        if let netrcEntry = auth?.httpAuthorizationHeader(for: requestURL) { return netrcEntry }
+    /// Get locally-configured credentials, such as netrc or username/password, for a host
+    func localCredentials(forURL url: URL) -> String? {
+        if let netrcEntry = auth?.httpAuthorizationHeader(for: url) { return netrcEntry }
 
         if let username, let password {
             let authorization = Data("\(username):\(password)".utf8).base64EncodedString()
@@ -142,52 +156,35 @@ public struct AuthHandler {
         return nil
     }
 
-    /// Add authorization to an HTTP rquest before it has been sent to a server.
-    /// Currently this function always passes the request back unmodified, to trigger a challenge.
-    /// In future it could provide cached responses from previous challenges.
-    /// - Parameter request: The request to authorize.
-    /// - Returns: The request, with an appropriate authorization header added, or nil if no credentials are available.
-    public func auth(for request: HTTPRequest) -> HTTPRequest? { nil }
+    public func auth(
+        registry: URL,
+        repository: String,
+        actions: [String],
+        withScheme scheme: AuthChallenge,
+        usingClient client: HTTPClient
+    ) async throws -> String? {
+        switch scheme {
+        case .none: return nil
+        case .basic: return localCredentials(forURL: registry)
 
-    /// Add authorization to an HTTP rquest in response to a challenge from the server.
-    /// - Parameters:
-    ///   - request: The reuqest to authorize.
-    ///   - challenge: The server's challeng.
-    ///   - client: An HTTP client, used to retrieve tokens if necessary.
-    /// - Returns: The request, with an appropriate authorization header added, or nil if no credentials are available.
-    /// - Throws: If an error occurs while retrieving a credential.
-    public func auth(for request: HTTPRequest, withChallenge challenge: String, usingClient client: HTTPClient)
-        async throws -> HTTPRequest?
-    {
-        if challenge.lowercased().starts(with: "basic") {
-            guard let authHeader = localCredentials(for: request) else { return nil }
-            var request = request
-            request.headerFields[.authorization] = authHeader
-            return request
-
-        } else if challenge.lowercased().starts(with: "bearer") {
+        case .bearer(let challenge):
             // Preemptively offer suitable basic auth credentials to the token server.
             // Instead of challenging, public token servers often return anonymous tokens when no credentials are offered.
             // These tokens allow pull access to public repositories, but attempts to push will fail with 'unauthorized'.
             // There is no obvious prompt for the client to retry with authentication.
-            let parsedChallenge = try parseChallenge(
+            var parsedChallenge = try parseChallenge(
                 challenge.dropFirst("bearer".count).trimmingCharacters(in: .whitespacesAndNewlines)
             )
+            parsedChallenge.scope = ["repository:\(repository):\(actions.joined(separator: ","))"]
             guard let challengeURL = parsedChallenge.url else { return nil }
             var tokenRequest = HTTPRequest(url: challengeURL)
-            if let credentials = localCredentials(for: tokenRequest) {
+            if let credentials = localCredentials(forURL: challengeURL) {
                 tokenRequest.headerFields[.authorization] = credentials
             }
 
             let (data, _) = try await client.executeRequestThrowing(tokenRequest, expectingStatus: .ok)
             let tokenResponse = try JSONDecoder().decode(BearerTokenResponse.self, from: data)
-            var request = request
-            request.headerFields[.authorization] = "Bearer \(tokenResponse.token)"
-            return request
-
-        } else {
-            // No other authentication methods available
-            return nil
+            return "Bearer \(tokenResponse.token)"
         }
     }
 }

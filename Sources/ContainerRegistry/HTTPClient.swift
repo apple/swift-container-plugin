@@ -159,4 +159,13 @@ extension HTTPRequest {
         //    https://developer.apple.com/forums/thread/89811
         if let authorization { headerFields[.authorization] = authorization }
     }
+
+    static func get(
+        _ url: URL,
+        accepting: [String] = [],
+        contentType: String? = nil,
+        withAuthorization authorization: String? = nil
+    ) -> HTTPRequest {
+        .init(method: .get, url: url, accepting: accepting, contentType: contentType, withAuthorization: authorization)
+    }
 }
