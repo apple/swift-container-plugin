@@ -115,21 +115,147 @@ public struct RegistryClient {
         let urlsession = URLSession(configuration: .ephemeral)
         try await self.init(registry: registryURL, client: urlsession, auth: auth)
     }
+}
 
-    func registryURLForPath(_ path: String) throws -> URL {
-        var components = URLComponents()
-        components.path = path
-        guard let url = components.url(relativeTo: registryURL) else {
-            throw RegistryClientError.invalidRegistryPath(path)
-        }
-        return url
+extension URL {
+    /// The base distribution endpoint URL
+    var distributionEndpoint: URL { self.appendingPathComponent("/v2/") }
+
+    /// The URL for a particular endpoint relating to a particular repository
+    /// - Parameters:
+    ///   - repository: The name of the repository.   May include path separators.
+    ///   - endpoint: The distribution endpoint e.g. "tags/list"
+    /// - Returns: A fully-qualified URL for the endpoint.
+    func distributionEndpoint(forRepository repository: String, andEndpoint endpoint: String) -> URL {
+        self.appendingPathComponent("/v2/\(repository)/\(endpoint)")
     }
 }
 
 extension RegistryClient {
+    /// Represents an operation to be executed on the registry.
+    struct RegistryOperation {
+        enum Destination {
+            case subpath(String)  // Repository subpath on the registry
+            case url(URL)  // Full destination URL, for example from a Location header returned by the registry
+        }
+
+        var method: HTTPRequest.Method  // HTTP method
+        var repository: String  // Repository path on the registry
+        var destination: Destination  // Destination of the operation: can be a subpath or remote URL
+        var accepting: [String] = []  // Acceptable response types
+        var contentType: String? = nil  // Request data type
+
+        func url(relativeTo registry: URL) -> URL {
+            switch destination {
+            case .url(let url): return url
+            case .subpath(let path):
+                let subpath = registry.distributionEndpoint(forRepository: repository, andEndpoint: path)
+                return subpath
+            }
+        }
+
+        // Convenience constructors
+        static func get(
+            _ repository: String,
+            path: String,
+            actions: [String]? = nil,
+            accepting: [String] = [],
+            contentType: String? = nil
+        ) -> RegistryOperation {
+            .init(
+                method: .get,
+                repository: repository,
+                destination: .subpath(path),
+                accepting: accepting,
+                contentType: contentType
+            )
+        }
+
+        static func get(
+            _ repository: String,
+            url: URL,
+            actions: [String]? = nil,
+            accepting: [String] = [],
+            contentType: String? = nil
+        ) -> RegistryOperation {
+            .init(
+                method: .get,
+                repository: repository,
+                destination: .url(url),
+                accepting: accepting,
+                contentType: contentType
+            )
+        }
+
+        static func head(
+            _ repository: String,
+            path: String,
+            actions: [String]? = nil,
+            accepting: [String] = [],
+            contentType: String? = nil
+        ) -> RegistryOperation {
+            .init(
+                method: .head,
+                repository: repository,
+                destination: .subpath(path),
+                accepting: accepting,
+                contentType: contentType
+            )
+        }
+
+        /// This handles the 'put' case where the registry gives us a location URL which we must not alter, aside from adding the digest to it
+        static func put(
+            _ repository: String,
+            url: URL,
+            actions: [String]? = nil,
+            accepting: [String] = [],
+            contentType: String? = nil
+        ) -> RegistryOperation {
+            .init(
+                method: .put,
+                repository: repository,
+                destination: .url(url),
+                accepting: accepting,
+                contentType: contentType
+            )
+        }
+
+        static func put(
+            _ repository: String,
+            path: String,
+            actions: [String]? = nil,
+            accepting: [String] = [],
+            contentType: String? = nil
+        ) -> RegistryOperation {
+            .init(
+                method: .put,
+                repository: repository,
+                destination: .subpath(path),
+                accepting: accepting,
+                contentType: contentType
+            )
+        }
+
+        static func post(
+            _ repository: String,
+            path: String,
+            actions: [String]? = nil,
+            accepting: [String] = [],
+            contentType: String? = nil
+        ) -> RegistryOperation {
+            .init(
+                method: .post,
+                repository: repository,
+                destination: .subpath(path),
+                accepting: accepting,
+                contentType: contentType
+            )
+        }
+    }
+
     /// Execute an HTTP request with no request body.
     /// - Parameters:
-    ///   - request: The HTTP request to execute.
+    ///   - operation: The Registry operation to execute.
     ///   - success: The HTTP status code expected if the request is successful.
     ///   - errors: Expected error codes for which the registry sends structured error messages.
     /// - Returns: An asynchronously-delivered tuple that contains the raw response body as a Data instance, and a HTTPURLResponse.
@@ -137,11 +263,18 @@ extension RegistryClient {
     ///
     /// A plain Data version of this function is required because Data is Decodable and decodes from base64.
     /// Plain blobs are not encoded in the registry, so trying to decode them will fail.
-    public func executeRequestThrowing(
-        _ request: HTTPRequest,
+    func executeRequestThrowing(
+        _ operation: RegistryOperation,
         expectingStatus success: HTTPResponse.Status = .ok,
         decodingErrors errors: [HTTPResponse.Status]
     ) async throws -> (data: Data, response: HTTPResponse) {
+        let request = HTTPRequest(
+            method: operation.method,
+            url: operation.url(relativeTo: registryURL),
+            accepting: operation.accepting,
+            contentType: operation.contentType
+        )
+
         do {
             let authenticatedRequest = auth?.auth(for: request) ?? request
             return try await client.executeRequestThrowing(authenticatedRequest, expectingStatus: success)
@@ -166,8 +299,8 @@ extension RegistryClient {
     ///   - errors: Expected error codes for which the registry sends structured error messages.
     /// - Returns: An asynchronously-delivered tuple that contains the raw response body as a Data instance, and a HTTPURLResponse.
     /// - Throws: If the server response is unexpected or indicates that an error occurred.
-    public func executeRequestThrowing<Response: Decodable>(
-        _ request: HTTPRequest,
+    func executeRequestThrowing<Response: Decodable>(
+        _ request: RegistryOperation,
         expectingStatus success: HTTPResponse.Status = .ok,
         decodingErrors errors: [HTTPResponse.Status]
     ) async throws -> (data: Response, response: HTTPResponse) {
@@ -182,7 +315,7 @@ extension RegistryClient {
 
     /// Execute an HTTP request uploading a request body.
     /// - Parameters:
-    ///   - request: The HTTP request to execute.
+    ///   - operation: The Registry operation to execute.
     ///   - payload: The request body to upload.
     ///   - success: The HTTP status code expected if the request is successful.
     ///   - errors: Expected error codes for which the registry sends structured error messages.
@@ -191,12 +324,19 @@ extension RegistryClient {
     ///
     /// A plain Data version of this function is required because Data is Encodable and encodes to base64.
     /// Accidentally encoding data blobs will cause digests to fail and runtimes to be unable to run the images.
-    public func executeRequestThrowing(
-        _ request: HTTPRequest,
+    func executeRequestThrowing(
+        _ operation: RegistryOperation,
         uploading payload: Data,
         expectingStatus success: HTTPResponse.Status,
         decodingErrors errors: [HTTPResponse.Status]
     ) async throws -> (data: Data, response: HTTPResponse) {
+        let request = HTTPRequest(
+            method: operation.method,
+            url: operation.url(relativeTo: registryURL),
+            accepting: operation.accepting,
+            contentType: operation.contentType
+        )
+
         do {
             let authenticatedRequest = auth?.auth(for: request) ?? request
             return try await client.executeRequestThrowing(
@@ -224,20 +364,20 @@ extension RegistryClient {
 
     /// Execute an HTTP request uploading a Codable request body.
     /// - Parameters:
-    ///   - request: The HTTP request to execute.
+    ///   - operation: The Registry operation to execute.
     ///   - payload: The request body to upload.
     ///   - success: The HTTP status code expected if the request is successful.
     ///   - errors: Expected error codes for which the registry sends structured error messages.
     /// - Returns: An asynchronously-delivered tuple that contains the raw response body as a Data instance, and a HTTPURLResponse.
     /// - Throws: If the server response is unexpected or indicates that an error occurred.
-    public func executeRequestThrowing<Body: Encodable>(
-        _ request: HTTPRequest,
+    func executeRequestThrowing<Body: Encodable>(
+        _ operation: RegistryOperation,
         uploading payload: Body,
         expectingStatus success: HTTPResponse.Status,
         decodingErrors errors: [HTTPResponse.Status]
     ) async throws -> (data: Data, response: HTTPResponse) {
         try await executeRequestThrowing(
-            request,
+            operation,
             uploading: try encoder.encode(payload),
             expectingStatus: success,
             decodingErrors: errors

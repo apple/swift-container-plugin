@@ -41,7 +41,7 @@ extension RegistryClient {
         // - Do not include the digest.
         // Response will include a 'Location' header telling us where to PUT the blob data.
         let httpResponse = try await executeRequestThrowing(
-            .post(registryURLForPath("/v2/\(repository)/blobs/uploads/")),
+            .post(repository, path: "blobs/uploads/"),
             expectingStatus: .accepted,  // expected response code for a "two-shot" upload
             decodingErrors: [.notFound]
         )
@@ -63,7 +63,7 @@ public extension RegistryClient {
 
         do {
             let _ = try await executeRequestThrowing(
-                .head(registryURLForPath("/v2/\(repository)/blobs/\(digest)")),
+                .head(repository, path: "blobs/\(digest)"),
                 decodingErrors: [.notFound]
             )
             return true
@@ -82,7 +82,7 @@ public extension RegistryClient {
         precondition(digest.count > 0, "digest must not be an empty string")
 
         return try await executeRequestThrowing(
-            .get(registryURLForPath("/v2/\(repository)/blobs/\(digest)"), accepting: ["application/octet-stream"]),
+            .get(repository, path: "blobs/\(digest)", accepting: ["application/octet-stream"]),
             decodingErrors: [.notFound]
         )
         .data
@@ -105,7 +105,7 @@ public extension RegistryClient {
         precondition(digest.count > 0, "digest must not be an empty string")
 
         return try await executeRequestThrowing(
-            .get(registryURLForPath("/v2/\(repository)/blobs/\(digest)"), accepting: ["application/octet-stream"]),
+            .get(repository, path: "blobs/\(digest)", accepting: ["application/octet-stream"]),
             decodingErrors: [.notFound]
         )
         .data
@@ -136,10 +136,9 @@ public extension RegistryClient {
         let digest = digest(of: data)
         location.queryItems = (location.queryItems ?? []) + [URLQueryItem(name: "digest", value: "\(digest.utf8)")]
         guard let uploadURL = location.url else { throw RegistryClientError.invalidUploadLocation("\(location)") }
-
         let httpResponse = try await executeRequestThrowing(
             // All blob uploads have Content-Type: application/octet-stream on the wire, even if mediatype is different
-            .put(uploadURL, contentType: "application/octet-stream"),
+            .put(repository, url: uploadURL, contentType: "application/octet-stream"),
             uploading: data,
             expectingStatus: .created,
             decodingErrors: [.badRequest, .notFound]

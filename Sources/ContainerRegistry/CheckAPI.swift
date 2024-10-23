@@ -22,8 +22,10 @@ public extension RegistryClient {
         // but this is not required and some do not.
         // The registry may require authentication on this endpoint.
         do {
+            // Using the bare HTTP client because this is the only endpoint which does not include a repository path
             let _ = try await executeRequestThrowing(
-                .get(registryURLForPath("/v2/")),
+                .get("", url: registryURL.distributionEndpoint),
+                expectingStatus: .ok,
                 decodingErrors: [.unauthorized, .notFound]
             )
             return true
