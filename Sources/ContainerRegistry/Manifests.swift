@@ -21,7 +21,8 @@ public extension RegistryClient {
         let httpResponse = try await executeRequestThrowing(
             // All blob uploads have Content-Type: application/octet-stream on the wire, even if mediatype is different
             .put(
-                registryURLForPath("/v2/\(repository)/manifests/\(reference)"),
+                repository,
+                path: "manifests/\(reference)",
                 contentType: manifest.mediaType ?? "application/vnd.oci.image.manifest.v1+json"
             ),
             uploading: manifest,
@@ -35,8 +36,9 @@ public extension RegistryClient {
         // ECR does not set this header at all.
         // If the header is not present, create a suitable value.
         // https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pulling-manifests
-        return try httpResponse.response.headerFields[.location]
-            ?? registryURLForPath("/v2/\(repository)/manifests/\(manifest.digest)").absoluteString
+        return httpResponse.response.headerFields[.location]
+            ?? registryURL.distributionEndpoint(forRepository: repository, andEndpoint: "manifests/\(manifest.digest)")
+            .absoluteString
     }
 
     func getManifest(repository: String, reference: String) async throws -> ImageManifest {
@@ -46,7 +48,8 @@ public extension RegistryClient {
 
         return try await executeRequestThrowing(
             .get(
-                registryURLForPath("/v2/\(repository)/manifests/\(reference)"),
+                repository,
+                path: "manifests/\(reference)",
                 accepting: [
                     "application/vnd.oci.image.manifest.v1+json",
                     "application/vnd.docker.distribution.manifest.v2+json",
@@ -63,7 +66,8 @@ public extension RegistryClient {
 
         return try await executeRequestThrowing(
             .get(
-                registryURLForPath("/v2/\(repository)/manifests/\(reference)"),
+                repository,
+                path: "manifests/\(reference)",
                 accepting: [
                     "application/vnd.oci.image.index.v1+json",
                     "application/vnd.docker.distribution.manifest.list.v2+json",
