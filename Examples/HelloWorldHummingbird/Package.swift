@@ -21,7 +21,7 @@ let package = Package(
     platforms: [.macOS(.v14)],
     dependencies: [
         .package(url: "https://github.com/hummingbird-project/hummingbird.git", from: "2.1.0"),
-        .package(url: "https://github.com/apple/swift-container-plugin", from: "0.1.0"),
+        .package(url: "https://github.com/apple/swift-container-plugin", from: "0.2.0"),
     ],
     targets: [
         .executableTarget(name: "hello-world", dependencies: [.product(name: "Hummingbird", package: "hummingbird")])
