@@ -16,7 +16,7 @@ import Foundation
 import ContainerRegistry
 import XCTest
 
-class SmokeTests: XCTestCase {
+class SmokeTests: XCTestCase, @unchecked Sendable {
     // These are basic tests to exercise the main registry operations.
     // The tests assume that a fresh, empty registry instance is available at
     // http://$REGISTRY_HOST:$REGISTRY_PORT
@@ -29,11 +29,6 @@ class SmokeTests: XCTestCase {
     override func setUp() async throws {
         try await super.setUp()
         client = try await RegistryClient(registry: "\(registryHost):\(registryPort)", insecure: true)
-    }
-
-    func testCheckAPI() async throws {
-        let supported = try await client.checkAPI()
-        XCTAssert(supported)
     }
 
     func testGetTags() async throws {

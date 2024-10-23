@@ -16,7 +16,7 @@ import Foundation
 import Basics
 import XCTest
 
-class AuthTests: XCTestCase {
+class AuthTests: XCTestCase, @unchecked Sendable {
     // SwiftPM's NetrcAuthorizationProvider does not throw an error if the .netrc file
     // does not exist.   For simplicity the local vendored version does the same.
     func testNonexistentNetrc() async throws {
