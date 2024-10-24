@@ -144,9 +144,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
         // MARK: Create the application configuration
 
-        // The more convenient Date.now.ISO8601Format() is not present on Linux
-        let formatter = ISO8601DateFormatter()
-        let now = formatter.string(from: Date.now)
+        let now = Date.now.ISO8601Format()
 
         // Inherit the configuration of the base image - UID, GID, environment etc -
         // and override the entrypoint.
