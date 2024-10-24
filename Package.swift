@@ -32,20 +32,16 @@ let package = Package(
         .target(
             name: "ContainerRegistry",
             dependencies: [
-                .product(name: "Crypto", package: "swift-crypto", condition: .when(platforms: [.linux])),
+                .target(name: "Basics"), .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "HTTPTypes", package: "swift-http-types"),
                 .product(name: "HTTPTypesFoundation", package: "swift-http-types"),
-                .target(
-                    name: "Basics"  // AuthorizationProvider
-                ),
             ]
         ),
         .executableTarget(
             name: "containertool",
             dependencies: [
-                .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .product(name: "Crypto", package: "swift-crypto", condition: .when(platforms: [.linux])),
                 .target(name: "ContainerRegistry"), .target(name: "VendorCNIOExtrasZlib"),
+                .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ],
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),

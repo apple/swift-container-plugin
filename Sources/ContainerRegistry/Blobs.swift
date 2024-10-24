@@ -14,12 +14,7 @@
 
 import Foundation
 import HTTPTypes
-
-#if canImport(CryptoKit)
-import CryptoKit
-#else
 import Crypto
-#endif
 
 /// Calculates the digest of a blob of data.
 /// - Parameter data: Blob of data to digest.
