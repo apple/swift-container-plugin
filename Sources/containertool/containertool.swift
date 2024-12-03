@@ -144,7 +144,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
         // MARK: Create the application configuration
 
-        let now = Date.now.ISO8601Format()
+        let timestamp = Date(timeIntervalSince1970: 0).ISO8601Format()
 
         // Inherit the configuration of the base image - UID, GID, environment etc -
         // and override the entrypoint.
@@ -154,7 +154,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         inherited_config.WorkingDir = "/"
 
         let configuration = ImageConfiguration(
-            created: now,
+            created: timestamp,
             architecture: architecture,
             os: os,
             config: inherited_config,
@@ -167,7 +167,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
                     digest(of: tardiff)
                 ] + baseimage_config.rootfs.diff_ids
             ),
-            history: [.init(created: now, created_by: "containertool")]
+            history: [.init(created: timestamp, created_by: "containertool")]
         )
 
         let config_blob = try await destination.putImageConfiguration(
