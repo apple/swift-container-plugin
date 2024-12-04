@@ -35,10 +35,36 @@ func gzip(_ bytes: [UInt8]) -> [UInt8] {
     stream.zfree = nil
     stream.opaque = nil
 
+    // Force identical gzip headers to be created on Linux and macOS.
+    //
+    // RFC1952 defines operating system codes which can be embedded in the gzip header.
+    //
+    // * Initially, zlib generated a default gzip header with the
+    //   OS field set to `Unknown` (255).
+    // * https://github.com/madler/zlib/commit/0484693e1723bbab791c56f95597bd7dbe867d03
+    //   changed the default to `Unix` (3).
+    // * https://github.com/madler/zlib/commit/ce12c5cd00628bf8f680c98123a369974d32df15
+    //   changed the default to use a value based on the OS detected
+    //   at compile time.  After this, zlib on Linux continued to
+    //   use `Unix` (3) whereas macOS started to use `Apple` (19).
+    //
+    // According to RFC1952 Section 2.3.1.2. (Compliance), `Unknown`
+    // 255 should be used by default where the OS on which the file
+    // was created is not known.
+    //
+    // Different versions of zlib might still produce different
+    // compressed output for the same input,  but using the same default
+    // value removes one one source of differences between platforms.
+
+    let gz_os_unknown = Int32(255)
+    var header = gz_header()
+    header.os = gz_os_unknown
+
     let windowBits: Int32 = 15 + 16
     let level = Z_DEFAULT_COMPRESSION
     let memLevel: Int32 = 8
     let rc = CNIOExtrasZlib_deflateInit2(&stream, level, Z_DEFLATED, windowBits, memLevel, Z_DEFAULT_STRATEGY)
+    deflateSetHeader(&stream, &header)
 
     precondition(rc == Z_OK, "Unexpected return from zlib init: \(rc)")
 
