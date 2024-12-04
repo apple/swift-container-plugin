@@ -26,5 +26,4 @@ let package = Package(
     targets: [
         .executableTarget(name: "hello-world", dependencies: [.product(name: "Hummingbird", package: "hummingbird")])
     ]
-
 )
