@@ -1,19 +1,13 @@
-name: PR
+name: main
 
 on:
-    pull_request:
-        types: [opened, reopened, synchronize]
+    push:
+        branches:
+            - main
+    schedule:
+        - cron: '12 3 * * *'
 
 jobs:
-    soundness:
-        name: Soundness
-        uses: swiftlang/github-workflows/.github/workflows/soundness.yml@main
-        with:
-            api_breakage_check_container_image: "swift:6.0-noble"
-            docs_check_container_image: "swift:6.0-noble"
-            license_header_check_project_name: "SwiftContainerPlugin"
-            shell_check_container_image: "swift:6.0-noble"
-
     unit-tests:
         name: Unit tests
         uses: apple/swift-nio/.github/workflows/unit_tests.yml@main
@@ -54,7 +48,3 @@ jobs:
     endtoend-tests:
         name: End to end tests
         uses: ./.github/workflows/endtoend_tests.yml
-
-    swift-6-language-mode:
-        name: Swift 6 Language Mode
-        uses: apple/swift-nio/.github/workflows/swift_6_language_mode.yml@main
