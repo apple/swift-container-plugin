@@ -28,10 +28,11 @@ public func digest<D: DataProtocol>(of data: D) -> String {
 
 extension RegistryClient {
     // Internal helper method to initiate a blob upload in 'two shot' mode
-    func startBlobUploadSession(repository: String) async throws -> URLComponents? {
+    func startBlobUploadSession(repository: String) async throws -> URL {
         precondition(repository.count > 0, "repository must not be an empty string")
 
         // Upload in "two shot" mode.
+        // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#post-then-put
         // - POST to obtain a session ID.
         // - Do not include the digest.
         // Response will include a 'Location' header telling us where to PUT the blob data.
@@ -44,7 +45,21 @@ extension RegistryClient {
         guard let location = httpResponse.response.headerFields[.location] else {
             throw HTTPClientError.missingResponseHeader("Location")
         }
-        return URLComponents(string: location)
+
+        guard let locationURL = URL(string: location) else {
+            throw RegistryClientError.invalidUploadLocation("\(location)")
+        }
+
+        // The location may be either an absolute URL or a relative URL
+        // If it is relative we need to make it absolute
+        guard locationURL.host != nil else {
+            guard let absoluteURL = URL(string: location, relativeTo: registryURL) else {
+                throw RegistryClientError.invalidUploadLocation("\(location)")
+            }
+            return absoluteURL
+        }
+
+        return locationURL
     }
 }
 
@@ -123,14 +138,14 @@ public extension RegistryClient {
         precondition(repository.count > 0, "repository must not be an empty string")
 
         // Ask the server to open a session and tell us where to upload our data
-        var location = try await startBlobUploadSession(repository: repository)!
+        let location = try await startBlobUploadSession(repository: repository)
 
         // Append the digest to the upload location, as the specification requires.
         // The server's URL is arbitrary and might already contain query items which we must not overwrite.
         // The URL could even point to a different host.
         let digest = digest(of: data)
-        location.queryItems = (location.queryItems ?? []) + [URLQueryItem(name: "digest", value: "\(digest.utf8)")]
-        guard let uploadURL = location.url else { throw RegistryClientError.invalidUploadLocation("\(location)") }
+        let uploadURL = location.appending(queryItems: [.init(name: "digest", value: "\(digest.utf8)")])
+
         let httpResponse = try await executeRequestThrowing(
             // All blob uploads have Content-Type: application/octet-stream on the wire, even if mediatype is different
             .put(repository, url: uploadURL, contentType: "application/octet-stream"),
