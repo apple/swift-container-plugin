@@ -50,6 +50,15 @@ extension RegistryClient {
             throw RegistryClientError.invalidUploadLocation("\(location)")
         }
 
+        // The location may be either an absolute URL or a relative URL
+        // If it is relative we need to make it absolute
+        guard locationURL.host != nil else {
+            guard let absoluteURL = URL(string: location, relativeTo: registryURL) else {
+                throw RegistryClientError.invalidUploadLocation("\(location)")
+            }
+            return absoluteURL
+        }
+
         return locationURL
     }
 }
