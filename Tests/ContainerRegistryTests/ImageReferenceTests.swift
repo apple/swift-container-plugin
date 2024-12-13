@@ -15,19 +15,13 @@
 @testable import ContainerRegistry
 import Testing
 
-struct ReferenceTest {
-    var reference: String
-    var registry: String
-    var repository: String
-}
-
-struct ReferenceTestCase {
+struct ReferenceTestCase: Sendable {
     var reference: String
     var expected: ImageReference?
 }
 
 struct ReferenceTests {
-    let tests = [
+    static let tests = [
         // A reference which does not contain a '/' is always interpreted as a repository name
         // in the default registry.
         ReferenceTestCase(
@@ -106,14 +100,12 @@ struct ReferenceTests {
         ),
     ]
 
-    @Test func testReferences() throws {
-        for test in tests {
-            let parsed = try! ImageReference(fromString: test.reference, defaultRegistry: "default")
-            #expect(
-                parsed == test.expected,
-                "\(String(reflecting: parsed)) is not equal to \(String(reflecting: test.expected))"
-            )
-        }
+    @Test(arguments: tests) func testReferences(test: ReferenceTestCase) throws {
+        let parsed = try! ImageReference(fromString: test.reference, defaultRegistry: "default")
+        #expect(
+            parsed == test.expected,
+            "\(String(reflecting: parsed)) is not equal to \(String(reflecting: test.expected))"
+        )
     }
 
     @Test func testLibraryReferences() throws {
