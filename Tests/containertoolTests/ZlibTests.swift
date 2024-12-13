@@ -12,20 +12,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
 @testable import containertool
 import Crypto
-import XCTest
+import Foundation
+import Testing
 
-class ZlibTests: XCTestCase, @unchecked Sendable {
-    // Check that compressing the same data on macOS and Linux produces the same output.
-    func testGzipHeader() async throws {
+// Check that compressing the same data on macOS and Linux produces the same output.
+struct ZlibTests {
+    @Test func testGzipHeader() async throws {
         let data = "test"
-
         let result = gzip([UInt8](data.utf8))
-        XCTAssertEqual(
-            "\(SHA256.hash(data: result))",
-            "SHA256 digest: 7dff8d09129482017247cb373e8138772e852a1a02f097d1440387055d2be69c"
+        #expect(
+            "\(SHA256.hash(data: result))"
+                == "SHA256 digest: 7dff8d09129482017247cb373e8138772e852a1a02f097d1440387055d2be69c"
         )
     }
 }

@@ -18,10 +18,6 @@ log() { printf -- "** %s\n" "$*" >&2; }
 error() { printf -- "** ERROR: %s\n" "$*" >&2; }
 fatal() { error "$@"; exit 1; }
 
-if [[ -n ${TOOLCHAINS+x} ]] ; then
-    fatal "Please unset the TOOLCHAINS environment variable.   The OSS Swift toolchain cannot run these tests because it does not include XCTest.framework."
-fi
-
 set -euo pipefail
 
 RUNTIME=${RUNTIME-"docker"}
