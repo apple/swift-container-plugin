@@ -48,7 +48,7 @@ func splitName(_ name: String) throws -> (String, String) {
 }
 
 /// ImageReference points to an image stored on a container registry
-public struct ImageReference: Equatable, CustomStringConvertible, CustomDebugStringConvertible {
+public struct ImageReference: Sendable, Equatable, CustomStringConvertible, CustomDebugStringConvertible {
     /// The registry which contains this image
     public var registry: String
     /// The repository which contains this image
