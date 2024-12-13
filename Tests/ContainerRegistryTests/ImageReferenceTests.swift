@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 @testable import ContainerRegistry
-import XCTest
+import Testing
 
 struct ReferenceTest {
     var reference: String
@@ -26,7 +26,7 @@ struct ReferenceTestCase {
     var expected: ImageReference?
 }
 
-class ReferenceTests: XCTestCase {
+struct ReferenceTests {
     let tests = [
         // A reference which does not contain a '/' is always interpreted as a repository name
         // in the default registry.
@@ -106,60 +106,59 @@ class ReferenceTests: XCTestCase {
         ),
     ]
 
-    func testReferences() throws {
+    @Test func testReferences() throws {
         for test in tests {
             let parsed = try! ImageReference(fromString: test.reference, defaultRegistry: "default")
-            XCTAssertEqual(
-                parsed,
-                test.expected,
+            #expect(
+                parsed == test.expected,
                 "\(String(reflecting: parsed)) is not equal to \(String(reflecting: test.expected))"
             )
         }
     }
 
-    func testLibraryReferences() throws {
+    @Test func testLibraryReferences() throws {
         // docker.io is a special case, as references such as "swift:slim" with no registry component are translated to "docker.io/library/swift:slim"
         // Verified against the behaviour of the docker CLI client
 
         // Fully-qualified name splits as usual
-        XCTAssertEqual(
-            try! ImageReference(fromString: "docker.io/library/swift:slim", defaultRegistry: "docker.io"),
-            ImageReference(registry: "index.docker.io", repository: "library/swift", reference: "slim")
+        #expect(
+            try! ImageReference(fromString: "docker.io/library/swift:slim", defaultRegistry: "docker.io")
+                == ImageReference(registry: "index.docker.io", repository: "library/swift", reference: "slim")
         )
 
         // A repository with no '/' part is assumed to be `library`
-        XCTAssertEqual(
-            try! ImageReference(fromString: "docker.io/swift:slim", defaultRegistry: "docker.io"),
-            ImageReference(registry: "index.docker.io", repository: "library/swift", reference: "slim")
+        #expect(
+            try! ImageReference(fromString: "docker.io/swift:slim", defaultRegistry: "docker.io")
+                == ImageReference(registry: "index.docker.io", repository: "library/swift", reference: "slim")
         )
 
         // Parsing with 'docker.io' as default registry is the same as the fully qualified case
-        XCTAssertEqual(
-            try! ImageReference(fromString: "library/swift:slim", defaultRegistry: "docker.io"),
-            ImageReference(registry: "index.docker.io", repository: "library/swift", reference: "slim")
+        #expect(
+            try! ImageReference(fromString: "library/swift:slim", defaultRegistry: "docker.io")
+                == ImageReference(registry: "index.docker.io", repository: "library/swift", reference: "slim")
         )
 
         // Bare image name with no registry or repository is interpreted as being in docker.io/library when default is docker.io
-        XCTAssertEqual(
-            try! ImageReference(fromString: "swift:slim", defaultRegistry: "docker.io"),
-            ImageReference(registry: "index.docker.io", repository: "library/swift", reference: "slim")
+        #expect(
+            try! ImageReference(fromString: "swift:slim", defaultRegistry: "docker.io")
+                == ImageReference(registry: "index.docker.io", repository: "library/swift", reference: "slim")
         )
 
         // The minimum reference to a library image.   No tag implies `latest`
-        XCTAssertEqual(
-            try! ImageReference(fromString: "swift", defaultRegistry: "docker.io"),
-            ImageReference(registry: "index.docker.io", repository: "library/swift", reference: "latest")
+        #expect(
+            try! ImageReference(fromString: "swift", defaultRegistry: "docker.io")
+                == ImageReference(registry: "index.docker.io", repository: "library/swift", reference: "latest")
         )
 
         // If the registry is not docker.io, the special case logic for `library` does not apply
-        XCTAssertEqual(
-            try! ImageReference(fromString: "localhost:5000/swift", defaultRegistry: "docker.io"),
-            ImageReference(registry: "localhost:5000", repository: "swift", reference: "latest")
+        #expect(
+            try! ImageReference(fromString: "localhost:5000/swift", defaultRegistry: "docker.io")
+                == ImageReference(registry: "localhost:5000", repository: "swift", reference: "latest")
         )
 
-        XCTAssertEqual(
-            try! ImageReference(fromString: "swift", defaultRegistry: "localhost:5000"),
-            ImageReference(registry: "localhost:5000", repository: "swift", reference: "latest")
+        #expect(
+            try! ImageReference(fromString: "swift", defaultRegistry: "localhost:5000")
+                == ImageReference(registry: "localhost:5000", repository: "swift", reference: "latest")
         )
     }
 }
