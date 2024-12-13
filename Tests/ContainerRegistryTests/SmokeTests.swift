@@ -14,24 +14,23 @@
 
 import Foundation
 import ContainerRegistry
-import XCTest
+import Testing
 
-class SmokeTests: XCTestCase, @unchecked Sendable {
+struct SmokeTests {
     // These are basic tests to exercise the main registry operations.
     // The tests assume that a fresh, empty registry instance is available at
     // http://$REGISTRY_HOST:$REGISTRY_PORT
 
-    var client: RegistryClient!
+    var client: RegistryClient
     let registryHost = ProcessInfo.processInfo.environment["REGISTRY_HOST"] ?? "localhost"
     let registryPort = ProcessInfo.processInfo.environment["REGISTRY_PORT"] ?? "5000"
 
     /// Registry client fixture created for each test
-    override func setUp() async throws {
-        try await super.setUp()
+    init() async throws {
         client = try await RegistryClient(registry: "\(registryHost):\(registryPort)", insecure: true)
     }
 
-    func testGetTags() async throws {
+    @Test func testGetTags() async throws {
         let repository = "testgettags"
 
         // registry:2 does not validate the contents of the config or image blobs
@@ -45,7 +44,7 @@ class SmokeTests: XCTestCase, @unchecked Sendable {
         // Initially there will be no tags
         do {
             _ = try await client.getTags(repository: repository)
-            XCTFail("Getting tags for an untagged blob should have thrown an error")
+            Issue.record("Getting tags for an untagged blob should have thrown an error")
         } catch {
             // Expect to receive an error
         }
@@ -61,7 +60,7 @@ class SmokeTests: XCTestCase, @unchecked Sendable {
         // After setting a tag, we should be able to retrieve it
         let _ = try await client.putManifest(repository: repository, reference: "latest", manifest: test_manifest)
         let firstTag = try await client.getTags(repository: repository).tags.sorted()
-        XCTAssertEqual(firstTag, ["latest"])
+        #expect(firstTag == ["latest"])
 
         // After setting another tag, the original tag should still exist
         let _ = try await client.putManifest(
@@ -70,10 +69,10 @@ class SmokeTests: XCTestCase, @unchecked Sendable {
             manifest: test_manifest
         )
         let secondTag = try await client.getTags(repository: repository)
-        XCTAssertEqual(secondTag.tags.sorted(), ["additional_tag", "latest"].sorted())
+        #expect(secondTag.tags.sorted() == ["additional_tag", "latest"].sorted())
     }
 
-    func testGetNonexistentBlob() async throws {
+    @Test func testGetNonexistentBlob() async throws {
         let repository = "testgetnonexistentblob"
 
         do {
@@ -81,36 +80,36 @@ class SmokeTests: XCTestCase, @unchecked Sendable {
                 repository: repository,
                 digest: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
             )
-            XCTFail("should have thrown")
+            Issue.record("should have thrown")
         } catch {}
     }
 
-    func testCheckNonexistentBlob() async throws {
+    @Test func testCheckNonexistentBlob() async throws {
         let repository = "testchecknonexistentblob"
 
         let exists = try await client.blobExists(
             repository: repository,
             digest: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
         )
-        XCTAssertFalse(exists)
+        #expect(!exists)
     }
 
-    func testPutAndGetBlob() async throws {
+    @Test func testPutAndGetBlob() async throws {
         let repository = "testputandgetblob"  // repository name must be lowercase
 
         let blob_data = "test".data(using: .utf8)!
 
         let descriptor = try await client.putBlob(repository: repository, data: blob_data)
-        XCTAssertEqual(descriptor.digest, "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08")
+        #expect(descriptor.digest == "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08")
 
         let exists = try await client.blobExists(repository: repository, digest: descriptor.digest)
-        XCTAssertTrue(exists)
+        #expect(exists)
 
         let blob = try await client.getBlob(repository: repository, digest: descriptor.digest)
-        XCTAssertEqual(blob, blob_data)
+        #expect(blob == blob_data)
     }
 
-    func testPutAndGetTaggedManifest() async throws {
+    @Test func testPutAndGetTaggedManifest() async throws {
         let repository = "testputandgettaggedmanifest"  // repository name must be lowercase
 
         // registry:2 does not validate the contents of the config or image blobs
@@ -139,13 +138,13 @@ class SmokeTests: XCTestCase, @unchecked Sendable {
         let _ = try await client.putManifest(repository: repository, reference: "latest", manifest: test_manifest)
 
         let manifest = try await client.getManifest(repository: repository, reference: "latest")
-        XCTAssertEqual(manifest.schemaVersion, 2)
-        XCTAssertEqual(manifest.config.mediaType, "application/vnd.docker.container.image.v1+json")
-        XCTAssertEqual(manifest.layers.count, 1)
-        XCTAssertEqual(manifest.layers[0].mediaType, "application/vnd.docker.image.rootfs.diff.tar.gzip")
+        #expect(manifest.schemaVersion == 2)
+        #expect(manifest.config.mediaType == "application/vnd.docker.container.image.v1+json")
+        #expect(manifest.layers.count == 1)
+        #expect(manifest.layers[0].mediaType == "application/vnd.docker.image.rootfs.diff.tar.gzip")
     }
 
-    func testPutAndGetAnonymousManifest() async throws {
+    @Test func testPutAndGetAnonymousManifest() async throws {
         let repository = "testputandgetanonymousmanifest"  // repository name must be lowercase
 
         // registry:2 does not validate the contents of the config or image blobs
@@ -178,13 +177,13 @@ class SmokeTests: XCTestCase, @unchecked Sendable {
         )
 
         let manifest = try await client.getManifest(repository: repository, reference: test_manifest.digest)
-        XCTAssertEqual(manifest.schemaVersion, 2)
-        XCTAssertEqual(manifest.config.mediaType, "application/vnd.docker.container.image.v1+json")
-        XCTAssertEqual(manifest.layers.count, 1)
-        XCTAssertEqual(manifest.layers[0].mediaType, "application/vnd.docker.image.rootfs.diff.tar.gzip")
+        #expect(manifest.schemaVersion == 2)
+        #expect(manifest.config.mediaType == "application/vnd.docker.container.image.v1+json")
+        #expect(manifest.layers.count == 1)
+        #expect(manifest.layers[0].mediaType == "application/vnd.docker.image.rootfs.diff.tar.gzip")
     }
 
-    func testPutAndGetImageConfiguration() async throws {
+    @Test func testPutAndGetImageConfiguration() async throws {
         let repository = "testputandgetimageconfiguration"  // repository name must be lowercase
 
         let configuration = ImageConfiguration(
@@ -205,6 +204,6 @@ class SmokeTests: XCTestCase, @unchecked Sendable {
             digest: config_descriptor.digest
         )
 
-        XCTAssertEqual(configuration, downloaded)
+        #expect(configuration == downloaded)
     }
 }
