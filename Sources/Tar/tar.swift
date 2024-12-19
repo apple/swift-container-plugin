@@ -143,7 +143,12 @@ let CONTTYPE = "7"  // reserved
 let XHDTYPE = "x"  // Extended header referring to the next file in the archive
 let XGLTYPE = "g"  // Global extended header
 
-func tar(_ bytes: [UInt8], filename: String = "app") -> [UInt8] {
+/// Creates a tar archive containing a single file
+/// - Parameters:
+///   - bytes: The file's body data
+///   - filename: The file's name in the archive
+/// - Returns: A tar archive containing the file
+public func tar(_ bytes: [UInt8], filename: String = "app") -> [UInt8] {
     // A file entry consists of a file header followed by the
     // contents of the file. The header includes information such as
     // the file name, size and permissions.   Different versions of
@@ -187,4 +192,9 @@ func tar(_ bytes: [UInt8], filename: String = "app") -> [UInt8] {
     return hdr
 }
 
-func tar(_ data: Data, filename: String) -> [UInt8] { tar([UInt8](data), filename: filename) }
+/// Creates a tar archive containing a single file
+/// - Parameters:
+///   - data: The file's body data
+///   - filename: The file's name in the archive
+/// - Returns: A tar archive containing the file
+public func tar(_ data: Data, filename: String) -> [UInt8] { tar([UInt8](data), filename: filename) }
