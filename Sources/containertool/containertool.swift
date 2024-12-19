@@ -15,6 +15,7 @@
 import ArgumentParser
 import Foundation
 import ContainerRegistry
+import Tar
 import Basics
 
 extension Swift.String: Swift.Error {}
