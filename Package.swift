@@ -87,6 +87,7 @@ let package = Package(
             dependencies: [.target(name: "ContainerRegistry")],
             resources: [.process("Resources")]
         ), .testTarget(name: "containertoolTests", dependencies: [.target(name: "containertool")]),
+        .testTarget(name: "TarTests", dependencies: [.target(name: "Tar")]),
     ],
     swiftLanguageModes: [.v6]
 )
