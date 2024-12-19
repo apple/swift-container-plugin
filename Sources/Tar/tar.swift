@@ -143,11 +143,11 @@ let CONTTYPE = "7"  // reserved
 let XHDTYPE = "x"  // Extended header referring to the next file in the archive
 let XGLTYPE = "g"  // Global extended header
 
-/// Creates a tar archive containing a single file
+/// Creates a tar header for a single file
 /// - Parameter bytes: The file's body data
 /// - Parameter filename: The file's name in the archive
-/// - Returns: A tar archive containing the file
-public func tar(_ bytes: [UInt8], filename: String = "app") -> [UInt8] {
+/// - Returns: A tar header representing the file
+public func tarHeader(filesize: Int, filename: String = "app") -> [UInt8] {
     // A file entry consists of a file header followed by the
     // contents of the file. The header includes information such as
     // the file name, size and permissions.   Different versions of
@@ -162,7 +162,7 @@ public func tar(_ bytes: [UInt8], filename: String = "app") -> [UInt8] {
     hdr.writeString(octal6(0o555), inField: mode, withTermination: .spaceAndNull)
     hdr.writeString(octal6(0o000000), inField: uid, withTermination: .spaceAndNull)
     hdr.writeString(octal6(0o000000), inField: gid, withTermination: .spaceAndNull)
-    hdr.writeString(octal11(bytes.count), inField: size, withTermination: .space)
+    hdr.writeString(octal11(filesize), inField: size, withTermination: .space)
     hdr.writeString(octal11(0), inField: mtime, withTermination: .space)
     hdr.writeString(INIT_CHECKSUM, inField: chksum, withTermination: .none)
     hdr.writeString(REGTYPE, inField: typeflag, withTermination: .none)
@@ -177,6 +177,16 @@ public func tar(_ bytes: [UInt8], filename: String = "app") -> [UInt8] {
 
     // Fill in the checksum.
     hdr.writeString(octal6(checksum(header: hdr)), inField: chksum, withTermination: .nullAndSpace)
+
+    return hdr
+}
+
+/// Creates a tar archive containing a single file
+/// - Parameter bytes: The file's body data
+/// - Parameter filename: The file's name in the archive
+/// - Returns: A tar archive containing the file
+public func tar(_ bytes: [UInt8], filename: String = "app") -> [UInt8] {
+    var hdr = tarHeader(filesize: bytes.count, filename: filename)
 
     // Append the file data to the header
     hdr.append(contentsOf: bytes)
