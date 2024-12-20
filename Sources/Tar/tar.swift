@@ -72,16 +72,24 @@ extension [UInt8] {
 func octal6(_ value: Int) -> String {
     precondition(value >= 0)
     precondition(value < 0o777777)
-    return String(format: "%06o", value)
+    // String(format: "%06o", value) cannot be used because of a race in Foundation
+    // which causes it to return an empty string from time to time when running the tests
+    // in parallel using swift-testing: https://github.com/swiftlang/swift-corelibs-foundation/issues/5152
+    let str = String(value, radix: 8)
+    return String(repeating: "0", count: 6 - str.count).appending(str)
 }
 
-/// Serializes an integer to a 11 character octal representation.
+/// Serializes an integer to an 11 character octal representation.
 /// - Parameter value: The integer to serialize.
 /// - Returns: The serialized form of `value`.
 func octal11(_ value: Int) -> String {
     precondition(value >= 0)
     precondition(value < 0o777_7777_7777)
-    return String(format: "%011o", value)
+    // String(format: "%011o", value) cannot be used because of a race in Foundation
+    // which causes it to return an empty string from time to time when running the tests
+    // in parallel using swift-testing: https://github.com/swiftlang/swift-corelibs-foundation/issues/5152
+    let str = String(value, radix: 8)
+    return String(repeating: "0", count: 11 - str.count).appending(str)
 }
 
 // These ranges define the offsets of the standard fields in a Tar header.
