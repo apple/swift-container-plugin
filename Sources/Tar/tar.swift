@@ -72,16 +72,24 @@ extension [UInt8] {
 func octal6(_ value: Int) -> String {
     precondition(value >= 0)
     precondition(value < 0o777777)
-    return String(format: "%06o", value)
+    // String(format: "%06o", value) cannot be used because of a race in Foundation
+    // which causes it to return an empty string from time to time when running the tests
+    // in parallel using swift-testing: https://github.com/swiftlang/swift-corelibs-foundation/issues/5152
+    let str = String(value, radix: 8)
+    return String(repeating: "0", count: 6 - str.count).appending(str)
 }
 
-/// Serializes an integer to a 11 character octal representation.
+/// Serializes an integer to an 11 character octal representation.
 /// - Parameter value: The integer to serialize.
 /// - Returns: The serialized form of `value`.
 func octal11(_ value: Int) -> String {
     precondition(value >= 0)
     precondition(value < 0o777_7777_7777)
-    return String(format: "%011o", value)
+    // String(format: "%011o", value) cannot be used because of a race in Foundation
+    // which causes it to return an empty string from time to time when running the tests
+    // in parallel using swift-testing: https://github.com/swiftlang/swift-corelibs-foundation/issues/5152
+    let str = String(value, radix: 8)
+    return String(repeating: "0", count: 11 - str.count).appending(str)
 }
 
 // These ranges define the offsets of the standard fields in a Tar header.
@@ -143,7 +151,12 @@ let CONTTYPE = "7"  // reserved
 let XHDTYPE = "x"  // Extended header referring to the next file in the archive
 let XGLTYPE = "g"  // Global extended header
 
-func tar(_ bytes: [UInt8], filename: String = "app") -> [UInt8] {
+/// Creates a tar header for a single file
+/// - Parameters:
+///   - filesize: The size of the file
+///   - filename: The file's name in the archive
+/// - Returns: A tar header representing the file
+public func tarHeader(filesize: Int, filename: String = "app") -> [UInt8] {
     // A file entry consists of a file header followed by the
     // contents of the file. The header includes information such as
     // the file name, size and permissions.   Different versions of
@@ -158,7 +171,7 @@ func tar(_ bytes: [UInt8], filename: String = "app") -> [UInt8] {
     hdr.writeString(octal6(0o555), inField: mode, withTermination: .spaceAndNull)
     hdr.writeString(octal6(0o000000), inField: uid, withTermination: .spaceAndNull)
     hdr.writeString(octal6(0o000000), inField: gid, withTermination: .spaceAndNull)
-    hdr.writeString(octal11(bytes.count), inField: size, withTermination: .space)
+    hdr.writeString(octal11(filesize), inField: size, withTermination: .space)
     hdr.writeString(octal11(0), inField: mtime, withTermination: .space)
     hdr.writeString(INIT_CHECKSUM, inField: chksum, withTermination: .none)
     hdr.writeString(REGTYPE, inField: typeflag, withTermination: .none)
@@ -174,6 +187,17 @@ func tar(_ bytes: [UInt8], filename: String = "app") -> [UInt8] {
     // Fill in the checksum.
     hdr.writeString(octal6(checksum(header: hdr)), inField: chksum, withTermination: .nullAndSpace)
 
+    return hdr
+}
+
+/// Creates a tar archive containing a single file
+/// - Parameters:
+///   - bytes: The file's body data
+///   - filename: The file's name in the archive
+/// - Returns: A tar archive containing the file
+public func tar(_ bytes: [UInt8], filename: String = "app") -> [UInt8] {
+    var hdr = tarHeader(filesize: bytes.count, filename: filename)
+
     // Append the file data to the header
     hdr.append(contentsOf: bytes)
 
@@ -187,4 +211,9 @@ func tar(_ bytes: [UInt8], filename: String = "app") -> [UInt8] {
     return hdr
 }
 
-func tar(_ data: Data, filename: String) -> [UInt8] { tar([UInt8](data), filename: filename) }
+/// Creates a tar archive containing a single file
+/// - Parameters:
+///   - data: The file's body data
+///   - filename: The file's name in the archive
+/// - Returns: A tar archive containing the file
+public func tar(_ data: Data, filename: String) -> [UInt8] { tar([UInt8](data), filename: filename) }
