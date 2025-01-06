@@ -149,7 +149,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         // MARK: Build the application layer
 
         let payload_name = executableURL.lastPathComponent
-        let tardiff = tar(payload, filename: payload_name)
+        let tardiff = try tar(payload, filename: payload_name)
         log("Built application layer")
 
         // MARK: Upload the application layer
