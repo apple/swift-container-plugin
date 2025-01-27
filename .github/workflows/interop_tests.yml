@@ -1,0 +1,41 @@
+name: Interop tests
+
+on:
+    workflow_call:
+#        inputs:
+#            example:
+#                required: true
+#                type: string
+
+jobs:
+    layering-test:
+        name: Layering test
+        runs-on: ubuntu-latest
+        services:
+            registry:
+                image: registry:2
+                ports:
+                    - 5000:5000
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  persist-credentials: false
+
+            - name: Mark the workspace as safe
+              # https://github.com/actions/checkout/issues/766
+              run: git config --global --add safe.directory ${GITHUB_WORKSPACE}
+
+            # First layer: payload does not have to be an executable, it just has to have known contents
+            - name: Build first layer
+              run: |
+                  echo first > payload
+                  swift run containertool --repository localhost:5000/layering_test payload
+                  docker run --pull=always --rm --entrypoint=cat localhost:5000/layering_test payload | grep first
+
+            # Second layer: payload does not have to be an executable, it just has to have known contents.   It should replace the first layer.
+            - name: Build another layer, which should override 'payload' from the first layer
+              run: |
+                  echo second > payload
+                  swift run containertool --repository localhost:5000/layering_test payload --from localhost:5000/layering_test:latest
+                  docker run --pull=always --rm --entrypoint=cat localhost:5000/layering_test payload | grep second
