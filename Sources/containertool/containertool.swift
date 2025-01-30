@@ -161,12 +161,10 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
             config: inherited_config,
             rootfs: .init(
                 _type: "layers",
-                diff_ids: [
-                    // The diff_id is the digest of the _uncompressed_ layer archive.
-                    // It is used by the runtime, which might not store the layers in
-                    // the compressed form in which it received them from the registry.
-                    digest(of: tardiff)
-                ] + baseimage_config.rootfs.diff_ids
+                // The diff_id is the digest of the _uncompressed_ layer archive.
+                // It is used by the runtime, which might not store the layers in
+                // the compressed form in which it received them from the registry.
+                diff_ids: baseimage_config.rootfs.diff_ids + [digest(of: tardiff)]
             ),
             history: [.init(created: timestamp, created_by: "containertool")]
         )
@@ -184,7 +182,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
             schemaVersion: 2,
             mediaType: "application/vnd.oci.image.manifest.v1+json",
             config: config_blob,
-            layers: [application_layer] + baseimage_manifest.layers
+            layers: baseimage_manifest.layers + [application_layer]
         )
 
         // MARK: Upload base image
