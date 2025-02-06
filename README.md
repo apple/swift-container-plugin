@@ -8,7 +8,10 @@
 
 Publish container images using Swift Package Manager.
 
-Learn more about Swift Container Plugin in the [lightning talk](https://www.youtube.com/watch?v=9AaINsCfZzw) from [ServerSide.Swift 2024](https://www.serversideswift.info/speakers/euan-harris/).
+Find out about Swift Container Plugin and see it in action:
+
+* [How to put Swift in a box](https://fosdem.org/2025/schedule/event/fosdem-2025-5116-how-to-put-swift-in-a-box-building-container-images-with-swift-container-plugin/) at [FOSDEM 2025](https://fosdem.org/2025/schedule/track/swift/).
+* [Swift to the cloud in a single step](https://www.youtube.com/watch?v=9AaINsCfZzw) at [ServerSide.Swift 2024](https://www.serversideswift.info/speakers/euan-harris/).
 
 ## Overview
 
