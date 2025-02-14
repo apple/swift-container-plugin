@@ -14,7 +14,6 @@
 
 @testable import containertool
 import Crypto
-import Foundation
 import Testing
 
 // Check that compressing the same data on macOS and Linux produces the same output.

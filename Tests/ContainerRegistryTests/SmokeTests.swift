@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
+import class Foundation.ProcessInfo
 import ContainerRegistry
 import Testing
 
