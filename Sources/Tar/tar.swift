@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
+import struct Foundation.Data
 
 // This file defines a basic tar writer which produces POSIX tar files.
 // This avoids the need to depend on a system-provided tar binary.

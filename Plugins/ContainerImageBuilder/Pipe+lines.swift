@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
+import class Foundation.Pipe
 
 extension Pipe {
     var lines: AsyncThrowingStream<String, Error> {

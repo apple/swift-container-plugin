@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import Foundation
-import Crypto
+import struct Crypto.SHA256
 
 public extension ImageManifest {
     var digest: String {

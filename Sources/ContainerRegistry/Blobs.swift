@@ -14,7 +14,7 @@
 
 import Foundation
 import HTTPTypes
-import Crypto
+import struct Crypto.SHA256
 
 /// Calculates the digest of a blob of data.
 /// - Parameter data: Blob of data to digest.
