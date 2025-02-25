@@ -40,7 +40,9 @@ let package = Package(
         .executableTarget(
             name: "containertool",
             dependencies: [
-                .target(name: "ContainerRegistry"), .target(name: "VendorCNIOExtrasZlib"), .target(name: "Tar"),
+                .target(name: "ContainerRegistry"),
+                .target(name: "VendorCNIOExtrasZlib"),
+                .target(name: "Tar"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ],
             swiftSettings: [.swiftLanguageMode(.v5)]
@@ -51,7 +53,8 @@ let package = Package(
             dependencies: [],
             path: "Vendor/github.com/apple/swift-nio-extras/Sources/CNIOExtrasZlib",
             linkerSettings: [.linkedLibrary("z")]
-        ), .target(name: "Tar"),
+        ),
+        .target(name: "Tar"),
         .target(
             // Vendored from https://github.com/apple/swift-package-manager with modifications
             name: "Basics",
@@ -86,7 +89,8 @@ let package = Package(
             name: "ContainerRegistryTests",
             dependencies: [.target(name: "ContainerRegistry")],
             resources: [.process("Resources")]
-        ), .testTarget(name: "containertoolTests", dependencies: [.target(name: "containertool")]),
+        ),
+        .testTarget(name: "containertoolTests", dependencies: [.target(name: "containertool")]),
         .testTarget(name: "TarTests", dependencies: [.target(name: "Tar")]),
     ],
     swiftLanguageModes: [.v6]

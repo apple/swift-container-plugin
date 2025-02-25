@@ -28,36 +28,45 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         abstract: "Build and upload a container image"
     )
 
-    @Option(help: "Default registry for references which do not specify a registry") private var defaultRegistry:
-        String = ProcessInfo.processInfo.environment["CONTAINERTOOL_DEFAULT_REGISTRY"] ?? "docker.io"
+    @Option(help: "Default registry for references which do not specify a registry")
+    private var defaultRegistry: String =
+        ProcessInfo.processInfo.environment["CONTAINERTOOL_DEFAULT_REGISTRY"] ?? "docker.io"
 
-    @Option(help: "Repository path") private var repository: String
+    @Option(help: "Repository path")
+    private var repository: String
 
-    @Argument(help: "Executable to package") private var executable: String
+    @Argument(help: "Executable to package")
+    private var executable: String
 
-    @Option(help: "Username") private var username: String?
+    @Option(help: "Username")
+    private var username: String?
 
-    @Option(help: "Password") private var password: String?
+    @Option(help: "Password")
+    private var password: String?
 
-    @Flag(name: .shortAndLong, help: "Verbose output") private var verbose: Bool = false
+    @Flag(name: .shortAndLong, help: "Verbose output")
+    private var verbose: Bool = false
 
-    @Option(help: "Connect to the container registry using plaintext HTTP") var allowInsecureHttp: AllowHTTP?
+    @Option(help: "Connect to the container registry using plaintext HTTP")
+    var allowInsecureHttp: AllowHTTP?
 
-    @Option(help: "CPU architecture") private var architecture: String =
-        ProcessInfo.processInfo.environment["CONTAINERTOOL_ARCHITECTURE"] ?? "amd64"
+    @Option(help: "CPU architecture")
+    private var architecture: String = ProcessInfo.processInfo.environment["CONTAINERTOOL_ARCHITECTURE"] ?? "amd64"
 
-    @Option(help: "Base image reference") private var from: String =
-        ProcessInfo.processInfo.environment["CONTAINERTOOL_BASE_IMAGE"] ?? "swift:slim"
+    @Option(help: "Base image reference")
+    private var from: String = ProcessInfo.processInfo.environment["CONTAINERTOOL_BASE_IMAGE"] ?? "swift:slim"
 
-    @Option(help: "Operating system") private var os: String =
-        ProcessInfo.processInfo.environment["CONTAINERTOOL_OS"] ?? "linux"
+    @Option(help: "Operating system")
+    private var os: String = ProcessInfo.processInfo.environment["CONTAINERTOOL_OS"] ?? "linux"
 
-    @Option(help: "Tag for this manifest") private var tag: String?
+    @Option(help: "Tag for this manifest")
+    private var tag: String?
 
     @Flag(inversion: .prefixedEnableDisable, exclusivity: .exclusive, help: "Load credentials from a netrc file")
     private var netrc: Bool = true
 
-    @Option(help: "Specify the netrc file path") private var netrcFile: String?
+    @Option(help: "Specify the netrc file path")
+    private var netrcFile: String?
 
     func run() async throws {
         let baseimage = try ImageReference(fromString: from, defaultRegistry: defaultRegistry)
