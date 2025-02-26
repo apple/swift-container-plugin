@@ -43,3 +43,32 @@ jobs:
                   docker create --name second --pull always localhost:5000/layering_test
                   docker cp second:/payload second.payload
                   grep second second.payload
+
+    elf-detection-test:
+        name: ELF detection test
+        runs-on: ubuntu-latest
+        services:
+            registry:
+                image: registry:2
+                ports:
+                    - 5000:5000
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  persist-credentials: false
+
+            - name: Mark the workspace as safe
+              # https://github.com/actions/checkout/issues/766
+              run: git config --global --add safe.directory ${GITHUB_WORKSPACE}
+
+            - name: Install the static SDK
+              run: |
+                  swift sdk install \
+                      https://download.swift.org/swift-6.0.2-release/static-sdk/swift-6.0.2-RELEASE/swift-6.0.2-RELEASE_static-linux-0.0.1.artifactbundle.tar.gz \
+                      --checksum aa5515476a403797223fc2aad4ca0c3bf83995d5427fb297cab1d93c68cee075
+
+            # Run the test script
+            - name: Test ELF detection
+              run: |
+                  scripts/test-elf-detection.sh

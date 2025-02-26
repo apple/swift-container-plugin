@@ -51,7 +51,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
     var allowInsecureHttp: AllowHTTP?
 
     @Option(help: "CPU architecture")
-    private var architecture: String = ProcessInfo.processInfo.environment["CONTAINERTOOL_ARCHITECTURE"] ?? "amd64"
+    private var architecture: String?
 
     @Option(help: "Base image reference")
     private var from: String = ProcessInfo.processInfo.environment["CONTAINERTOOL_BASE_IMAGE"] ?? "swift:slim"
@@ -71,6 +71,9 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
     func run() async throws {
         let baseimage = try ImageReference(fromString: from, defaultRegistry: defaultRegistry)
         var destination_image = try ImageReference(fromString: repository, defaultRegistry: defaultRegistry)
+
+        let executableURL = URL(fileURLWithPath: executable)
+        let payload = try Data(contentsOf: executableURL)
 
         let authProvider: AuthorizationProvider?
         if !netrc {
@@ -110,6 +113,14 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
         // MARK: Find the base image
 
+        let elfheader = ELF.read([UInt8](payload))
+        let architecture =
+            architecture
+            ?? ProcessInfo.processInfo.environment["CONTAINERTOOL_ARCHITECTURE"]
+            ?? elfheader?.ISA.containerArchitecture
+            ?? "amd64"
+        if verbose { log("Base image architecture: \(architecture)") }
+
         let baseimage_manifest: ImageManifest
         let baseimage_config: ImageConfiguration
         if let source {
@@ -137,8 +148,6 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
         // MARK: Build the application layer
 
-        let executableURL = URL(fileURLWithPath: executable)
-        let payload = try Data(contentsOf: executableURL)
         let payload_name = executableURL.lastPathComponent
         let tardiff = tar(payload, filename: payload_name)
         log("Built application layer")
@@ -226,5 +235,15 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
         destination_image.reference = reference
         print(destination_image)
+    }
+}
+
+extension ELF.ISA {
+    var containerArchitecture: String? {
+        switch self {
+        case .x86_64: "amd64"
+        case .aarch64: "arm64"
+        default: nil
+        }
     }
 }
