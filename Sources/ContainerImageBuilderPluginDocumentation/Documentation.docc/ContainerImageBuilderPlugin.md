@@ -41,14 +41,14 @@ swift-6.0.1-RELEASE_static-linux-0.0.1
 Swift Container Plugin is distributed as a Swift Package Manager package.   Use the `swift package` command to add it to your project:
 
 ```shell
-swift package add-dependency https://github.com/apple/swift-container-plugin --from 0.1.0
+swift package add-dependency https://github.com/apple/swift-container-plugin --from 0.4.0
 ```
 
 Alternatively, append the following lines to `Package.swift`:
 
 ```swift
 package.dependencies += [
-    .package(url: "https://github.com/apple/swift-container-plugin", from: "0.1.0"),
+    .package(url: "https://github.com/apple/swift-container-plugin", from: "0.4.0"),
 ]
 ```
 

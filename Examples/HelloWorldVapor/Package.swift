@@ -21,7 +21,7 @@ let package = Package(
     platforms: [.macOS(.v13)],
     dependencies: [
         .package(url: "https://github.com/vapor/vapor", .upToNextMajor(from: "4.102.0")),
-        .package(url: "https://github.com/apple/swift-container-plugin", from: "0.2.0"),
+        .package(url: "https://github.com/apple/swift-container-plugin", from: "0.4.0"),
     ],
     targets: [.executableTarget(name: "hello-world", dependencies: [.product(name: "Vapor", package: "vapor")])]
 )
