@@ -42,6 +42,30 @@ let trailerLen = 2 * blocksize
         #expect(octal11(input) == expected)
     }
 
+    // We should never add a full block (512 bytes) of padding
+    @Test(arguments: [
+        (input: 0, expected: 0),
+        (input: 1, expected: 511),
+        (input: 2, expected: 510),
+        (input: 511, expected: 1),
+        (input: 512, expected: 0),
+        (input: 513, expected: 511),
+    ])
+    func testPadded(input: Int, expected: Int) async throws {
+        #expect(padding(input) == expected)
+    }
+
+    @Test(arguments: 0...1025)
+    func testPaddedProperties(input: Int) async throws {
+        let output = padding(input)
+
+        // The padded output should be a whole number of blocks
+        #expect((input + output) % 512 == 0)
+
+        // We should never write a full block of padding, because tar considers this to be the end of the file
+        #expect(output < 512)
+    }
+
     @Test func testUInt8writeString() async throws {
         // Fill the buffer with 0xFF to show null termination
         var hdr = [UInt8](repeating: 255, count: 21)
