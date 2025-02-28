@@ -201,6 +201,16 @@ public func tarHeader(filesize: Int, filename: String = "app") throws -> [UInt8]
     return hdr
 }
 
+let blockSize = 512
+
+/// Returns the number of padding bytes to be appended to a file.
+/// Each file in a tar archive must be padded to a multiple of the 512 byte block size.
+/// - Parameter len: The length of the archive member.
+/// - Returns: The number of zero bytes to append as padding.
+func padding(_ len: Int) -> Int {
+    (blockSize - len % blockSize) % blockSize
+}
+
 /// Creates a tar archive containing a single file
 /// - Parameters:
 ///   - bytes: The file's body data
@@ -214,7 +224,7 @@ public func tar(_ bytes: [UInt8], filename: String = "app") throws -> [UInt8] {
     hdr.append(contentsOf: bytes)
 
     // Pad the file data to a multiple of 512 bytes
-    let padding = [UInt8](repeating: 0, count: 512 - (bytes.count % 512))
+    let padding = [UInt8](repeating: 0, count: padding(bytes.count))
     hdr.append(contentsOf: padding)
 
     // Append the end of file marker
