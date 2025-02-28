@@ -22,6 +22,10 @@ import struct Foundation.Data
 // relatively straightforward;  reading an arbitrary tar file is more
 // complicated because the reader must be prepared to handle all variants.
 
+enum TarError: Error, Equatable {
+    case invalidName(String)
+}
+
 enum Termination {
     case null
     case nullAndSpace
@@ -156,13 +160,20 @@ let XGLTYPE = "g"  // Global extended header
 ///   - filesize: The size of the file
 ///   - filename: The file's name in the archive
 /// - Returns: A tar header representing the file
-public func tarHeader(filesize: Int, filename: String = "app") -> [UInt8] {
+/// - Throws: If the filename is invalid
+public func tarHeader(filesize: Int, filename: String = "app") throws -> [UInt8] {
     // A file entry consists of a file header followed by the
     // contents of the file. The header includes information such as
     // the file name, size and permissions.   Different versions of
     // tar added extra header fields.
     //
     // The file data is padded with nulls to a multiple of 512 bytes.
+
+    // Archive member name cannot be empty because a Unix filename cannot be the empty string
+    // https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_170
+    guard filename.count > 0 else {
+        throw TarError.invalidName(filename)
+    }
 
     var hdr = [UInt8](repeating: 0, count: 512)
 
@@ -195,8 +206,9 @@ public func tarHeader(filesize: Int, filename: String = "app") -> [UInt8] {
 ///   - bytes: The file's body data
 ///   - filename: The file's name in the archive
 /// - Returns: A tar archive containing the file
-public func tar(_ bytes: [UInt8], filename: String = "app") -> [UInt8] {
-    var hdr = tarHeader(filesize: bytes.count, filename: filename)
+/// - Throws: If the filename is invalid
+public func tar(_ bytes: [UInt8], filename: String = "app") throws -> [UInt8] {
+    var hdr = try tarHeader(filesize: bytes.count, filename: filename)
 
     // Append the file data to the header
     hdr.append(contentsOf: bytes)
@@ -216,4 +228,7 @@ public func tar(_ bytes: [UInt8], filename: String = "app") -> [UInt8] {
 ///   - data: The file's body data
 ///   - filename: The file's name in the archive
 /// - Returns: A tar archive containing the file
-public func tar(_ data: Data, filename: String) -> [UInt8] { tar([UInt8](data), filename: filename) }
+/// - Throws: If the filename is invalid
+public func tar(_ data: Data, filename: String) throws -> [UInt8] {
+    try tar([UInt8](data), filename: filename)
+}
