@@ -101,12 +101,12 @@ let trailerLen = 2 * blocksize
 
     @Test func testEmptyName() async throws {
         #expect(throws: TarError.invalidName("")) {
-            let _ = try tarHeader(filesize: 0, filename: "")
+            let _ = try TarHeader(name: "", size: 0)
         }
     }
 
     @Test func testSingleEmptyFile() async throws {
-        let hdr = try tarHeader(filesize: 0, filename: "filename")
+        let hdr = try TarHeader(name: "filename", size: 0).bytes
         #expect(hdr.count == 512)
         #expect(
             hdr == [
@@ -131,7 +131,7 @@ let trailerLen = 2 * blocksize
     }
 
     @Test func testSingle1kBFile() async throws {
-        let hdr = try tarHeader(filesize: 1024, filename: "filename")
+        let hdr = try TarHeader(name: "filename", size: 1024).bytes
         #expect(hdr.count == 512)
         #expect(
             hdr == [

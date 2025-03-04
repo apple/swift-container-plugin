@@ -97,22 +97,24 @@ func octal11(_ value: Int) -> String {
 }
 
 // These ranges define the offsets of the standard fields in a Tar header.
-let name = 0..<100
-let mode = 100..<108
-let uid = 108..<116
-let gid = 116..<124
-let size = 124..<136
-let mtime = 136..<148
-let chksum = 148..<156
-let typeflag = 156..<157
-let linkname = 157..<257
-let magic = 257..<264
-let version = 263..<265
-let uname = 265..<297
-let gname = 297..<329
-let devmajor = 329..<337
-let devminor = 337..<345
-let prefix = 345..<500
+enum Field {
+    static let name = 0..<100
+    static let mode = 100..<108
+    static let uid = 108..<116
+    static let gid = 116..<124
+    static let size = 124..<136
+    static let mtime = 136..<148
+    static let chksum = 148..<156
+    static let typeflag = 156..<157
+    static let linkname = 157..<257
+    static let magic = 257..<264
+    static let version = 263..<265
+    static let uname = 265..<297
+    static let gname = 297..<329
+    static let devmajor = 329..<337
+    static let devminor = 337..<345
+    static let prefix = 345..<500
+}
 
 /// Calculates a checksum over the contents of a tar header.
 /// - Parameter header: Tar header to checksum.
@@ -142,63 +144,172 @@ let TVERSION = "00"  // Version used by macOS tar
 
 let INIT_CHECKSUM = "        "  // Initial value of the checksum field before checksum calculation
 
-// Typeflag values
-let REGTYPE = "0"  // regular file
-let AREGTYPE = "\0"  // regular file
-let LNKTYPE = "1"  // link
-let SYMTYPE = "2"  // reserved
-let CHRTYPE = "3"  // character special
-let BLKTYPE = "4"  // block special
-let DIRTYPE = "5"  // directory
-let FIFOTYPE = "6"  // FIFO special
-let CONTTYPE = "7"  // reserved
-let XHDTYPE = "x"  // Extended header referring to the next file in the archive
-let XGLTYPE = "g"  // Global extended header
+/// Represents the type of a tar archive member
+public enum MemberType: String {
+    /// Regular file
+    case REGTYPE = "0"
 
-/// Creates a tar header for a single file
-/// - Parameters:
-///   - filesize: The size of the file
-///   - filename: The file's name in the archive
-/// - Returns: A tar header representing the file
-/// - Throws: If the filename is invalid
-public func tarHeader(filesize: Int, filename: String = "app") throws -> [UInt8] {
-    // A file entry consists of a file header followed by the
-    // contents of the file. The header includes information such as
-    // the file name, size and permissions.   Different versions of
-    // tar added extra header fields.
-    //
-    // The file data is padded with nulls to a multiple of 512 bytes.
+    /// Regular file (alternative)
+    case AREGTYPE = "\0"
 
-    // Archive member name cannot be empty because a Unix filename cannot be the empty string
-    // https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_170
-    guard filename.count > 0 else {
-        throw TarError.invalidName(filename)
+    /// Link
+    case LNKTYPE = "1"
+
+    /// Reserved
+    case SYMTYPE = "2"
+
+    /// Character special
+    case CHRTYPE = "3"
+
+    /// Block special
+    case BLKTYPE = "4"
+
+    /// Directory
+    case DIRTYPE = "5"
+
+    /// FIFO special
+    case FIFOTYPE = "6"
+
+    /// Reserved
+    case CONTTYPE = "7"
+
+    /// Extended header referring to the next file in the archive
+    case XHDTYPE = "x"
+
+    /// Global extended header
+    case XGLTYPE = "g"
+}
+
+// maybe limited string, octal6 and octal11 should be separate types
+
+/// Represents a single tar archive member
+public struct TarHeader {
+    /// Member file name when unpacked
+    var name: String
+
+    /// Access mode
+    var mode: Int = 555
+
+    /// User ID of the file's owner
+    var uid: Int = 0
+
+    /// Group ID of the file's owner
+    var gid: Int = 0
+
+    /// File size in bytes
+    var size: Int = 0
+
+    /// Last modification time
+    var mtime: Int = 0
+
+    /// Tar header checksum
+    var checksum: String = INIT_CHECKSUM
+
+    /// Type of this member
+    var typeflag: MemberType = .REGTYPE
+
+    /// Name of the linked file
+    var linkname: String = ""
+
+    /// Tar header magic number
+    var magic: String = TMAGIC
+
+    /// Tar header format version
+    var version: String = TVERSION
+
+    /// Username of the file's owner
+    var uname: String = ""
+
+    /// Group name of the file's owner
+    var gname: String = ""
+
+    /// Major device number
+    var devmajor: Int = 0
+
+    /// Minor device number
+    var devminor: Int = 0
+
+    /// Filename prefix - prepended to name
+    var prefix: String = ""
+
+    init(
+        name: String,
+        mode: Int = 0o555,
+        uid: Int = 0,
+        gid: Int = 0,
+        size: Int = 0,
+        mtime: Int = 0,
+        typeflag: MemberType = .REGTYPE,
+        linkname: String = "",
+        uname: String = "",
+        gname: String = "",
+        devmajor: Int = 0,
+        devminor: Int = 0,
+        prefix: String = ""
+    ) throws {
+        // Archive member name cannot be empty because a Unix filename cannot be the empty string
+        //     https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_170
+        guard name.count > 0 else {
+            throw TarError.invalidName(name)
+        }
+
+        self.name = name
+        self.mode = mode
+        self.uid = uid
+        self.gid = gid
+        self.size = size
+        self.mtime = mtime
+        self.checksum = INIT_CHECKSUM
+        self.typeflag = typeflag
+        self.linkname = linkname
+        self.magic = TMAGIC
+        self.version = TVERSION
+        self.uname = uname
+        self.gname = gname
+        self.devmajor = devmajor
+        self.devminor = devminor
+        self.prefix = prefix
     }
+}
 
-    var hdr = [UInt8](repeating: 0, count: 512)
+extension TarHeader {
+    /// Creates a tar header for a single file
+    /// - Parameters:
+    ///   - hdr: The header structure of the file
+    /// - Returns: A tar header representing the file
+    var bytes: [UInt8] {
+        // A file entry consists of a file header followed by the
+        // contents of the file. The header includes information such as
+        // the file name, size and permissions.   Different versions of
+        // tar added extra header fields.
+        //
+        // The file data is padded with nulls to a multiple of 512 bytes.
 
-    // Construct a POSIX ustar header for the file
-    hdr.writeString(filename, inField: name, withTermination: .null)
-    hdr.writeString(octal6(0o555), inField: mode, withTermination: .spaceAndNull)
-    hdr.writeString(octal6(0o000000), inField: uid, withTermination: .spaceAndNull)
-    hdr.writeString(octal6(0o000000), inField: gid, withTermination: .spaceAndNull)
-    hdr.writeString(octal11(filesize), inField: size, withTermination: .space)
-    hdr.writeString(octal11(0), inField: mtime, withTermination: .space)
-    hdr.writeString(INIT_CHECKSUM, inField: chksum, withTermination: .none)
-    hdr.writeString(REGTYPE, inField: typeflag, withTermination: .none)
-    hdr.writeString("", inField: linkname, withTermination: .null)
-    hdr.writeString(TMAGIC, inField: magic, withTermination: .null)
-    hdr.writeString(TVERSION, inField: version, withTermination: .none)
-    hdr.writeString("", inField: uname, withTermination: .null)
-    hdr.writeString("", inField: gname, withTermination: .null)
-    hdr.writeString(octal6(0o000000), inField: devmajor, withTermination: .spaceAndNull)
-    hdr.writeString(octal6(0o000000), inField: devminor, withTermination: .spaceAndNull)
-    hdr.writeString("", inField: prefix, withTermination: .null)
+        var bytes = [UInt8](repeating: 0, count: 512)
 
-    // Fill in the checksum.
-    hdr.writeString(octal6(checksum(header: hdr)), inField: chksum, withTermination: .nullAndSpace)
+        // Construct a POSIX ustar header for the file
+        bytes.writeString(self.name, inField: Field.name, withTermination: .null)
+        bytes.writeString(octal6(self.mode), inField: Field.mode, withTermination: .spaceAndNull)
+        bytes.writeString(octal6(self.uid), inField: Field.uid, withTermination: .spaceAndNull)
+        bytes.writeString(octal6(self.gid), inField: Field.gid, withTermination: .spaceAndNull)
+        bytes.writeString(octal11(self.size), inField: Field.size, withTermination: .space)
+        bytes.writeString(octal11(self.mtime), inField: Field.mtime, withTermination: .space)
+        bytes.writeString(INIT_CHECKSUM, inField: Field.chksum, withTermination: .none)
+        bytes.writeString(self.typeflag.rawValue, inField: Field.typeflag, withTermination: .none)
+        bytes.writeString(self.linkname, inField: Field.linkname, withTermination: .null)
+        bytes.writeString(TMAGIC, inField: Field.magic, withTermination: .null)
+        bytes.writeString(TVERSION, inField: Field.version, withTermination: .none)
+        bytes.writeString(self.uname, inField: Field.uname, withTermination: .null)
+        bytes.writeString(self.gname, inField: Field.gname, withTermination: .null)
+        bytes.writeString(octal6(self.devmajor), inField: Field.devmajor, withTermination: .spaceAndNull)
+        bytes.writeString(octal6(self.devminor), inField: Field.devminor, withTermination: .spaceAndNull)
+        bytes.writeString(self.prefix, inField: Field.prefix, withTermination: .null)
 
-    return hdr
+        // Fill in the checksum.
+        bytes.writeString(octal6(Tar.checksum(header: bytes)), inField: Field.chksum, withTermination: .nullAndSpace)
+
+        return bytes
+    }
 }
 
 let blockSize = 512
@@ -218,19 +329,19 @@ func padding(_ len: Int) -> Int {
 /// - Returns: A tar archive containing the file
 /// - Throws: If the filename is invalid
 public func tar(_ bytes: [UInt8], filename: String = "app") throws -> [UInt8] {
-    var hdr = try tarHeader(filesize: bytes.count, filename: filename)
+    var archive = try TarHeader(name: filename, size: bytes.count).bytes
 
     // Append the file data to the header
-    hdr.append(contentsOf: bytes)
+    archive.append(contentsOf: bytes)
 
     // Pad the file data to a multiple of 512 bytes
     let padding = [UInt8](repeating: 0, count: padding(bytes.count))
-    hdr.append(contentsOf: padding)
+    archive.append(contentsOf: padding)
 
     // Append the end of file marker
     let marker = [UInt8](repeating: 0, count: 2 * 512)
-    hdr.append(contentsOf: marker)
-    return hdr
+    archive.append(contentsOf: marker)
+    return archive
 }
 
 /// Creates a tar archive containing a single file
