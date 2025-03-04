@@ -20,30 +20,7 @@ jobs:
 
     integration-tests:
         name: Integration tests
-        runs-on: ubuntu-latest
-        services:
-            registry:
-                image: registry:2
-                ports:
-                    - 5000:5000
-        container:
-            image: swift:6.0-noble
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v4
-              with:
-                  persist-credentials: false
-
-            - name: Mark the workspace as safe
-              # https://github.com/actions/checkout/issues/766
-              run: git config --global --add safe.directory ${GITHUB_WORKSPACE}
-
-            - name: Run test job
-              env:
-                  REGISTRY_HOST: registry
-                  REGISTRY_PORT: 5000
-              run: |
-                  swift test
+        uses: ./.github/workflows/integration_tests.yml
 
     endtoend-tests:
         name: End to end tests
