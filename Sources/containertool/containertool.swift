@@ -38,6 +38,9 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
     @Argument(help: "Executable to package")
     private var executable: String
 
+    @Option(help: "Resource bundle directory")
+    private var resources: [String] = []
+
     @Option(help: "Username")
     private var username: String?
 
@@ -72,9 +75,6 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         let baseimage = try ImageReference(fromString: from, defaultRegistry: defaultRegistry)
         var destination_image = try ImageReference(fromString: repository, defaultRegistry: defaultRegistry)
 
-        let executableURL = URL(fileURLWithPath: executable)
-        let payload = try Data(contentsOf: executableURL)
-
         let authProvider: AuthorizationProvider?
         if !netrc {
             authProvider = nil
@@ -87,8 +87,9 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
             authProvider = try NetrcAuthorizationProvider(defaultNetrc)
         }
 
-        // Create clients for the source and destination registries
-        // The base image may be stored on a different registry, so two clients are needed.
+        // MARK: Create registry clients
+
+        // The base image may be stored on a different registry to the final destination, so two clients are needed.
         // `scratch` is a special case and requires no source client.
         let source: RegistryClient?
         if from == "scratch" {
@@ -113,7 +114,10 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
         // MARK: Find the base image
 
-        let elfheader = ELF.read([UInt8](payload))
+        // Try to detect the architecture of the application executable so a suitable base image can be selected.
+        // This reduces the risk of accidentally creating an image which stacks an aarch64 executable on top of an x86_64 base image.
+        let executableURL = URL(fileURLWithPath: executable)
+        let elfheader = try ELF.read(at: executableURL)
         let architecture =
             architecture
             ?? ProcessInfo.processInfo.environment["CONTAINERTOOL_ARCHITECTURE"]
@@ -146,29 +150,39 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
             if verbose { log("Using scratch as base image") }
         }
 
-        // MARK: Build the application layer
+        // MARK: Upload resource layers
 
-        let payload_name = executableURL.lastPathComponent
-        let tardiff = try tar([UInt8](payload), filename: payload_name)
-        log("Built application layer")
+        var resourceLayers: [RegistryClient.ImageLayer] = []
+        for resourceDir in resources {
+            let resourceTardiff = try Archive().appendingRecursively(atPath: resourceDir).bytes
+            let resourceLayer = try await destination.uploadLayer(
+                repository: destination_image.repository,
+                contents: resourceTardiff
+            )
+
+            if verbose {
+                log("resource layer: \(resourceLayer.descriptor.digest) (\(resourceLayer.descriptor.size) bytes)")
+            }
+
+            resourceLayers.append(resourceLayer)
+        }
 
         // MARK: Upload the application layer
-
-        let application_layer = try await destination.uploadImageLayer(
+        let applicationLayer = try await destination.uploadLayer(
             repository: destination_image.repository,
-            layer: Data(tardiff)
+            contents: try Archive().appendingFile(at: executableURL).bytes
         )
-
-        if verbose { log("application layer: \(application_layer.digest) (\(application_layer.size) bytes)") }
+        if verbose {
+            log("application layer: \(applicationLayer.descriptor.digest) (\(applicationLayer.descriptor.size) bytes)")
+        }
 
         // MARK: Create the application configuration
-
         let timestamp = Date(timeIntervalSince1970: 0).ISO8601Format()
 
         // Inherit the configuration of the base image - UID, GID, environment etc -
         // and override the entrypoint.
         var inherited_config = baseimage_config.config ?? .init()
-        inherited_config.Entrypoint = ["/\(payload_name)"]
+        inherited_config.Entrypoint = ["/\(executableURL.lastPathComponent)"]
         inherited_config.Cmd = []
         inherited_config.WorkingDir = "/"
 
@@ -182,7 +196,9 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
                 // The diff_id is the digest of the _uncompressed_ layer archive.
                 // It is used by the runtime, which might not store the layers in
                 // the compressed form in which it received them from the registry.
-                diff_ids: baseimage_config.rootfs.diff_ids + [digest(of: tardiff)]
+                diff_ids: baseimage_config.rootfs.diff_ids
+                    + resourceLayers.map { $0.diffID }
+                    + [applicationLayer.diffID]
             ),
             history: [.init(created: timestamp, created_by: "containertool")]
         )
@@ -200,7 +216,9 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
             schemaVersion: 2,
             mediaType: "application/vnd.oci.image.manifest.v1+json",
             config: config_blob,
-            layers: baseimage_manifest.layers + [application_layer]
+            layers: baseimage_manifest.layers
+                + resourceLayers.map { $0.descriptor }
+                + [applicationLayer.descriptor]
         )
 
         // MARK: Upload base image
