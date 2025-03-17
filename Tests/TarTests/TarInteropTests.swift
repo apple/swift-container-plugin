@@ -12,7 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
+import class Foundation.Pipe
+import class Foundation.Process
+
 import Testing
 @testable import Tar
 
@@ -43,7 +45,7 @@ import Testing
     @Test func testSingle4BFile() async throws {
         let data = "test"
         let result = try tar([UInt8](data.utf8), filename: "filename")
-        #expect(result.count == headerLen + blocksize + trailerLen)
+        #expect(result.count == headerSize + blockSize + trailerSize)
 
         let output = try await tarListContents(result)
         #expect(output == "-r-xr-xr-x  0 0      0           4 Jan  1  1970 filename")
@@ -60,7 +62,7 @@ import Testing
 
         let data = ""
         let result = try tar([UInt8](data.utf8), filename: "filename")
-        #expect(result.count == headerLen + trailerLen)
+        #expect(result.count == headerSize + trailerSize)
 
         let output = try await tarListContents(result)
         #expect(output == "-r-xr-xr-x  0 0      0           0 Jan  1  1970 filename")
@@ -72,7 +74,7 @@ import Testing
         hdr.append(contentsOf: try TarHeader(name: "filename1", size: 0).bytes)
 
         // No file data, no padding, no end of file marker
-        #expect(hdr.count == headerLen)
+        #expect(hdr.count == headerSize)
 
         // bsdtar tolerates the lack of end of file marker
         let output = try await tarListContents(hdr)

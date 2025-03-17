@@ -16,9 +16,11 @@ import Testing
 
 @testable import Tar
 
-let blocksize = 512
-let headerLen = blocksize
-let trailerLen = 2 * blocksize
+let blockSize = 512
+let headerSize = blockSize
+let trailerSize = 2 * blockSize
+
+let trailer = [UInt8](repeating: 0, count: trailerSize)
 
 @Suite struct TarUnitTests {
     @Test(arguments: [
@@ -153,5 +155,330 @@ let trailerLen = 2 * blocksize
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             ]
         )
+    }
+
+    let emptyFile: [UInt8] = [
+        // name: 100 bytes
+        101, 109, 112, 116, 121, 102, 105, 108, 101, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0,
+
+        // mode: 8 bytes
+        48, 48, 48, 53, 53, 53, 32, 0,
+
+        // uid: 8 bytes
+        48, 48, 48, 48, 48, 48, 32, 0,
+
+        // gid: 8 bytes
+        48, 48, 48, 48, 48, 48, 32, 0,
+
+        // size: 12 bytes
+        48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 32,
+
+        // mtime: 12 bytes
+        48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 32,
+
+        // chksum: 8 bytes
+        48, 49, 49, 48, 55, 53, 0, 32,
+
+        // typeflag: 1 byte
+        48,
+
+        // linkname: 100 bytes
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0,
+
+        // magic: 6 bytes
+        117, 115, 116, 97, 114, 0,
+
+        // version: 2 bytes
+        48, 48,
+
+        // uname: 32 bytes
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        // gname: 32 bytes
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        // devmajor: 8 bytes
+        48, 48, 48, 48, 48, 48, 32, 0,
+        // devminor: 8 bytes
+        48, 48, 48, 48, 48, 48, 32, 0,
+
+        // prefix: 155 bytes
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        // padding: 12 bytes
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ]
+
+    @Test func testAppendingEmptyFile() async throws {
+        let archive = try Archive().appendingFile(name: "emptyfile", data: []).bytes
+
+        // Expecting: member header, no file content, 2-block end of archive marker
+        #expect(archive.count == headerSize + trailerSize)
+        #expect(archive == emptyFile + trailer)
+    }
+
+    let helloFile: [UInt8] =
+        [
+            // name: 100 bytes
+            104, 101, 108, 108, 111, 102, 105, 108, 101, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0,
+
+            // mode: 8 bytes
+            48, 48, 48, 53, 53, 53, 32, 0,
+
+            // uid: 8 bytes
+            48, 48, 48, 48, 48, 48, 32, 0,
+
+            // gid: 8 bytes
+            48, 48, 48, 48, 48, 48, 32, 0,
+
+            // size: 12 bytes
+            48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 53, 32,
+
+            // mtime: 12 bytes
+            48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 32,
+
+            // chksum: 8 bytes
+            48, 49, 49, 48, 52, 55, 0, 32,
+
+            // typeflag: 1 byte
+            48,
+
+            // linkname: 100 bytes
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0,
+
+            // magic: 6 bytes
+            117, 115, 116, 97, 114, 0,
+
+            // version: 2 bytes
+            48, 48,
+
+            // uname: 32 bytes
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+            // gname: 32 bytes
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+            // devmajor: 8 bytes
+            48, 48, 48, 48, 48, 48, 32, 0,
+            // devminor: 8 bytes
+            48, 48, 48, 48, 48, 48, 32, 0,
+
+            // prefix: 155 bytes
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+            // padding: 12 bytes
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ] + [
+            // file contents: "hello", padded to 512 bytes
+            104, 101, 108, 108, 111, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ]
+
+    @Test func testAppendFile() async throws {
+        var archive = Archive()
+        try archive.appendFile(name: "hellofile", data: [UInt8]("hello".utf8))
+        let output = archive.bytes
+
+        // Expecting: member header, file content, 2-block end of archive marker
+        #expect(output.count == headerSize + blockSize + trailerSize)
+        #expect(output == helloFile + trailer)
+    }
+
+    @Test func testAppendingFile() async throws {
+        let archive = try Archive().appendingFile(name: "hellofile", data: [UInt8]("hello".utf8)).bytes
+
+        // Expecting: member header, file content, 2-block end of archive marker
+        #expect(archive.count == headerSize + blockSize + trailerSize)
+        #expect(archive == helloFile + trailer)
+    }
+
+    let directoryWithPrefix: [UInt8] = [
+        // name: 100 bytes
+        100, 105, 114, 101, 99, 116, 111, 114, 121, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0,
+
+        // mode: 8 bytes
+        48, 48, 48, 53, 53, 53, 32, 0,
+
+        // uid: 8 bytes
+        48, 48, 48, 48, 48, 48, 32, 0,
+
+        // gid: 8 bytes
+        48, 48, 48, 48, 48, 48, 32, 0,
+
+        // size: 12 bytes
+        48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 32,
+
+        // mtime: 12 bytes
+        48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 32,
+
+        // chksum: 8 bytes
+        48, 49, 50, 51, 50, 54, 0, 32,
+
+        // typeflag: 1 byte
+        53,
+
+        // linkname: 100 bytes
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0,
+
+        // magic: 6 bytes
+        117, 115, 116, 97, 114, 0,
+
+        // version: 2 bytes
+        48, 48,
+
+        // uname: 32 bytes
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        // gname: 32 bytes
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        // devmajor: 8 bytes
+        48, 48, 48, 48, 48, 48, 32, 0,
+        // devminor: 8 bytes
+        48, 48, 48, 48, 48, 48, 32, 0,
+
+        // prefix: 155 bytes
+        112, 114, 101, 102, 105, 120, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+        // padding: 12 bytes
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ]
+
+    @Test func testAppendDirectory() async throws {
+        var archive = Archive()
+        try archive.appendDirectory(name: "directory", prefix: "prefix")
+        let output = archive.bytes
+
+        // Expecting: member header, no content, 2-block end of archive marker
+        #expect(output.count == headerSize + trailerSize)
+        #expect(output == directoryWithPrefix + trailer)
+    }
+
+    @Test func testAppendingDirectory() async throws {
+        let archive = try Archive().appendingDirectory(name: "directory", prefix: "prefix").bytes
+
+        // Expecting: member header, no content, 2-block end of archive marker
+        #expect(archive.count == headerSize + trailerSize)
+        #expect(archive == directoryWithPrefix + trailer)
+    }
+
+    @Test func testAppendFilesAndDirectories() async throws {
+        var archive = Archive()
+        try archive.appendFile(name: "hellofile", data: [UInt8]("hello".utf8))
+        try archive.appendFile(name: "emptyfile", data: [UInt8]())
+        try archive.appendDirectory(name: "directory", prefix: "prefix")
+
+        let output = archive.bytes
+
+        // Expecting: file member header, file content, file member header, no file content,
+        //     directory member header, 2-block end of archive marker
+        #expect(output.count == headerSize + blockSize + headerSize + headerSize + trailerSize)
+        #expect(output == helloFile + emptyFile + directoryWithPrefix + trailer)
+    }
+
+    @Test func testAppendingFilesAndDirectories() async throws {
+        let archive = try Archive()
+            .appendingFile(name: "hellofile", data: [UInt8]("hello".utf8))
+            .appendingFile(name: "emptyfile", data: [UInt8]())
+            .appendingDirectory(name: "directory", prefix: "prefix")
+            .bytes
+
+        // Expecting: file member header, file content, file member header, no file content,
+        //     directory member header, 2-block end of archive marker
+        #expect(archive.count == headerSize + blockSize + headerSize + headerSize + trailerSize)
+        #expect(archive == helloFile + emptyFile + directoryWithPrefix + trailer)
     }
 }
