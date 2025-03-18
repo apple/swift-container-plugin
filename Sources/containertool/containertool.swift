@@ -237,13 +237,3 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         print(destination_image)
     }
 }
-
-extension ELF.ISA {
-    var containerArchitecture: String? {
-        switch self {
-        case .x86_64: "amd64"
-        case .aarch64: "arm64"
-        default: nil
-        }
-    }
-}
