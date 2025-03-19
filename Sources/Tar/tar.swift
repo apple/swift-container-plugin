@@ -12,8 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-import struct Foundation.Data
-
 // This file defines a basic tar writer which produces POSIX tar files.
 // This avoids the need to depend on a system-provided tar binary.
 //
@@ -92,7 +90,7 @@ func octal6(_ value: Int) -> String {
     // which causes it to return an empty string from time to time when running the tests
     // in parallel using swift-testing: https://github.com/swiftlang/swift-corelibs-foundation/issues/5152
     let str = String(value, radix: 8)
-    return String(repeating: "0", count: 6 - str.count).appending(str)
+    return String(repeating: "0", count: 6 - str.count) + str
 }
 
 /// Serializes an integer to an 11 character octal representation.
@@ -105,7 +103,7 @@ func octal11(_ value: Int) -> String {
     // which causes it to return an empty string from time to time when running the tests
     // in parallel using swift-testing: https://github.com/swiftlang/swift-corelibs-foundation/issues/5152
     let str = String(value, radix: 8)
-    return String(repeating: "0", count: 11 - str.count).appending(str)
+    return String(repeating: "0", count: 11 - str.count) + str
 }
 
 // These ranges define the offsets of the standard fields in a Tar header.
@@ -341,16 +339,6 @@ public func tar(_ bytes: [UInt8], filename: String = "app") throws -> [UInt8] {
     let marker = [UInt8](repeating: 0, count: 2 * blockSize)
     archive.append(contentsOf: marker)
     return archive
-}
-
-/// Creates a tar archive containing a single file
-/// - Parameters:
-///   - data: The file's body data
-///   - filename: The file's name in the archive
-/// - Returns: A tar archive containing the file
-/// - Throws: If the filename is invalid
-public func tar(_ data: Data, filename: String) throws -> [UInt8] {
-    try tar([UInt8](data), filename: filename)
 }
 
 /// Represents a tar archive
