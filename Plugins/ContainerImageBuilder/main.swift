@@ -89,10 +89,18 @@ extension PluginError: CustomStringConvertible {
 
         for built in builtExecutables { Diagnostics.remark("Built product: \(built.url.path)") }
 
+        let resources = builtExecutables[0].url
+            .deletingLastPathComponent()
+            .appendingPathComponent(
+                "\(context.package.displayName)_\(productName).resources"
+            )
+
         // Run a command line helper to upload the image
-        let helper = try context.tool(named: "containertool")
-        let helperURL = helper.url
-        let helperArgs = extractor.remainingArguments + builtExecutables.map { $0.url.path }
+        let helperURL = try context.tool(named: "containertool").url
+        let helperArgs =
+            (FileManager.default.fileExists(atPath: resources.path) ? ["--resources", resources.path] : [])
+            + extractor.remainingArguments
+            + builtExecutables.map { $0.url.path }
         let helperEnv = ProcessInfo.processInfo.environment.filter { $0.key.starts(with: "CONTAINERTOOL_") }
 
         let err = Pipe()
