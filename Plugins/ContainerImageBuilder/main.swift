@@ -99,16 +99,48 @@ extension PluginError: CustomStringConvertible {
 
         await withThrowingTaskGroup(of: Void.self) { group in
             group.addTask {
-                for try await line in err.lines {
-                    let errorLabel = "Error: "  // SwiftArgumentParser adds this prefix to all errors which bubble up
-                    let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+                enum LoggingState {
+                    // Normal output is logged at 'progress' level.
+                    case progress
 
-                    if trimmed.starts(with: errorLabel) {
-                        // Errors are reported even without the --verbose flag and cause the build to fail.
-                        Diagnostics.error(String(trimmed.dropFirst(errorLabel.count)))
-                    } else {
-                        Diagnostics.progress(trimmed)
+                    // If an error is detected, all output from that point onwards is logged at 'error' level, which is always printed.
+                    // Errors are reported even without the --verbose flag and cause the build to return a nonzero exit code.
+                    case error
+
+                    func log(_ msg: String) {
+                        let trimmed = msg.trimmingCharacters(in: .newlines)
+                        switch self {
+                        case .progress: Diagnostics.progress(trimmed)
+                        case .error: Diagnostics.error(trimmed)
+                        }
                     }
+                }
+
+                var buf = ""
+                var logger = LoggingState.progress
+
+                for try await line in err.lines {
+                    buf.append(line)
+
+                    guard let (before, after) = buf.splitOn(first: "\n") else {
+                        continue
+                    }
+
+                    var msg = before
+                    buf = String(after)
+
+                    let errorLabel = "Error: "  // SwiftArgumentParser adds this prefix to all errors which bubble up
+                    if msg.starts(with: errorLabel) {
+                        logger = .error
+                        msg.trimPrefix(errorLabel)
+                    }
+
+                    logger.log(String(msg))
+                }
+
+                // Print any leftover output in the buffer, in case the child exited without sending a final newline.
+                if !buf.isEmpty {
+                    logger.log(buf)
                 }
             }
 
@@ -116,5 +148,15 @@ extension PluginError: CustomStringConvertible {
                 try await run(command: helperURL, arguments: helperArgs, environment: helperEnv, errorPipe: err)
             }
         }
+    }
+}
+
+extension Collection where Element: Equatable {
+    func splitOn(first element: Element) -> (before: SubSequence, after: SubSequence)? {
+        guard let idx = self.firstIndex(of: element) else {
+            return nil
+        }
+
+        return (self[..<idx], self[idx...].dropFirst())
     }
 }
