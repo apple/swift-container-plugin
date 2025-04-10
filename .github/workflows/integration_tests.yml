@@ -35,6 +35,28 @@ jobs:
               run: |
                   swift test
 
+    containertool-resources-test:
+        name: Containertool resources test
+        runs-on: ubuntu-latest
+        services:
+            registry:
+                image: registry:2
+                ports:
+                    - 5000:5000
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  persist-credentials: false
+
+            - name: Mark the workspace as safe
+              # https://github.com/actions/checkout/issues/766
+              run: git config --global --add safe.directory ${GITHUB_WORKSPACE}
+
+            - name: Check plugin streaming output is reassembled and printed properly
+              run: |
+                  scripts/test-containertool-resources.sh
+
     plugin-streaming-output-test:
         name: Plugin streaming output test
         runs-on: ubuntu-latest
