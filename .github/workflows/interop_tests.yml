@@ -2,14 +2,10 @@ name: Interop tests
 
 on:
     workflow_call:
-#        inputs:
-#            example:
-#                required: true
-#                type: string
 
 jobs:
     layering-test:
-        name: Layering test
+        name: Containertool layering test
         runs-on: ubuntu-latest
         services:
             registry:
@@ -45,7 +41,7 @@ jobs:
                   grep second second.payload
 
     elf-detection-test:
-        name: ELF detection test
+        name: Containertool ELF detection test
         runs-on: ubuntu-latest
         services:
             registry:
@@ -71,4 +67,4 @@ jobs:
             # Run the test script
             - name: Test ELF detection
               run: |
-                  scripts/test-elf-detection.sh
+                  scripts/test-containertool-elf-detection.sh
