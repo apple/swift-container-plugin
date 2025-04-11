@@ -12,12 +12,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-@main
-struct Hello {
-    static let hostname = "0.0.0.0"
-    static let port = 8080
+import ArgumentParser
 
-    static func main() async throws {
+@main
+struct Hello: AsyncParsableCommand {
+    @Option(name: .shortAndLong)
+    var hostname: String = "0.0.0.0"
+
+    @Option(name: .shortAndLong)
+    var port: Int = 8080
+
+    func run() async throws {
         let app = buildApplication(
             configuration: .init(
                 address: .hostname(hostname, port: port),
