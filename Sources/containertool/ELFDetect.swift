@@ -12,6 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+import class Foundation.FileHandle
+import struct Foundation.URL
+
 struct ArrayField<T: Collection> where T.Element == UInt8 {
     var start: Int
     var count: Int
@@ -52,6 +55,11 @@ extension Array where Element == UInt8 {
 /// architecture and operating system ABI for which that object
 /// was created.
 struct ELF: Equatable {
+    /// Minimum ELF header length is 52 bytes for a 32-bit ELF header.
+    /// A 64-bit header is 64 bytes.   A potential header must be at
+    /// least 52 bytes or it cannot possibly be an ELF header.
+    static let minHeaderLength = 52
+
     /// Multibyte ELF fields are stored in the native endianness of the target system.
     /// This field records the endianness of objects in the file.
     enum Endianness: UInt8 {
@@ -189,7 +197,7 @@ extension ELF {
         /// Object type: 2 bytes
         static let EI_TYPE = IntField<UInt16>(start: 0x10)
 
-        //l Machine ISA (processor architecture): 2 bytes
+        /// Machine ISA (processor architecture): 2 bytes
         static let EI_MACHINE = IntField<UInt16>(start: 0x12)
     }
 
@@ -205,7 +213,7 @@ extension ELF {
     static func read(_ bytes: [UInt8]) -> ELF? {
         // An ELF file starts with a magic number which is the same in either endianness.
         // The only defined ELF header version is 1.
-        guard bytes.count > 0x13, bytes[Field.EI_MAGIC] == ELFMagic, bytes[Field.EI_VERSION] == 1 else {
+        guard bytes.count >= minHeaderLength, bytes[Field.EI_MAGIC] == ELFMagic, bytes[Field.EI_VERSION] == 1 else {
             return nil
         }
 
@@ -224,5 +232,15 @@ extension ELF {
             object: object,
             ISA: .init(rawValue: bytes[Field.EI_MACHINE, endianness: endianness])
         )
+    }
+}
+
+extension ELF {
+    static func read(at path: URL) throws -> ELF? {
+        let handle = try FileHandle(forReadingFrom: path)
+        guard let header = try handle.read(upToCount: minHeaderLength) else {
+            return nil
+        }
+        return ELF.read([UInt8](header))
     }
 }
