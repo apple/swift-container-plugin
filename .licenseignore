@@ -1,4 +1,5 @@
 **/*.docc/*
+**/*.jpg
 **/*.md
 **/.gitignore
 **/Package.resolved
