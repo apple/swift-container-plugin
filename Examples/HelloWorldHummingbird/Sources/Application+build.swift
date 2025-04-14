@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftContainerPlugin open source project
 //
-// Copyright (c) 2024 Apple Inc. and the SwiftContainerPlugin project authors
+// Copyright (c) 2025 Apple Inc. and the SwiftContainerPlugin project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -14,12 +14,22 @@
 
 import Foundation
 import Hummingbird
+import Logging
 
 let myos = ProcessInfo.processInfo.operatingSystemVersionString
 
-let router = Router()
-router.get { request, _ -> String in "Hello World, from Hummingbird on \(myos)\n" }
+func buildApplication(configuration: ApplicationConfiguration) -> some ApplicationProtocol {
+    let router = Router()
+    router.addMiddleware { LogRequestsMiddleware(.info) }
+    router.get("/") { _, _ in
+        "Hello World, from Hummingbird on \(myos)\n"
+    }
 
-let app = Application(router: router, configuration: .init(address: .hostname("0.0.0.0", port: 8080)))
+    let app = Application(
+        router: router,
+        configuration: configuration,
+        logger: Logger(label: "HelloWorldHummingbird")
+    )
 
-try await app.runService()
+    return app
+}
