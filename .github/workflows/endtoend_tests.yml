@@ -44,6 +44,7 @@ jobs:
                   cat ${{ matrix.example }}/Package.swift
                   swift package \
                       --package-path ${{ matrix.example }} \
+                      -Xswiftc -warnings-as-errors \
                       --swift-sdk x86_64-swift-linux-musl \
                       --allow-network-connections all \
                       build-container-image \
