@@ -21,6 +21,7 @@ jobs:
                 example:
                     - Examples/HelloWorldVapor
                     - Examples/HelloWorldHummingbird
+                    - Examples/HelloWorldWithResources
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
@@ -55,4 +56,14 @@ jobs:
 
             - name: Check that the service is running
               run: |
-                  curl -v localhost:8080 | grep "Hello World"
+                  # The curious combination of --verbose and --silent causes
+                  # curl to print the request and response (--verbose) but not
+                  # the transmission progress messages (--silent).
+                  #
+                  # --fail-with-body causes curl to exit with a nonzero exit code
+                  # if the HTTP response code is >= 400.   Without this flag, curl
+                  # only returns a nonzero exit code if something went wrong while
+                  # connecting to the server - a successful HTTP transaction which
+                  # indicates a server error is still considered to be a successful
+                  # transaction from the client's point of view.
+                  curl --verbose --silent --output /dev/null --fail-with-body localhost:8080
