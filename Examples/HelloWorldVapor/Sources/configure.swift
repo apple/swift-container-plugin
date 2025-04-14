@@ -2,7 +2,7 @@
 //
 // This source file is part of the SwiftContainerPlugin open source project
 //
-// Copyright (c) 2024 Apple Inc. and the SwiftContainerPlugin project authors
+// Copyright (c) 2025 Apple Inc. and the SwiftContainerPlugin project authors
 // Licensed under Apache License v2.0
 //
 // See LICENSE.txt for license information
@@ -12,15 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
 import Vapor
 
-let myos = ProcessInfo.processInfo.operatingSystemVersionString
-
-let app = try Application(.detect())
-app.http.server.configuration.hostname = "0.0.0.0"
-defer { app.shutdown() }
-
-app.get { _ in "Hello World, from Vapor on \(myos)\n" }
-
-try app.run()
+func configure(_ app: Application) async throws {
+    try routes(app)
+}
