@@ -6,20 +6,26 @@
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fapple%2Fswift-container-plugin%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/apple/swift-container-plugin)
 [![](https://github.com/apple/swift-container-plugin/actions/workflows/main.yml/badge.svg)](https://github.com/apple/swift-container-plugin/actions/workflows/main.yml)
 
-Publish container images using Swift Package Manager.
+Build and publish container images using Swift Package Manager.
 
-Find out about Swift Container Plugin and see it in action:
+## Overview
+
+Container images are the standard way to package cloud software today.   Once you have packaged your server in a container image, you can deploy it on any container-based public or private cloud service, or run it locally using a desktop container runtime.
+
+Swift Container Plugin makes it easy to build container images for servers written in Swift, using Swift Package Manager.
+
+Find out more and see it in action:
 
 * [How to put Swift in a box](https://fosdem.org/2025/schedule/event/fosdem-2025-5116-how-to-put-swift-in-a-box-building-container-images-with-swift-container-plugin/) at [FOSDEM 2025](https://fosdem.org/2025/schedule/track/swift/).
 * [Swift to the cloud in a single step](https://www.youtube.com/watch?v=9AaINsCfZzw) at [ServerSide.Swift 2024](https://www.serversideswift.info/speakers/euan-harris/).
 
-## Overview
+## Usage
 
-Swift Container Plugin provides a Swift Package Manager command plugin and utilities to make it easy to build container images for servers written in Swift.
+Swift Container Plugin can package any executable product defined in `Package.swift` in a container image and publish it to a container registry.
 
-> Container images are the standard way to package cloud software today.   Once you have packaged your server in a container image, you can deploy it on any container-based public or private cloud service, or run it locally using a desktop container runtime.
+### Build and publish a container image
 
-After setting up your project, you can use the plugin to build and publish a container image in one step:
+After adding the plugin to your project, you can build and publish a container image in one step:
 
 ```
 % swift package --swift-sdk x86_64-swift-linux-musl \
@@ -44,7 +50,9 @@ Build of product 'hello-world' complete! (5.51s)
 registry.example.com/myservice@sha256:a3f75d0932d052dd9d448a1c9040b16f9f2c2ed9190317147dee95a218faf1df
 ```
 
-You can then use a container runtime, such as `podman` to run the image:
+### Run the image
+
+You can deploy your service in the cloud, or use a standards-compliant container runtime such as `podman` to run it locally:
 
 ```
 % podman run -p 8080:8080 registry.example.com/myservice@sha256:a3f75d0932d052dd9d448a1c9040b16f9f2c2ed9190317147dee95a218faf1df
@@ -53,9 +61,13 @@ Trying to pull registry.example.com/myservice@sha256:a3f75d0932d052dd9d448a1c904
 2024-05-26T22:57:50+0000 info HummingBird : [HummingbirdCore] Server started and listening on 0.0.0.0:8080
 ```
 
-## Getting Started
+## Platforms and requirements
 
-Swift Container Plugin requires Swift 6.0 and runs on macOS and Linux.   It does not require a local container runtime to be installed in order to build an image.
+* Swift Container Plugin runs on macOS and Linux and requires Swift 6.0 or later.
+* On macOS you must install a cross-compilation Swift SDK, such as the [Swift Static Linux SDK](https://www.swift.org/documentation/articles/static-linux-getting-started.html), in order to build executables which can run on Linux-based cloud infrastructure.
+* A container runtime is not required to build an image, but one must be available wherever the image is to be run.  
+
+## Getting Started
 
 Learn more about setting up your project in the [ContainerImageBuilder plugin documentation](Sources/ContainerImageBuilderPluginDocumentation/Documentation.docc/ContainerImageBuilderPlugin.md).
 
