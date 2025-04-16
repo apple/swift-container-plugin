@@ -2,9 +2,11 @@
 
 Make Swift Container Plugin available in your project
 
+## Overview
+
 Swift Container Plugin is distributed as a Swift Package Manager package.    To make it available, you must add it as a dependency of your project.
 
-## Install the plugin using the `swift package` CLI
+### Install the plugin using the `swift package` CLI
 
 Recent versions of `swift package` suupport the `add-dependency` command:
 
@@ -12,7 +14,7 @@ Recent versions of `swift package` suupport the `add-dependency` command:
 swift package add-dependency https://github.com/apple/swift-container-plugin --from 0.5.0
 ```
 
-## Install the plugin by manually editing `Package.swift`
+### Install the plugin by manually editing `Package.swift`
 
 If you cannot use the `swift package add-dependency` comand, append the following lines to your project's `Package.swift` file:
 
@@ -22,7 +24,7 @@ package.dependencies += [
 ]
 ```
 
-## Check that the plugin is available
+### Check that the plugin is available
 
 After installation, Swift Package Manager should show that the `ContainerImageBuilder` is now available:
 

@@ -2,16 +2,18 @@
 
 The open source Swift toolchain and a compatible Swift SDK make it possible to build Linux executables on macOS
 
+## Overview
+
 * Swift Container Plugin runs on macOS and Linux and requires Swift 6.0 or later.
 * On macOS you must install a cross-compilation Swift SDK, such as the [Swift Static Linux SDK](https://www.swift.org/documentation/articles/static-linux-getting-started.html), in order to build executables which can run on Linux-based cloud infrastructure.
 * The Swift Static Linux SDK requires the [open source Swift toolchain](https://www.swift.org/install/macos/) to be installed.
 * A container runtime is not required to build an image, but you will need one wherever you want to run the image.
 
-## Install the open source Swift toolchain
+### Install the open source Swift toolchain
 
 Follow the instructions at [https://www.swift.org/install/macos/](https://www.swift.org/install/macos/) to install the open source Swift toolchain.   The easiest way to do this is to use the [Swiftly swift toolchain installer](https://www.swift.org/install/macos/swiftly/).
 
-## Install a Swift SDK for cross-compilation
+### Install a Swift SDK for cross-compilation
 
 If you are running on macOS, you can use a [Swift SDK](https://github.com/apple/swift-evolution/blob/main/proposals/0387-cross-compilation-destinations.md) to cross-compile your server executable for Linux.   Either:
 
