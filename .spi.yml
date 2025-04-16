@@ -3,4 +3,4 @@ builder:
   configs:
     - documentation_targets:
         - containertool
-        - ContainerImageBuilderPlugin
+        - swift-container-plugin
