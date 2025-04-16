@@ -83,7 +83,6 @@ let package = Package(
         // the ContainerImageBuilder plugin from the command-line.
         .target(
             name: "swift-container-plugin",
-            //path: "Sources/SwiftContainerPluginDocumentation",
             exclude: ["README.md"]
         ),
         .testTarget(
