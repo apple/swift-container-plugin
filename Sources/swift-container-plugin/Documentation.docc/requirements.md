@@ -9,11 +9,11 @@ Install an open source Swift toolchain and a compatible Swift SDK to build Linux
 * The Swift Static Linux SDK requires the [open source Swift toolchain](https://www.swift.org/install/macos/) to be installed.
 * A container runtime is not required to build an image, but you will need one wherever you want to run the image.
 
-### Install the open source Swift toolchain
+### Install an open source Swift toolchain
 
 Follow the instructions at [https://www.swift.org/install/macos/](https://www.swift.org/install/macos/) to install the open source Swift toolchain.   The easiest way to do this is to use the [Swiftly swift toolchain installer](https://www.swift.org/install/macos/swiftly/).
 
-### Install a Swift SDK for cross-compilation
+### Install a Swift SDK for cross-compilation which matches the open source toolchain
 
 If you are running on macOS, you can use a [Swift SDK](https://github.com/apple/swift-evolution/blob/main/proposals/0387-cross-compilation-destinations.md) to cross-compile your server executable for Linux.   Either:
 
