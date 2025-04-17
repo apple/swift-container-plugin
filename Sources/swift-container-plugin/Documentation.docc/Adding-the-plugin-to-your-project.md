@@ -8,6 +8,9 @@ Swift Container Plugin is distributed as a Swift Package Manager package.    To 
 
 ### Install the plugin using the `swift package` CLI
 
+> Adding the same dependency to your project more than once will prevent it from building.
+> If this happens, delete the duplicate dependency lines from `Package.swift` and rebuild.
+
 Recent versions of `swift package` suupport the `add-dependency` command:
 
 ```shell
