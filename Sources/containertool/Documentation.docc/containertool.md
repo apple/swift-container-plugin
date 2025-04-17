@@ -8,7 +8,7 @@ Wrap a binary in a container image and publish it.
 
 > Note: A container image is the standard way to package cloud software.   Once you have wrapped your server in a container image, you can deploy it on any public or private cloud service based on [Kubernetes](https://kubernetes.io), or run it locally using a desktop container runtime.
 
-## Usage
+### Usage
 
 `containertool` can be run directly but its main role is to be a helper tool used by the `ContainerImageBuilder` command plugin.   See the plugin documentation for examples of how to use it in this way.
 
@@ -23,6 +23,7 @@ ARGUMENTS:
 OPTIONS:
   --repository <repository>
                           Repository path
+  --resources <resources> Resource bundle directory
   --username <username>   Username
   --password <password>   Password
   -v, --verbose           Verbose output
@@ -33,5 +34,10 @@ OPTIONS:
   --from <from>           Base image reference
   --os <os>               Operating system (default: linux)
   --tag <tag>             Tag for this manifest
+  --enable-netrc/--disable-netrc
+                          Load credentials from a netrc file (default:
+                          --enable-netrc)
+  --netrc-file <netrc-file>
+                          Specify the netrc file path
   -h, --help              Show help information.
 ```
