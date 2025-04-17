@@ -16,14 +16,14 @@ The plugin exposes the command `build-container-image` which you invoke to build
 * The `--repository` argument specifies the repository to which the plugin will upload the finished image.
 
 > Note: on macOS, the plugin needs permission to connect to the network to publish the image to the registry.
-
-```
-Plugin ‘ContainerImageBuilder’ wants permission to allow all network connections on all ports.
-Stated reason: “This command publishes images to container registries over the network”.
-Allow this plugin to allow all network connections on all ports? (yes/no)
-```
-
-Type `yes` to continue.
+>
+> ```
+> Plugin ‘ContainerImageBuilder’ wants permission to allow all network connections on all ports.
+> Stated reason: “This command publishes images to container registries over the network”.
+> Allow this plugin to allow all network connections on all ports? (yes/no)
+> ```
+>
+> Type `yes` to continue.
 
 ```
 Building for debugging...
