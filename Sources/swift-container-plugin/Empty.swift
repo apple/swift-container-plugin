@@ -17,3 +17,7 @@
 
 // SwiftContainerPluginDocumentation is an otherwise empty target that includes high-level,
 // user-facing documentation about using the Swift Container Plugin from the command-line.
+
+// To preview the documentation, run the following command:
+//
+// swift package --disable-sandbox preview-documentation --target swift-container-plugin --analyze
