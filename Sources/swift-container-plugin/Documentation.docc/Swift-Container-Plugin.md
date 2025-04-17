@@ -17,7 +17,7 @@ Find out more and see it in action:
 * [How to put Swift in a box](https://fosdem.org/2025/schedule/event/fosdem-2025-5116-how-to-put-swift-in-a-box-building-container-images-with-swift-container-plugin/) at [FOSDEM 2025](https://fosdem.org/2025/schedule/track/swift/).
 * [Swift to the cloud in a single step](https://www.youtube.com/watch?v=9AaINsCfZzw) at [ServerSide.Swift 2024](https://www.serversideswift.info/2024/speakers/euan-harris/).
 
-## Usage
+### Usage
 
 Use the Swift Container Plugin to package an executable product from your Swift package into a container image and publish it to a container registry.
 
@@ -25,6 +25,7 @@ To use the plugin:
 - <doc:Adding-the-plugin-to-your-project>
 - <doc:requirements>
 - <doc:authentication>
+
 ### Build and publish a container image
 
 After adding the plugin to your project, you can build and publish a container image in one step.
