@@ -1,10 +1,8 @@
 # Swift Container Plugin
 
-[![](https://img.shields.io/badge/docc-read_documentation-blue)](https://swiftpackageindex.com/apple/swift-container-plugin/documentation/containerimagebuilderplugin)
-[![](https://img.shields.io/github/v/release/apple/swift-container-plugin?include_prereleases)](https://github.com/apple/swift-container-plugin/releases)
-[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fapple%2Fswift-container-plugin%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/apple/swift-container-plugin)
-[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fapple%2Fswift-container-plugin%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/apple/swift-container-plugin)
-[![](https://github.com/apple/swift-container-plugin/actions/workflows/main.yml/badge.svg)](https://github.com/apple/swift-container-plugin/actions/workflows/main.yml)
+@Metadata {
+    @TechnologyRoot()
+}
 
 Build and publish container images using Swift Package Manager.
 
@@ -19,13 +17,19 @@ Find out more and see it in action:
 * [How to put Swift in a box](https://fosdem.org/2025/schedule/event/fosdem-2025-5116-how-to-put-swift-in-a-box-building-container-images-with-swift-container-plugin/) at [FOSDEM 2025](https://fosdem.org/2025/schedule/track/swift/).
 * [Swift to the cloud in a single step](https://www.youtube.com/watch?v=9AaINsCfZzw) at [ServerSide.Swift 2024](https://www.serversideswift.info/2024/speakers/euan-harris/).
 
-## Usage
+### Usage
 
-Swift Container Plugin can package any executable product defined in `Package.swift` in a container image and publish it to a container registry.
+Use the Swift Container Plugin to package an executable product from your Swift package into a container image and publish it to a container registry.
+
+To use the plugin:
+- <doc:Adding-the-plugin-to-your-project>
+- <doc:requirements>
+- <doc:authentication>
 
 ### Build and publish a container image
 
-After adding the plugin to your project, you can build and publish a container image in one step:
+After adding the plugin to your project, you can build and publish a container image in one step.
+Here is how to build the [HelloWorld example](https://github.com/apple/swift-container-plugin/tree/main/Examples/HelloWorldHummingbird) as a static binary for Linux running the `x86_64` architecture:
 
 ```
 % swift package --swift-sdk x86_64-swift-linux-musl \
@@ -61,14 +65,15 @@ Trying to pull registry.example.com/myservice@sha256:a3f75d0932d052dd9d448a1c904
 2024-05-26T22:57:50+0000 info HummingBird : [HummingbirdCore] Server started and listening on 0.0.0.0:8080
 ```
 
-## Platforms and requirements
-
-* Swift Container Plugin runs on macOS and Linux and requires Swift 6.0 or later.
-* On macOS you must install a cross-compilation Swift SDK, such as the [Swift Static Linux SDK](https://www.swift.org/documentation/articles/static-linux-getting-started.html), in order to build executables which can run on Linux-based cloud infrastructure.
-* A container runtime is not required to build an image, but one must be available wherever the image is to be run.  
-
-## Getting Started
-
-Learn more about setting up your project in the [ContainerImageBuilder plugin documentation](Sources/ContainerImageBuilderPluginDocumentation/Documentation.docc/ContainerImageBuilderPlugin.md).
-
 Take a look at the [Examples](Examples).
+
+## Topics
+
+### Essentials
+- <doc:requirements>
+- <doc:Adding-the-plugin-to-your-project>
+- <doc:authentication>
+
+### Building and running
+- <doc:build>
+- <doc:run>

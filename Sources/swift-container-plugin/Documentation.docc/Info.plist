@@ -11,10 +11,18 @@
 -->
 <plist version="1.0">
 <dict>
-    <key>CDDefaultCodeListingLanguage</key>
-    <string>shell</string>
-    <key>CDDefaultModuleKind</key>
-    <string>Command Plugin</string>
+    	<key>CDDefaultCodeListingLanguage</key>
+	<string>shell</string>
+	<key>CFBundleName</key>
+	<string>swift-container-plugin</string>
+	<key>CFBundleDisplayName</key>
+	<string>swift-container-plugin</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.apple.ContainerPlugin</string>
+	<key>CFBundlePackageType</key>
+	<string>DOCS</string>
+	<key>CDDefaultModuleKind</key>
+	<string>Tool</string>
 </dict>
 </plist>
 
