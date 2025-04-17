@@ -19,8 +19,12 @@ Find out more and see it in action:
 
 ## Usage
 
-Swift Container Plugin can package any executable product defined in `Package.swift` in a container image and publish it to a container registry.
+Use the Swift Container Plugin to package an executable product from your Swift package into a container image and publish it to a container registry.
 
+To use the plugin:
+- <doc:Adding-the-plugin-to-your-project>
+- <doc:requirements>
+- <doc:authentication>
 ### Build and publish a container image
 
 After adding the plugin to your project, you can build and publish a container image in one step:

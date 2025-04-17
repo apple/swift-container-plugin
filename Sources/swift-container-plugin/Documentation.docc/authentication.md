@@ -1,10 +1,14 @@
 # Set up your registry credentials
 
-Configure Swift Container Plugin to authenticate to your container registry
+Configure the plugin to authenticate to your container registry.
 
 ## Overview
 
-Many registries require authentication in order to push images, or even pull them.   The plugin can read your registry credentials from a `.netrc` file in your home directory.   You can add a netrc record for each registry you need to use, and the plugin will choose the correct one:
+Many container registries require authentication in order to push images, or even pull them.
+The plugin reads your registry credentials from a `.netrc` file in your home directory.
+Add a record into the `.netrc` file for each registry you use, the plugin uses the authentication by the registry you choose.
+
+The following example shows placeholder values for the registry `registry.example.com`:
 
 ```
 machine registry.example.com

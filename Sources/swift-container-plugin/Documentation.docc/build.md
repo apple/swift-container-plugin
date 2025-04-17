@@ -2,18 +2,18 @@
 
 ## Overview
 
-`build-container-image` is a command plugin which takes care of building your service, packaging it in a container image and uploading it to a container registry, all in one command:
+The plugin exposes the command `build-container-image` which you invoke to build your service, package it in a container image and upload it to a container registry, in a single command:
 
 ```shell
 % swift package --swift-sdk x86_64-swift-linux-musl \
         build-container-image --from swift:slim --repository registry.example.com/myservice
 ```
 
-* The `--swift-sdk` argument specifies the Swift SDK with which to build the executable.   In this case we are using the Static Linux SDK, which was installed earlier, to build an statically-linked x86_64 Linux binary
+* The `--swift-sdk` argument specifies the Swift SDK with which to build the executable.   In this case we are using the Static Linux SDK, installed earlier, to build an statically-linked x86_64 Linux binary.
 * The `--from` argument specifies the base image on which our service will run.   `swift:slim` is the default, but you can choose your own base image or use `scratch` if your service does not require a base image at all.
 * The `--repository` argument specifies where the plugin will upload our finished image.
 
-The plugin needs permission to connect to the network to publish the image to the registry:
+> Note: on macOS, the plugin needs permission to connect to the network to publish the image to the registry.
 
 ```
 Plugin ‘ContainerImageBuilder’ wants permission to allow all network connections on all ports.
@@ -39,4 +39,5 @@ Build of product 'hello-world' complete! (5.51s)
 registry.example.com/myservice@sha256:a3f75d0932d052dd9d448a1c9040b16f9f2c2ed9190317147dee95a218faf1df
 ```
 
-When it finishes, the plugin prints a reference identifying the new image.   Any standard container runtime can use the reference to pull and run your service.
+When the plugin finishes, it prints a reference identifying the new image.
+Any standard container runtime can use the reference to pull and run your service.
