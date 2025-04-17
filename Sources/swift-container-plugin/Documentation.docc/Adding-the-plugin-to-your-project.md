@@ -1,6 +1,6 @@
 # Add the plugin to your project
 
-Make Swift Container Plugin available in your project
+Make Swift Container Plugin available in your project.
 
 ## Overview
 

@@ -1,5 +1,7 @@
 # Build and package your service
 
+Build a container image and upload it to a registry.
+
 ## Overview
 
 The plugin exposes the command `build-container-image` which you invoke to build your service, package it in a container image and upload it to a container registry, in a single command:
