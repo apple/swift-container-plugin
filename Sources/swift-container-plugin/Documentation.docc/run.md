@@ -1,5 +1,6 @@
 # Run your service
 
+Run the container you built on cloud infrastructure or locally on a desktop container runtime.
 ## Overview
 
 Swift Container Plugin builds standards-compliant container images which can run in public or private cloud infrastructure, or locally on a desktop container runtime.
