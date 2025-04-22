@@ -11,7 +11,7 @@ Swift Container Plugin is distributed as a Swift Package Manager package.    To 
 > Adding the same dependency to your project more than once will prevent it from building.
 > If this happens, delete the duplicate dependency lines from `Package.swift` and rebuild.
 
-Recent versions of `swift package` suupport the `add-dependency` command:
+Recent versions of `swift package` support the `add-dependency` command:
 
 ```shell
 swift package add-dependency https://github.com/apple/swift-container-plugin --from 0.5.0
