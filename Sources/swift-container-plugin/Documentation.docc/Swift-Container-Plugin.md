@@ -65,7 +65,7 @@ Trying to pull registry.example.com/myservice@sha256:a3f75d0932d052dd9d448a1c904
 2024-05-26T22:57:50+0000 info HummingBird : [HummingbirdCore] Server started and listening on 0.0.0.0:8080
 ```
 
-Take a look at the [Examples](Examples).
+Take a look at some [other examples](https://github.com/apple/swift-container-plugin/tree/main/Examples).
 
 ## Topics
 

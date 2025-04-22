@@ -65,10 +65,10 @@ Trying to pull registry.example.com/myservice@sha256:a3f75d0932d052dd9d448a1c904
 
 * Swift Container Plugin runs on macOS and Linux and requires Swift 6.0 or later.
 * On macOS you must install a cross-compilation Swift SDK, such as the [Swift Static Linux SDK](https://www.swift.org/documentation/articles/static-linux-getting-started.html), in order to build executables which can run on Linux-based cloud infrastructure.
-* A container runtime is not required to build an image, but one must be available wherever the image is to be run.  
+* A container runtime is not required to build an image, but one must be available wherever the image is to be run.
 
 ## Getting Started
 
-Learn more about setting up your project in the [ContainerImageBuilder plugin documentation](Sources/ContainerImageBuilderPluginDocumentation/Documentation.docc/ContainerImageBuilderPlugin.md).
+Learn more about setting up your project in the [plugin documentation](https://swiftpackageindex.com/apple/swift-container-plugin/documentation/containerimagebuilderplugin).
 
 Take a look at the [Examples](Examples).
