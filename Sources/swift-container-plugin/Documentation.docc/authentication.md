@@ -54,3 +54,40 @@ machine ghcr.io
   login mygithubusername
   password ghp_fAOsWl...
 ```
+
+### Amazon Elastic Container Registry
+
+> Amazon Elastic Container Registry uses [short-lived authorization tokens](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html#registry-auth-token) which expire after 12 hours.
+>
+> To generate an ECR authentication token, you must [first install the AWS CLI tools.](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+
+1. Use the `aws` CLI tool to [generate an authentication token](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html#registry-auth-token).
+You'll need to know the name of the [AWS region](https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-regions.html) in which your registry is hosted.
+Registries in different AWS regions are separate and require different authentication tokens.
+
+    The following command generates a token which can be used with ECR in the `us-west-2` region:
+    ```
+    aws ecr get-login-password --region us-west-2
+    ```
+
+2. Copy the token and add it to your `.netrc` file.
+    * The format of the machine name is:
+
+        ```
+        <aws_account_id>.dkr.ecr.<region>.amazonaws.com
+        ```
+
+      You can [find your AWS account ID](https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-identifiers.html) in the AWS Management Console or by running the following command:
+        ```
+        aws sts get-caller-identity \
+            --query Account \
+            --output text
+        ```
+    * **The login name must be `AWS`**.
+    * The token is a large encoded string which is not shown in full in the example.
+
+```
+machine 123456789012.dkr.ecr.us-west-2.amazonaws.com
+  login AWS
+  password eyJwYXlsb2FkIj...
+```
