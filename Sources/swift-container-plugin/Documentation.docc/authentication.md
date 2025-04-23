@@ -32,6 +32,8 @@ The following examples show how to set up the plugin for some popular registry p
 
 3. Copy the token and add it, together with your Docker ID, to your `.netrc` file under the machine name `auth.docker.io`:
 
+The final `.netrc` entry should be similar to this:
+
 ```
 machine auth.docker.io
   login mydockerid
@@ -48,6 +50,8 @@ machine auth.docker.io
 2. **Select the *write:packages* scope.**
 
 3. Copy the token and add it, together with your GitHub username, to your `.netrc` file:
+
+The final `.netrc` entry should be similar to this:
 
 ```
 machine ghcr.io
@@ -85,6 +89,8 @@ Registries in different AWS regions are separate and require different authentic
         ```
     * **The login name must be `AWS`**.
     * The token is a large encoded string which is not shown in full in the example.
+
+The final `.netrc` entry should be similar to this:
 
 ```
 machine 123456789012.dkr.ecr.us-west-2.amazonaws.com
