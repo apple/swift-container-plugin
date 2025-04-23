@@ -11,7 +11,7 @@ The plugin exposes the command `build-container-image` which you invoke to build
         build-container-image --from swift:slim --repository registry.example.com/myservice
 ```
 
-* The `--swift-sdk` argument specifies the Swift SDK with which to build the executable.   In this case we are using the Static Linux SDK, installed earlier, to build an statically-linked x86_64 Linux binary.
+* The `--swift-sdk` argument specifies the Swift SDK with which to build the executable.   In this case we are using the Static Linux SDK, [installed earlier](<doc:requirements>), to build an statically-linked x86_64 Linux binary.
 * The `--from` argument specifies the base image on which our service will run.   `swift:slim` is the default, but you can choose your own base image or use `scratch` if your service does not require a base image at all.
 * The `--repository` argument specifies the repository to which the plugin will upload the finished image.
 
