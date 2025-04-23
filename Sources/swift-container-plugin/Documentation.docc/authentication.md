@@ -37,3 +37,20 @@ machine auth.docker.io
   login mydockerid
   password dckr_pat_B3FwrU...
 ```
+
+### GitHub Container Registry
+
+> GitHub Container Registry only supports authentication using a [Personal Access Token (classic)](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-to-the-container-registry).
+> A fine-grained personal access token cannot be used.
+
+1. Log into GitHub and [generate a Personal Access Token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) for Swift Container Plugin.
+
+2. **Select the *write:packages* scope.**
+
+3. Copy the token and add it, together with your GitHub username, to your `.netrc` file:
+
+```
+machine ghcr.io
+  login mygithubusername
+  password ghp_fAOsWl...
+```
