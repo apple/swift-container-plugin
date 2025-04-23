@@ -69,7 +69,7 @@ machine ghcr.io
 You'll need to know the name of the [AWS region](https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-regions.html) in which your registry is hosted.
 Registries in different AWS regions are separate and require different authentication tokens.
 
-    The following command generates a token which can be used with ECR in the `us-west-2` region:
+    For example, the following command generates a token for ECR in the `us-west-2` region:
     ```
     aws ecr get-login-password --region us-west-2
     ```
@@ -88,7 +88,8 @@ Registries in different AWS regions are separate and require different authentic
             --output text
         ```
     * **The login name must be `AWS`**.
-    * The token is a large encoded string which is not shown in full in the example.
+    * The token is a large encoded string.
+        It must appear in the `.netrc` file as a single line, with no breaks.
 
 The final `.netrc` entry should be similar to this:
 
