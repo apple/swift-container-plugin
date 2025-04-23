@@ -24,7 +24,8 @@ The following examples show how to set up the plugin for some popular registry p
 ### Docker Hub
 
 > Don't use your Docker Hub account password to push and pull images.
-> Personal Access Tokens have restricted privileges and you can create a separate token for each integration you use, which you can monitor independently and revoke at any time.
+> Create a Personal Access Token, which has restricted privileges, for each integration you use. 
+> By using separate tokens, you can monitor them independently and revoke one at any time.
 
 1. Log into Docker Hub and [generate a Personal Access Token](https://docs.docker.com/security/for-developers/access-tokens/) for Swift Container Plugin.
 
