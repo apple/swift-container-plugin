@@ -19,3 +19,19 @@ When the service has started, we can access it with a web browser or `curl`:
 % curl localhost:8080
 Hello World, from Hummingbird on Ubuntu 24.04.2 LTS
 ```
+
+### Build and run in one step
+
+Swift Container Plugin prints a reference to the newly built image on standard output.
+The image reference can then be piped to the deployment command, or passed as an argument using shell output substitution.
+
+This allows a container image to be built and deployed in one shell command, using a convenient pattern offered by tools such as [ko.build](https://ko.build):
+
+```
+% podman run -p 8080:8080 \
+    $(swift package --swift-sdk x86_64-linux-swift-musl \
+        build-container-image --repository registry.example.com/myservice)
+Trying to pull registry.example.com/myservice@sha256:a3f75d0932d052dd9d448a1c9040b16f9f2c2ed9190317147dee95a218faf1df...
+...
+2024-05-26T22:57:50+0000 info HummingBird : [HummingbirdCore] Server started and listening on 0.0.0.0:8080
+```
