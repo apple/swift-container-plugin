@@ -26,6 +26,7 @@ The following examples show how to set up the plugin for some popular registry p
 > Don't use your Docker Hub account password to push and pull images.
 > Create a Personal Access Token, which has restricted privileges, for each integration you use. 
 > By using separate tokens, you can monitor them independently and revoke one at any time.
+To create a `.netrc` entry for Docker Hub:
 
 1. Log into Docker Hub and [generate a Personal Access Token](https://docs.docker.com/security/for-developers/access-tokens/) for Swift Container Plugin.
 
