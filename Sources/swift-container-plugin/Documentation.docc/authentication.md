@@ -47,6 +47,8 @@ machine auth.docker.io
 > GitHub Container Registry only supports authentication using a [Personal Access Token (classic)](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-to-the-container-registry).
 > A fine-grained personal access token cannot be used.
 
+To create a `.netrc` entry for Github Container Registry:
+
 1. Log into GitHub and [generate a Personal Access Token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic) for Swift Container Plugin.
 
 2. **Select the *write:packages* scope.**
