@@ -69,6 +69,8 @@ machine ghcr.io
 >
 > To generate an ECR authentication token, you must [first install the AWS CLI tools.](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 
+To create a `.netrc` entry for Amazon Elastic Container Registry:
+
 1. Use the `aws` CLI tool to [generate an authentication token](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html#registry-auth-token).
 You'll need to know the name of the [AWS region](https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-regions.html) in which your registry is hosted.
 Registries in different AWS regions are separate and require different authentication tokens.
