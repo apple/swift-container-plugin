@@ -14,7 +14,7 @@ Swift Container Plugin is distributed as a Swift Package Manager package.    To 
 Recent versions of `swift package` support the `add-dependency` command:
 
 ```shell
-swift package add-dependency https://github.com/apple/swift-container-plugin --from 0.5.0
+swift package add-dependency https://github.com/apple/swift-container-plugin --from 1.0.0
 ```
 
 ### Install the plugin by manually editing `Package.swift`
@@ -23,7 +23,7 @@ If you cannot use the `swift package add-dependency` comand, append the followin
 
 ```swift
 package.dependencies += [
-    .package(url: "https://github.com/apple/swift-container-plugin", from: "0.5.0"),
+    .package(url: "https://github.com/apple/swift-container-plugin", from: "1.0.0"),
 ]
 ```
 
