@@ -1,10 +1,10 @@
 # Build and package your service
 
-Build a container image and upload it to a registry.
+Build a container image and publish it to a registry.
 
 ## Overview
 
-The plugin exposes the command `build-container-image` which you invoke to build your service, package it in a container image and upload it to a container registry, in a single command:
+The plugin exposes the command `build-container-image` which you invoke to build your service, package it in a container image and publish it to a container registry, in a single command:
 
 ```shell
 % swift package --swift-sdk x86_64-swift-linux-musl \
@@ -13,7 +13,7 @@ The plugin exposes the command `build-container-image` which you invoke to build
 
 * The `--swift-sdk` argument specifies the Swift SDK with which to build the executable.   In this case we are using the Static Linux SDK, [installed earlier](<doc:requirements>), to build an statically-linked x86_64 Linux executable.
 * The `--from` argument specifies the base image on which our service will run.   `swift:slim` is the default, but you can choose your own base image or use `scratch` if your service does not require a base image at all.
-* The `--repository` argument specifies the repository to which the plugin will upload the finished image.
+* The `--repository` argument specifies the repository to which the plugin will publish the finished image.
 
 > Note: on macOS, the plugin needs permission to connect to the network to publish the image to the registry.
 >
@@ -46,15 +46,15 @@ Any standard container runtime can use the reference to pull and run your servic
 
 ### Default registry
 
-If you don't include a registry name in the `--repository` argument, the plugin will upload your image to Docker Hub by default.
+If you don't include a registry name in the `--repository` argument, the plugin will publish your image to Docker Hub by default.
 
 You can override the default registry by using the `--default-registry` argument or setting the `CONTAINERTOOL_DEFAULT_REGISTRY` environment variable.
 
-The following examples show how to upload images to some popular registry providers.
+The following examples show how to publish images to some popular registry providers.
 
 ### Docker Hub
 
-The following example uploads an image to a repository named `mydockerid/example` on Docker Hub.
+The following example publishes an image to a repository named `mydockerid/example` on Docker Hub.
 
 The repository will be created if it does not already exist.
 
@@ -65,7 +65,7 @@ swift package --swift-sdk x86_64-swift-linux-musl build-container-image \
 
 ### GitHub Container Registry
 
-The following example uploads an image to a repository named `mydockerid/example` on GitHub Container Registry.
+The following example publishes an image to a repository named `mydockerid/example` on GitHub Container Registry.
 
 The repository will be created if it does not already exist.
 
@@ -76,7 +76,7 @@ swift package --swift-sdk x86_64-swift-linux-musl build-container-image \
 
 ### Amazon Elastic Container Registry
 
-The following example uploads an image to the repository named `example/test` on Amazon Elastic Container Registry.
+The following example publishes an image to the repository named `example/test` on Amazon Elastic Container Registry.
 
 **The repository must already exist before you push to it.**
 Create a repository using the [Amazon ECR Console](https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-create.html).
