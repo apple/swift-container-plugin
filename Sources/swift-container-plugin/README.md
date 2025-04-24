@@ -1,7 +1,6 @@
-# ContainerImageBuilder Plugin Documentation
+# Swift Container Plugin User Documentation
 
-`ContainerImageBuilderPluginDocumentation` is an otherwise empty target that includes high-level,
-user-facing documentation about using the ContainerImageBuilder plugin from the command-line.
+This is an otherwise empty target that includes high-level, user-facing documentation about using the plugin from the command-line.
 
 To preview the documentation, run the following command:
 
