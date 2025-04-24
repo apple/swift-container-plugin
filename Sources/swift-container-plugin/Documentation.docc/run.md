@@ -23,7 +23,7 @@ Hello World, from Hummingbird on Ubuntu 24.04.2 LTS
 ### Build and run in one step
 
 Swift Container Plugin prints a reference to the newly built image on standard output.
-The image reference can then be piped to the deployment command, or passed as an argument using shell output substitution.
+You can pipe the image reference to a deployment command or pass it as an argument using shell output substitution.
 
 This allows a container image to be built and deployed in one shell command, using a convenient pattern offered by tools such as [ko.build](https://ko.build):
 
