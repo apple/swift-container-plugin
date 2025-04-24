@@ -25,7 +25,7 @@ Hello World, from Hummingbird on Ubuntu 24.04.2 LTS
 Swift Container Plugin prints a reference to the newly built image on standard output.
 You can pipe the image reference to a deployment command or pass it as an argument using shell output substitution.
 
-This allows a container image to be built and deployed in one shell command, using a convenient pattern offered by tools such as [ko.build](https://ko.build):
+This allows you to build and deploy a container image in one shell command, using a convenient pattern offered by tools such as [ko.build](https://ko.build):
 
 ```
 % podman run -p 8080:8080 \
