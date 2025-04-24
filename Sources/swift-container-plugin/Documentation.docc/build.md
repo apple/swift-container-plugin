@@ -43,3 +43,45 @@ registry.example.com/myservice@sha256:a3f75d0932d052dd9d448a1c9040b16f9f2c2ed919
 
 When the plugin finishes, it prints a reference identifying the new image.
 Any standard container runtime can use the reference to pull and run your service.
+
+### Default registry
+
+If you don't include a registry name in the `--repository` argument, the plugin will upload your image to Docker Hub by default.
+
+You can override the default registry by using the `--default-registry` argument or setting the `CONTAINERTOOL_DEFAULT_REGISTRY` environment variable.
+
+The following examples show how to upload images to some popular registry providers.
+
+### Docker Hub
+
+The following example uploads an image to a repository named `mydockerid/example` on Docker Hub.
+
+The repository will be created if it does not already exist.
+
+```
+swift package --swift-sdk x86_64-swift-linux-musl build-container-image \
+    --repository mydockerid/example
+```
+
+### GitHub Container Registry
+
+The following example uploads an image to a repository named `mydockerid/example` on GitHub Container Registry.
+
+The repository will be created if it does not already exist.
+
+```
+swift package --swift-sdk x86_64-swift-linux-musl build-container-image \
+    --repository ghcr.io/mygithubusername/example
+```
+
+### Amazon Elastic Container Registry
+
+The following example uploads an image to the repository named `example/test` on Amazon Elastic Container Registry.
+
+**The repository must already exist before you push to it.**
+Create a repository using the [Amazon ECR Console](https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-create.html).
+
+```
+swift package --swift-sdk x86_64-swift-linux-musl build-container-image \
+    --repository 123456789012.dkr.ecr.us-west-2.amazonaws.com/example/test
+```
