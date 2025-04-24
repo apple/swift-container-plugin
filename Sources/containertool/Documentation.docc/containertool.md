@@ -13,7 +13,7 @@ Wrap a binary in a container image and publish it.
 `containertool` can be run directly but its main role is to be a helper tool used by the `ContainerImageBuilder` command plugin.   See the plugin documentation for examples of how to use it in this way.
 
 ```text
-OVERVIEW: Build and upload a container image
+OVERVIEW: Build and publish a container image
 
 USAGE: containertool --repository <repository> <executable> [--username <username>] [--password <password>] [--verbose] [--allow-insecure-http <allow-insecure-http>] [--architecture <architecture>] --from <from> [--os <os>] [--tag <tag>]
 

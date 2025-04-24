@@ -78,9 +78,7 @@ let package = Package(
             ),
             dependencies: [.target(name: "containertool")]
         ),
-        // Empty target that builds the DocC catalog at /SwiftContainerPluginDocumentation/Documentation.docc.
-        // The ContainerImageBuilder catalog includes high-level, user-facing documentation about using
-        // the ContainerImageBuilder plugin from the command-line.
+        // Empty target which builds high-level, user-facing documentation about using the plugin from the command-line.
         .target(
             name: "swift-container-plugin",
             exclude: ["README.md"]

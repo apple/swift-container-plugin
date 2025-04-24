@@ -25,7 +25,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 @main struct ContainerTool: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "containertool",
-        abstract: "Build and upload a container image"
+        abstract: "Build and publish a container image"
     )
 
     @Option(help: "Default registry for references which do not specify a registry")
