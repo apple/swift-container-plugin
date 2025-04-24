@@ -77,3 +77,6 @@ Take a look at some [other examples](https://github.com/apple/swift-container-pl
 ### Building and running
 - <doc:build>
 - <doc:run>
+
+### Reference
+- <doc:build-container-image>
