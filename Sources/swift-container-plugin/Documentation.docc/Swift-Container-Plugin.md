@@ -29,7 +29,7 @@ To use the plugin:
 ### Build and publish a container image
 
 After adding the plugin to your project, you can build and publish a container image in one step.
-Here is how to build the [HelloWorld example](https://github.com/apple/swift-container-plugin/tree/main/Examples/HelloWorldHummingbird) as a static executable for Linux running the `x86_64` architecture:
+Here is how to build the [HelloWorld example](https://github.com/apple/swift-container-plugin/tree/main/Examples/HelloWorldHummingbird) as a static executable for Linux running on the `x86_64` architecture:
 
 ```
 % swift package --swift-sdk x86_64-swift-linux-musl \
