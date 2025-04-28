@@ -40,10 +40,10 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
     @Option(help: "Resource bundle directory")
     private var resources: [String] = []
 
-    @Option(help: "Username")
+    @Option(help: "Default username, used if there are no matching entries in .netrc")
     private var username: String?
 
-    @Option(help: "Password")
+    @Option(help: "Default password, used if there are no matching entries in .netrc")
     private var password: String?
 
     @Flag(name: .shortAndLong, help: "Verbose output")
@@ -75,6 +75,8 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
         let env = ProcessInfo.processInfo.environment
         let defaultRegistry = defaultRegistry ?? env["CONTAINERTOOL_DEFAULT_REGISTRY"] ?? "docker.io"
+        let username = username ?? env["CONTAINERTOOL_USERNAME"]
+        let password = password ?? env["CONTAINERTOOL_PASSWORD"]
         let from = from ?? env["CONTAINERTOOL_BASE_IMAGE"] ?? "swift:slim"
         let os = os ?? env["CONTAINERTOOL_OS"] ?? "linux"
 
