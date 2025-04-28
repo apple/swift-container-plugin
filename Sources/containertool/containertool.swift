@@ -72,8 +72,8 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
     private var netrcFile: String?
 
     func run() async throws {
-        let baseimage = try ImageReference(fromString: from, defaultRegistry: defaultRegistry)
-        var destination_image = try ImageReference(fromString: repository, defaultRegistry: defaultRegistry)
+        let baseImage = try ImageReference(fromString: from, defaultRegistry: defaultRegistry)
+        let destinationImage = try ImageReference(fromString: repository, defaultRegistry: defaultRegistry)
 
         let authProvider: AuthorizationProvider?
         if !netrc {
@@ -96,23 +96,23 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
             source = nil
         } else {
             source = try await RegistryClient(
-                registry: baseimage.registry,
+                registry: baseImage.registry,
                 insecure: allowInsecureHttp == .source || allowInsecureHttp == .both,
                 auth: .init(username: username, password: password, auth: authProvider)
             )
-            if verbose { log("Connected to source registry: \(baseimage.registry)") }
+            if verbose { log("Connected to source registry: \(baseImage.registry)") }
         }
 
         let destination = try await RegistryClient(
-            registry: destination_image.registry,
+            registry: destinationImage.registry,
             insecure: allowInsecureHttp == .destination || allowInsecureHttp == .both,
             auth: .init(username: username, password: password, auth: authProvider)
         )
 
-        if verbose { log("Connected to destination registry: \(destination_image.registry)") }
-        if verbose { log("Using base image: \(baseimage)") }
+        if verbose { log("Connected to destination registry: \(destinationImage.registry)") }
+        if verbose { log("Using base image: \(baseImage)") }
 
-        // MARK: Find the base image
+        // MARK: Detect the base image architecture
 
         // Try to detect the architecture of the application executable so a suitable base image can be selected.
         // This reduces the risk of accidentally creating an image which stacks an aarch64 executable on top of an x86_64 base image.
@@ -125,27 +125,64 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
             ?? "amd64"
         if verbose { log("Base image architecture: \(architecture)") }
 
-        let baseimage_manifest: ImageManifest
-        let baseimage_config: ImageConfiguration
+        // MARK: Build the image
+
+        let finalImage = try await destination.publishContainerImage(
+            baseImage: baseImage,
+            destinationImage: destinationImage,
+            source: source,
+            architecture: architecture,
+            os: os,
+            resources: resources,
+            tag: tag,
+            verbose: verbose,
+            executableURL: executableURL
+        )
+
+        print(finalImage)
+    }
+}
+
+extension RegistryClient {
+    func publishContainerImage(
+        baseImage: ImageReference,
+        destinationImage: ImageReference,
+        source: RegistryClient?,
+        architecture: String,
+        os: String,
+        resources: [String],
+        tag: String?,
+        verbose: Bool,
+        executableURL: URL
+    ) async throws -> ImageReference {
+
+        // MARK: Find the base image
+
+        let baseImageManifest: ImageManifest
+        let baseImageConfiguration: ImageConfiguration
         if let source {
-            baseimage_manifest = try await source.getImageManifest(
-                forImage: baseimage,
+            baseImageManifest = try await source.getImageManifest(
+                forImage: baseImage,
                 architecture: architecture
             )
-            log("Found base image manifest: \(baseimage_manifest.digest)")
+            log("Found base image manifest: \(baseImageManifest.digest)")
 
-            baseimage_config = try await source.getImageConfiguration(
-                forImage: baseimage,
-                digest: baseimage_manifest.config.digest
+            baseImageConfiguration = try await source.getImageConfiguration(
+                forImage: baseImage,
+                digest: baseImageManifest.config.digest
             )
-            log("Found base image configuration: \(baseimage_manifest.config.digest)")
+            log("Found base image configuration: \(baseImageManifest.config.digest)")
         } else {
-            baseimage_manifest = .init(
+            baseImageManifest = .init(
                 schemaVersion: 2,
                 config: .init(mediaType: "scratch", digest: "scratch", size: 0),
                 layers: []
             )
-            baseimage_config = .init(architecture: architecture, os: os, rootfs: .init(_type: "layers", diff_ids: []))
+            baseImageConfiguration = .init(
+                architecture: architecture,
+                os: os,
+                rootfs: .init(_type: "layers", diff_ids: [])
+            )
             if verbose { log("Using scratch as base image") }
         }
 
@@ -154,8 +191,8 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         var resourceLayers: [RegistryClient.ImageLayer] = []
         for resourceDir in resources {
             let resourceTardiff = try Archive().appendingRecursively(atPath: resourceDir).bytes
-            let resourceLayer = try await destination.uploadLayer(
-                repository: destination_image.repository,
+            let resourceLayer = try await self.uploadLayer(
+                repository: destinationImage.repository,
                 contents: resourceTardiff
             )
 
@@ -167,8 +204,9 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         }
 
         // MARK: Upload the application layer
-        let applicationLayer = try await destination.uploadLayer(
-            repository: destination_image.repository,
+
+        let applicationLayer = try await self.uploadLayer(
+            repository: destinationImage.repository,
             contents: try Archive().appendingFile(at: executableURL).bytes
         )
         if verbose {
@@ -176,46 +214,49 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         }
 
         // MARK: Create the application configuration
+
         let timestamp = Date(timeIntervalSince1970: 0).ISO8601Format()
 
         // Inherit the configuration of the base image - UID, GID, environment etc -
         // and override the entrypoint.
-        var inherited_config = baseimage_config.config ?? .init()
-        inherited_config.Entrypoint = ["/\(executableURL.lastPathComponent)"]
-        inherited_config.Cmd = []
-        inherited_config.WorkingDir = "/"
+        var inheritedConfiguration = baseImageConfiguration.config ?? .init()
+        inheritedConfiguration.Entrypoint = ["/\(executableURL.lastPathComponent)"]
+        inheritedConfiguration.Cmd = []
+        inheritedConfiguration.WorkingDir = "/"
 
         let configuration = ImageConfiguration(
             created: timestamp,
             architecture: architecture,
             os: os,
-            config: inherited_config,
+            config: inheritedConfiguration,
             rootfs: .init(
                 _type: "layers",
                 // The diff_id is the digest of the _uncompressed_ layer archive.
                 // It is used by the runtime, which might not store the layers in
                 // the compressed form in which it received them from the registry.
-                diff_ids: baseimage_config.rootfs.diff_ids
+                diff_ids: baseImageConfiguration.rootfs.diff_ids
                     + resourceLayers.map { $0.diffID }
                     + [applicationLayer.diffID]
             ),
             history: [.init(created: timestamp, created_by: "containertool")]
         )
 
-        let config_blob = try await destination.putImageConfiguration(
-            forImage: destination_image,
+        let configurationBlobReference = try await self.putImageConfiguration(
+            forImage: destinationImage,
             configuration: configuration
         )
 
-        if verbose { log("image configuration: \(config_blob.digest) (\(config_blob.size) bytes)") }
+        if verbose {
+            log("image configuration: \(configurationBlobReference.digest) (\(configurationBlobReference.size) bytes)")
+        }
 
         // MARK: Create application manifest
 
         let manifest = ImageManifest(
             schemaVersion: 2,
             mediaType: "application/vnd.oci.image.manifest.v1+json",
-            config: config_blob,
-            layers: baseimage_manifest.layers
+            config: configurationBlobReference,
+            layers: baseImageManifest.layers
                 + resourceLayers.map { $0.descriptor }
                 + [applicationLayer.descriptor]
         )
@@ -226,12 +267,12 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         // Layers could be checked and uploaded concurrently
         // This could also happen in parallel with the application image build
         if let source {
-            for layer in baseimage_manifest.layers {
+            for layer in baseImageManifest.layers {
                 try await source.copyBlob(
                     digest: layer.digest,
-                    fromRepository: baseimage.repository,
-                    toClient: destination,
-                    toRepository: destination_image.repository
+                    fromRepository: baseImage.repository,
+                    toClient: self,
+                    toRepository: destinationImage.repository
                 )
             }
         }
@@ -242,15 +283,16 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         // To support multiarch images, we should also create an an index pointing to
         // this manifest.
         let reference = tag ?? manifest.digest
-        let location = try await destination.putManifest(
-            repository: destination_image.repository,
-            reference: destination_image.reference,
+        let location = try await self.putManifest(
+            repository: destinationImage.repository,
+            reference: destinationImage.reference,
             manifest: manifest
         )
 
         if verbose { log(location) }
 
-        destination_image.reference = reference
-        print(destination_image)
+        var result = destinationImage
+        result.reference = reference
+        return result
     }
 }
