@@ -29,8 +29,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
     )
 
     @Option(help: "Default registry for references which do not specify a registry")
-    private var defaultRegistry: String =
-        ProcessInfo.processInfo.environment["CONTAINERTOOL_DEFAULT_REGISTRY"] ?? "docker.io"
+    private var defaultRegistry: String?
 
     @Option(help: "Repository path")
     private var repository: String
@@ -51,16 +50,16 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
     private var verbose: Bool = false
 
     @Option(help: "Connect to the container registry using plaintext HTTP")
-    var allowInsecureHttp: AllowHTTP?
+    private var allowInsecureHttp: AllowHTTP?
 
     @Option(help: "CPU architecture")
     private var architecture: String?
 
     @Option(help: "Base image reference")
-    private var from: String = ProcessInfo.processInfo.environment["CONTAINERTOOL_BASE_IMAGE"] ?? "swift:slim"
+    private var from: String?
 
     @Option(help: "Operating system")
-    private var os: String = ProcessInfo.processInfo.environment["CONTAINERTOOL_OS"] ?? "linux"
+    private var os: String?
 
     @Option(help: "Tag for this manifest")
     private var tag: String?
@@ -72,8 +71,26 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
     private var netrcFile: String?
 
     func run() async throws {
-        let baseImage = try ImageReference(fromString: from, defaultRegistry: defaultRegistry)
-        let destinationImage = try ImageReference(fromString: repository, defaultRegistry: defaultRegistry)
+        // MARK: Apply defaults for unspecified configuration flags
+
+        let env = ProcessInfo.processInfo.environment
+        let defaultRegistry = defaultRegistry ?? env["CONTAINERTOOL_DEFAULT_REGISTRY"] ?? "docker.io"
+        let from = from ?? env["CONTAINERTOOL_BASE_IMAGE"] ?? "swift:slim"
+        let os = os ?? env["CONTAINERTOOL_OS"] ?? "linux"
+
+        // Try to detect the architecture of the application executable so a suitable base image can be selected.
+        // This reduces the risk of accidentally creating an image which stacks an aarch64 executable on top of an x86_64 base image.
+        let executableURL = URL(fileURLWithPath: executable)
+        let elfheader = try ELF.read(at: executableURL)
+
+        let architecture =
+            architecture
+            ?? env["CONTAINERTOOL_ARCHITECTURE"]
+            ?? elfheader?.ISA.containerArchitecture
+            ?? "amd64"
+        if verbose { log("Base image architecture: \(architecture)") }
+
+        // MARK: Load netrc
 
         let authProvider: AuthorizationProvider?
         if !netrc {
@@ -88,6 +105,9 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         }
 
         // MARK: Create registry clients
+
+        let baseImage = try ImageReference(fromString: from, defaultRegistry: defaultRegistry)
+        let destinationImage = try ImageReference(fromString: repository, defaultRegistry: defaultRegistry)
 
         // The base image may be stored on a different registry to the final destination, so two clients are needed.
         // `scratch` is a special case and requires no source client.
@@ -111,19 +131,6 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
         if verbose { log("Connected to destination registry: \(destinationImage.registry)") }
         if verbose { log("Using base image: \(baseImage)") }
-
-        // MARK: Detect the base image architecture
-
-        // Try to detect the architecture of the application executable so a suitable base image can be selected.
-        // This reduces the risk of accidentally creating an image which stacks an aarch64 executable on top of an x86_64 base image.
-        let executableURL = URL(fileURLWithPath: executable)
-        let elfheader = try ELF.read(at: executableURL)
-        let architecture =
-            architecture
-            ?? ProcessInfo.processInfo.environment["CONTAINERTOOL_ARCHITECTURE"]
-            ?? elfheader?.ISA.containerArchitecture
-            ?? "amd64"
-        if verbose { log("Base image architecture: \(architecture)") }
 
         // MARK: Build the image
 
