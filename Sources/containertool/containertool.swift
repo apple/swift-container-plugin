@@ -40,10 +40,10 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
     @Option(help: "Resource bundle directory")
     private var resources: [String] = []
 
-    @Option(help: "Username")
+    @Option(help: "Default username, used if there are no matching entries in .netrc")
     private var username: String?
 
-    @Option(help: "Password")
+    @Option(help: "Default password, used if there are no matching entries in .netrc")
     private var password: String?
 
     @Flag(name: .shortAndLong, help: "Verbose output")
