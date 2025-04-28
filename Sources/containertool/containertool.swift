@@ -129,14 +129,13 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         let baseimage_config: ImageConfiguration
         if let source {
             baseimage_manifest = try await source.getImageManifest(
-                repository: baseimage.repository,
-                reference: baseimage.reference,
+                forImage: baseimage,
                 architecture: architecture
             )
             log("Found base image manifest: \(baseimage_manifest.digest)")
 
             baseimage_config = try await source.getImageConfiguration(
-                repository: baseimage.repository,
+                forImage: baseimage,
                 digest: baseimage_manifest.config.digest
             )
             log("Found base image configuration: \(baseimage_manifest.config.digest)")
@@ -204,7 +203,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         )
 
         let config_blob = try await destination.putImageConfiguration(
-            repository: destination_image.repository,
+            forImage: destination_image,
             configuration: configuration
         )
 

@@ -185,6 +185,7 @@ struct SmokeTests {
 
     @Test func testPutAndGetImageConfiguration() async throws {
         let repository = "testputandgetimageconfiguration"  // repository name must be lowercase
+        let image = ImageReference(registry: "registry", repository: repository, reference: "latest")
 
         let configuration = ImageConfiguration(
             created: "1996-12-19T16:39:57-08:00",
@@ -195,12 +196,12 @@ struct SmokeTests {
             history: [.init(created: "1996-12-19T16:39:57-08:00", author: "test", created_by: "smoketest")]
         )
         let config_descriptor = try await client.putImageConfiguration(
-            repository: repository,
+            forImage: image,
             configuration: configuration
         )
 
         let downloaded = try await client.getImageConfiguration(
-            repository: repository,
+            forImage: image,
             digest: config_descriptor.digest
         )
 
