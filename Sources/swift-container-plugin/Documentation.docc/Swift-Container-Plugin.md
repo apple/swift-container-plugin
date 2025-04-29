@@ -10,23 +10,22 @@ Build and publish container images using Swift Package Manager.
 
 Container images are the standard way to package cloud software today.   Once you have packaged your server in a container image, you can deploy it on any container-based public or private cloud service, or run it locally using a desktop container runtime.
 
-Swift Container Plugin makes it easy to build container images for servers written in Swift, using Swift Package Manager.
+Use Swift Container Plugin to build and publish container images for your Swift services in one streamlined workflow with Swift Package Manager.
 
-Find out more and see it in action:
+![Swift Container Plugin flow diagram](swift-container-plugin-flow-diagram)
 
-* [How to put Swift in a box](https://fosdem.org/2025/schedule/event/fosdem-2025-5116-how-to-put-swift-in-a-box-building-container-images-with-swift-container-plugin/) at [FOSDEM 2025](https://fosdem.org/2025/schedule/track/swift/).
-* [Swift to the cloud in a single step](https://www.youtube.com/watch?v=9AaINsCfZzw) at [ServerSide.Swift 2024](https://www.serversideswift.info/2024/speakers/euan-harris/).
+1. [Add the plugin to your project's dependencies](doc:Adding-the-plugin-to-your-project) in `Package.swift`.
+2. [Build and package your service](doc:build) using Swift Package Manager.
+   - If you are building on macOS, [use a Swift SDK](doc:requirements) to cross-compile a Linux executable.
+   - If you are building on Linux, use your native Swift compiler to build a Linux executable.   If you have special requirements such as building a static executable, or cross-compiling to a different processor architecture, use a suitable Swift SDK.
+3. The plugin automatically packages your executable in a container image and publishes it to your chosen container registry.
+4. [Run your container image](doc:run) on any container-based platform.
 
 ### Usage
 
-Use the Swift Container Plugin to package an executable product from your Swift package into a container image and publish it to a container registry.
+Swift Container Plugin can package any executable product defined in `Package.swift`.
 
-To use the plugin:
-- <doc:Adding-the-plugin-to-your-project>
-- <doc:requirements>
-- <doc:authentication>
-
-### Build and publish a container image
+#### Build and publish a container image
 
 After adding the plugin to your project, you can build and publish a container image in one step.
 Here is how to build the [HelloWorld example](https://github.com/apple/swift-container-plugin/tree/main/Examples/HelloWorldHummingbird) as a static executable for Linux running on the `x86_64` architecture:
@@ -54,9 +53,9 @@ Build of product 'hello-world' complete! (5.51s)
 registry.example.com/myservice@sha256:a3f75d0932d052dd9d448a1c9040b16f9f2c2ed9190317147dee95a218faf1df
 ```
 
-### Run the image
+#### Run the image
 
-You can deploy your service in the cloud, or use a standards-compliant container runtime such as `podman` to run it locally:
+Deploy your service in the cloud, or use a standards-compliant container runtime to run it locally:
 
 ```
 % podman run -p 8080:8080 registry.example.com/myservice@sha256:a3f75d0932d052dd9d448a1c9040b16f9f2c2ed9190317147dee95a218faf1df
@@ -65,7 +64,14 @@ Trying to pull registry.example.com/myservice@sha256:a3f75d0932d052dd9d448a1c904
 2024-05-26T22:57:50+0000 info HummingBird : [HummingbirdCore] Server started and listening on 0.0.0.0:8080
 ```
 
-Take a look at some [other examples](https://github.com/apple/swift-container-plugin/tree/main/Examples).
+### Find out more
+
+* Take a look at [more examples](https://github.com/apple/swift-container-plugin/tree/main/Examples).
+
+* Watch some talks:
+
+    * [How to put Swift in a box](https://fosdem.org/2025/schedule/event/fosdem-2025-5116-how-to-put-swift-in-a-box-building-container-images-with-swift-container-plugin/) at [FOSDEM 2025](https://fosdem.org/2025/schedule/track/swift/).
+    * [Swift to the cloud in a single step](https://www.youtube.com/watch?v=9AaINsCfZzw) at [ServerSide.Swift 2024](https://www.serversideswift.info/2024/speakers/euan-harris/).
 
 ## Topics
 
