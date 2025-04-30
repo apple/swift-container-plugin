@@ -40,11 +40,27 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
     @Option(help: "Resource bundle directory")
     private var resources: [String] = []
 
-    @Option(help: "Default username, used if there are no matching entries in .netrc")
+    @Option(
+        help: ArgumentHelp(
+            "[DEPRECATED] Default username, used if there are no matching entries in .netrc. Use --default-username instead.",
+            visibility: .private
+        )
+    )
     private var username: String?
 
-    @Option(help: "Default password, used if there are no matching entries in .netrc")
+    @Option(help: "Default username, used if there are no matching entries in .netrc")
+    private var defaultUsername: String?
+
+    @Option(
+        help: ArgumentHelp(
+            "[DEPRECATED] Default password, used if there are no matching entries in .netrc.   Use --default-password instead.",
+            visibility: .private
+        )
+    )
     private var password: String?
+
+    @Option(help: "Default password, used if there are no matching entries in .netrc")
+    private var defaultPassword: String?
 
     @Flag(name: .shortAndLong, help: "Verbose output")
     private var verbose: Bool = false
@@ -70,13 +86,37 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
     @Option(help: "Specify the netrc file path")
     private var netrcFile: String?
 
+    mutating func validate() throws {
+        if username != nil {
+            guard defaultUsername == nil else {
+                throw ValidationError(
+                    "--default-username and --username cannot be specified together.   Please use --default-username only."
+                )
+            }
+
+            log("Deprecation warning: --username is deprecated, please use --default-username instead.")
+            defaultUsername = username
+        }
+
+        if password != nil {
+            guard defaultPassword == nil else {
+                throw ValidationError(
+                    "--default-password and --password cannot be specified together.   Please use --default-password only."
+                )
+            }
+
+            log("Deprecation warning: --password is deprecated, please use --default-password instead.")
+            defaultPassword = password
+        }
+    }
+
     func run() async throws {
         // MARK: Apply defaults for unspecified configuration flags
 
         let env = ProcessInfo.processInfo.environment
         let defaultRegistry = defaultRegistry ?? env["CONTAINERTOOL_DEFAULT_REGISTRY"] ?? "docker.io"
-        let username = username ?? env["CONTAINERTOOL_USERNAME"]
-        let password = password ?? env["CONTAINERTOOL_PASSWORD"]
+        let username = defaultUsername ?? env["CONTAINERTOOL_DEFAULT_USERNAME"]
+        let password = defaultPassword ?? env["CONTAINERTOOL_DEFAULT_PASSWORD"]
         let from = from ?? env["CONTAINERTOOL_BASE_IMAGE"] ?? "swift:slim"
         let os = os ?? env["CONTAINERTOOL_OS"] ?? "linux"
 
