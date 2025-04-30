@@ -21,11 +21,11 @@ Use Swift Container Plugin to build and publish container images for your Swift 
 3. The plugin automatically packages your executable in a container image and publishes it to your chosen container registry.
 4. [Run your container image](doc:run) on any container-based platform.
 
-## Usage
+### Usage
 
 Swift Container Plugin can package any executable product defined in `Package.swift`.
 
-### Build and publish a container image
+#### Build and publish a container image
 
 After adding the plugin to your project, you can build and publish a container image in one step.
 Here is how to build the [HelloWorld example](https://github.com/apple/swift-container-plugin/tree/main/Examples/HelloWorldHummingbird) as a static executable for Linux running on the `x86_64` architecture:
@@ -53,7 +53,7 @@ Build of product 'hello-world' complete! (5.51s)
 registry.example.com/myservice@sha256:a3f75d0932d052dd9d448a1c9040b16f9f2c2ed9190317147dee95a218faf1df
 ```
 
-### Run the image
+#### Run the image
 
 Deploy your service in the cloud, or use a standards-compliant container runtime to run it locally:
 
