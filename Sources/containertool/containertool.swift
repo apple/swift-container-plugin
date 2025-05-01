@@ -32,7 +32,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
     private var defaultRegistry: String?
 
     @Option(help: "Repository path")
-    private var repository: String
+    private var repository: String?
 
     @Argument(help: "Executable to package")
     private var executable: String
@@ -114,7 +114,14 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         // MARK: Apply defaults for unspecified configuration flags
 
         let env = ProcessInfo.processInfo.environment
+
         let defaultRegistry = defaultRegistry ?? env["CONTAINERTOOL_DEFAULT_REGISTRY"] ?? "docker.io"
+        guard let repository = repository ?? env["CONTAINERTOOL_REPOSITORY"] else {
+            throw ValidationError(
+                "Please specify the destination repository using --repository or CONTAINERTOOL_REPOSITORY"
+            )
+        }
+
         let username = defaultUsername ?? env["CONTAINERTOOL_DEFAULT_USERNAME"]
         let password = defaultPassword ?? env["CONTAINERTOOL_DEFAULT_PASSWORD"]
         let from = from ?? env["CONTAINERTOOL_BASE_IMAGE"] ?? "swift:slim"
