@@ -1,6 +1,6 @@
 # Swift Container Plugin
 
-[![](https://img.shields.io/badge/docc-read_documentation-blue)](https://swiftpackageindex.com/apple/swift-container-plugin/main/documentation/swift-container-plugin)
+[![](https://img.shields.io/badge/docc-read_documentation-blue)](https://swiftpackageindex.com/apple/swift-container-plugin/documentation)
 [![](https://img.shields.io/github/v/release/apple/swift-container-plugin?include_prereleases)](https://github.com/apple/swift-container-plugin/releases)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fapple%2Fswift-container-plugin%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/apple/swift-container-plugin)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fapple%2Fswift-container-plugin%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/apple/swift-container-plugin)
@@ -14,16 +14,16 @@ Container images are the standard way to package cloud software today.   Once yo
 
 Use Swift Container Plugin to build and publish container images for your Swift services in one streamlined workflow with Swift Package Manager.
 
-![Swift Container Plugin flow diagram](Sources/swift-container-plugin/Documentation.docc/_Resources/swift-container-plugin-flow-diagram.png)
+[![Swift Container Plugin flow diagram](Sources/swift-container-plugin/Documentation.docc/_Resources/swift-container-plugin-flow-diagram.png)](https://swiftpackageindex.com/apple/swift-container-plugin/documentation)
 
-1. [Add the plugin to your project's dependencies](https://swiftpackageindex.com/apple/swift-container-plugin/main/documentation/swift-container-plugin/adding-the-plugin-to-your-project) in `Package.swift`.
-2. [Build and package your service](https://swiftpackageindex.com/apple/swift-container-plugin/main/documentation/swift-container-plugin/build) using Swift Package Manager.
-   - If you are building on macOS, [use a Swift SDK](https://swiftpackageindex.com/apple/swift-container-plugin/main/documentation/swift-container-plugin/requirements) to cross-compile a Linux executable.
+1. [Add the plugin to your project's dependencies](https://swiftpackageindex.com/apple/swift-container-plugin/documentation/swift-container-plugin/adding-the-plugin-to-your-project) in `Package.swift`.
+2. [Build and package your service](https://swiftpackageindex.com/apple/swift-container-plugin/documentation/swift-container-plugin/build) using Swift Package Manager.
+   - If you are building on macOS, [use a Swift SDK](https://swiftpackageindex.com/apple/swift-container-plugin/documentation/swift-container-plugin/requirements) to cross-compile a Linux executable.
    - If you are building on Linux, use your native Swift compiler to build a Linux executable.   If you have special requirements such as building a static executable, or cross-compiling to a different processor architecture, use a suitable Swift SDK.
 3. The plugin automatically packages your executable in a container image and publishes it to your chosen container registry.
-4. [Run your container image](https://swiftpackageindex.com/apple/swift-container-plugin/main/documentation/swift-container-plugin/run) on any container-based platform.
+4. [Run your container image](https://swiftpackageindex.com/apple/swift-container-plugin/documentation/swift-container-plugin/run) on any container-based platform.
 
-Find full details [in the documentation](https://swiftpackageindex.com/apple/swift-container-plugin/main/documentation/swift-container-plugin).
+Find full details [in the documentation](https://swiftpackageindex.com/apple/swift-container-plugin/documentation).
 
 ## Usage
 
@@ -75,7 +75,7 @@ Trying to pull registry.example.com/myservice@sha256:a3f75d0932d052dd9d448a1c904
 * A container runtime is not required to build an image, but one must be available wherever the image is to be run.
 
 ### Find out more
-* Learn more about setting up your project in the [plugin documentation](https://swiftpackageindex.com/apple/swift-container-plugin/main/documentation/swift-container-plugin).
+* Learn more about setting up your project in the [plugin documentation](https://swiftpackageindex.com/apple/swift-container-plugin/documentation/swift-container-plugin).
 
 * Take a look at [more examples](https://github.com/apple/swift-container-plugin/tree/main/Examples).
 
