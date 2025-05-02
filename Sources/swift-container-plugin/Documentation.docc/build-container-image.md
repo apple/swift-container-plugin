@@ -20,7 +20,7 @@ Wrap a binary in a container image and publish it.
 - term  `--default-registry <default-registry>`:
   The default registry hostname. (default: `docker.io`)
 
-  If the value of the `--repository` argument does not contain a registry hostname, the default registry will be prepended to the repository path.
+  If the repository path does not contain a registry hostname, the default registry will be prepended to it.
 
 - term  `--repository <repository>`:
   The repository path.
@@ -79,8 +79,13 @@ Wrap a binary in a container image and publish it.
 ### Environment
 
 - term `CONTAINERTOOL_DEFAULT_REGISTRY`:
-  Default image registry hostname, used when the `--repository` argument does not contain a registry hostname.
+  Default image registry hostname, used when the repository path does not contain a registry hostname.
   (default: `docker.io`)
+
+- term `CONTAINERTOOL_REPOSITORY`:
+  The repository path.
+
+  If the path does not begin with a registry hostname, the default registry will be prepended to the path.
 
 - term `CONTAINERTOOL_BASE_IMAGE`:
   Base image on which to layer the application.

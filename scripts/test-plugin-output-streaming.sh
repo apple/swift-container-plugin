@@ -46,9 +46,8 @@ swift package --package-path "$PKGPATH" --allow-network-connections all build-co
 set -o pipefail
 
 # This checks that the output lines are not broken, but not that they appear in the correct order
-grep -F -x -e "error: Missing expected argument '--repository <repository>'" \
-           -e "error: Help:  --repository <repository>  Repository path" \
-           -e "error: Usage: containertool [<options>] --repository <repository> <executable>" \
+grep -F -x -e "error: Please specify the destination repository using --repository or CONTAINERTOOL_REPOSITORY" \
+           -e "error: Usage: containertool [<options>] <executable>" \
            -e "error:   See 'containertool --help' for more information." "$PKGPATH/output"
 
 log Plugin error output: PASSED
