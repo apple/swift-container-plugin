@@ -102,6 +102,33 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
         @Option(help: "Connect to the registry using plaintext HTTP")
         var allowInsecureHttp: AllowHTTP?
+
+        mutating func validate() throws {
+            // The `--username` and `--password` options present v1.0 were deprecated and replaced by more descriptive
+            // `--default-username` and `--default-password`.  The old names are still accepted, but specifying both the old
+            // and the new names at the same time is ambiguous and causes an error.
+            if username != nil {
+                guard defaultUsername == nil else {
+                    throw ValidationError(
+                        "--default-username and --username cannot be specified together.   --username is deprecated, please use --default-username instead."
+                    )
+                }
+
+                log("Deprecation warning: --username is deprecated, please use --default-username instead.")
+                defaultUsername = username
+            }
+
+            if password != nil {
+                guard defaultPassword == nil else {
+                    throw ValidationError(
+                        "--default-password and --password cannot be specified together.   --password is deprecated, please use --default-password instead."
+                    )
+                }
+
+                log("Deprecation warning: --password is deprecated, please use --default-password instead.")
+                defaultPassword = password
+            }
+        }
     }
 
     @OptionGroup(title: "Authentication options")
@@ -111,30 +138,6 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
     @Flag(name: .shortAndLong, help: "Verbose output")
     private var verbose: Bool = false
-
-    mutating func validate() throws {
-        if authenticationOptions.username != nil {
-            guard authenticationOptions.defaultUsername == nil else {
-                throw ValidationError(
-                    "--default-username and --username cannot be specified together.   Please use --default-username only."
-                )
-            }
-
-            log("Deprecation warning: --username is deprecated, please use --default-username instead.")
-            authenticationOptions.defaultUsername = authenticationOptions.username
-        }
-
-        if authenticationOptions.password != nil {
-            guard authenticationOptions.defaultPassword == nil else {
-                throw ValidationError(
-                    "--default-password and --password cannot be specified together.   Please use --default-password only."
-                )
-            }
-
-            log("Deprecation warning: --password is deprecated, please use --default-password instead.")
-            authenticationOptions.defaultPassword = authenticationOptions.password
-        }
-    }
 
     func run() async throws {
         // MARK: Apply defaults for unspecified configuration flags
