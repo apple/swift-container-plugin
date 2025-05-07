@@ -28,85 +28,111 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         abstract: "Build and publish a container image"
     )
 
-    @Option(help: "Default registry for references which do not specify a registry")
-    private var defaultRegistry: String?
-
-    @Option(help: "Repository path")
-    private var repository: String?
-
     @Argument(help: "Executable to package")
     private var executable: String
 
-    @Option(help: "Resource bundle directory")
-    private var resources: [String] = []
+    /// Options controlling the locations of the source and destination images
+    struct RepositoryOptions: ParsableArguments {
+        @Option(help: "Default registry for image references which do not specify one")
+        var defaultRegistry: String?
 
-    @Option(
-        help: ArgumentHelp(
-            "[DEPRECATED] Default username, used if there are no matching entries in .netrc. Use --default-username instead.",
-            visibility: .private
+        @Option(help: "Destination image reference")
+        var repository: String?
+
+        @Option(help: "Destination image tag")
+        var tag: String?
+
+        @Option(help: "Base image reference")
+        var from: String?
+    }
+
+    @OptionGroup(title: "Source and destination repository options")
+    var repositoryOptions: RepositoryOptions
+
+    /// Options controlling how the destination image is built
+    struct ImageBuildOptions: ParsableArguments {
+        @Option(help: "Directory of resources to include in the image")
+        var resources: [String] = []
+    }
+
+    @OptionGroup(title: "Image build options")
+    var imageBuildOptions: ImageBuildOptions
+
+    // Options controlling the destination image's runtime configuration
+    struct ImageConfigurationOptions: ParsableArguments {
+        @Option(help: "CPU architecture")
+        var architecture: String?
+
+        @Option(help: "Operating system")
+        var os: String?
+    }
+
+    @OptionGroup(title: "Image configuration options")
+    var imageConfigurationOptions: ImageConfigurationOptions
+
+    /// Options controlling how containertool authenticates to registries
+    struct AuthenticationOptions: ParsableArguments {
+        @Option(
+            help: ArgumentHelp(
+                "[DEPRECATED] Default username, used if there are no matching entries in .netrc. Use --default-username instead.",
+                visibility: .private
+            )
         )
-    )
-    private var username: String?
+        var username: String?
 
-    @Option(help: "Default username, used if there are no matching entries in .netrc")
-    private var defaultUsername: String?
+        @Option(help: "Default username, used if there are no matching entries in .netrc")
+        var defaultUsername: String?
 
-    @Option(
-        help: ArgumentHelp(
-            "[DEPRECATED] Default password, used if there are no matching entries in .netrc.   Use --default-password instead.",
-            visibility: .private
+        @Option(
+            help: ArgumentHelp(
+                "[DEPRECATED] Default password, used if there are no matching entries in .netrc.   Use --default-password instead.",
+                visibility: .private
+            )
         )
-    )
-    private var password: String?
+        var password: String?
 
-    @Option(help: "Default password, used if there are no matching entries in .netrc")
-    private var defaultPassword: String?
+        @Option(help: "Default password, used if there are no matching entries in .netrc")
+        var defaultPassword: String?
+
+        @Flag(inversion: .prefixedEnableDisable, exclusivity: .exclusive, help: "Load credentials from a netrc file")
+        var netrc: Bool = true
+
+        @Option(help: "Specify the netrc file path")
+        var netrcFile: String?
+
+        @Option(help: "Connect to the registry using plaintext HTTP")
+        var allowInsecureHttp: AllowHTTP?
+    }
+
+    @OptionGroup(title: "Authentication options")
+    var authenticationOptions: AuthenticationOptions
+
+    // General options
 
     @Flag(name: .shortAndLong, help: "Verbose output")
     private var verbose: Bool = false
 
-    @Option(help: "Connect to the container registry using plaintext HTTP")
-    private var allowInsecureHttp: AllowHTTP?
-
-    @Option(help: "CPU architecture")
-    private var architecture: String?
-
-    @Option(help: "Base image reference")
-    private var from: String?
-
-    @Option(help: "Operating system")
-    private var os: String?
-
-    @Option(help: "Tag for this manifest")
-    private var tag: String?
-
-    @Flag(inversion: .prefixedEnableDisable, exclusivity: .exclusive, help: "Load credentials from a netrc file")
-    private var netrc: Bool = true
-
-    @Option(help: "Specify the netrc file path")
-    private var netrcFile: String?
-
     mutating func validate() throws {
-        if username != nil {
-            guard defaultUsername == nil else {
+        if authenticationOptions.username != nil {
+            guard authenticationOptions.defaultUsername == nil else {
                 throw ValidationError(
                     "--default-username and --username cannot be specified together.   Please use --default-username only."
                 )
             }
 
             log("Deprecation warning: --username is deprecated, please use --default-username instead.")
-            defaultUsername = username
+            authenticationOptions.defaultUsername = authenticationOptions.username
         }
 
-        if password != nil {
-            guard defaultPassword == nil else {
+        if authenticationOptions.password != nil {
+            guard authenticationOptions.defaultPassword == nil else {
                 throw ValidationError(
                     "--default-password and --password cannot be specified together.   Please use --default-password only."
                 )
             }
 
             log("Deprecation warning: --password is deprecated, please use --default-password instead.")
-            defaultPassword = password
+            authenticationOptions.defaultPassword = authenticationOptions.password
         }
     }
 
@@ -115,17 +141,17 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
         let env = ProcessInfo.processInfo.environment
 
-        let defaultRegistry = defaultRegistry ?? env["CONTAINERTOOL_DEFAULT_REGISTRY"] ?? "docker.io"
-        guard let repository = repository ?? env["CONTAINERTOOL_REPOSITORY"] else {
+        let defaultRegistry = repositoryOptions.defaultRegistry ?? env["CONTAINERTOOL_DEFAULT_REGISTRY"] ?? "docker.io"
+        guard let repository = repositoryOptions.repository ?? env["CONTAINERTOOL_REPOSITORY"] else {
             throw ValidationError(
                 "Please specify the destination repository using --repository or CONTAINERTOOL_REPOSITORY"
             )
         }
 
-        let username = defaultUsername ?? env["CONTAINERTOOL_DEFAULT_USERNAME"]
-        let password = defaultPassword ?? env["CONTAINERTOOL_DEFAULT_PASSWORD"]
-        let from = from ?? env["CONTAINERTOOL_BASE_IMAGE"] ?? "swift:slim"
-        let os = os ?? env["CONTAINERTOOL_OS"] ?? "linux"
+        let username = authenticationOptions.defaultUsername ?? env["CONTAINERTOOL_DEFAULT_USERNAME"]
+        let password = authenticationOptions.defaultPassword ?? env["CONTAINERTOOL_DEFAULT_PASSWORD"]
+        let from = repositoryOptions.from ?? env["CONTAINERTOOL_BASE_IMAGE"] ?? "swift:slim"
+        let os = imageConfigurationOptions.os ?? env["CONTAINERTOOL_OS"] ?? "linux"
 
         // Try to detect the architecture of the application executable so a suitable base image can be selected.
         // This reduces the risk of accidentally creating an image which stacks an aarch64 executable on top of an x86_64 base image.
@@ -133,7 +159,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         let elfheader = try ELF.read(at: executableURL)
 
         let architecture =
-            architecture
+            imageConfigurationOptions.architecture
             ?? env["CONTAINERTOOL_ARCHITECTURE"]
             ?? elfheader?.ISA.containerArchitecture
             ?? "amd64"
@@ -142,10 +168,12 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         // MARK: Load netrc
 
         let authProvider: AuthorizationProvider?
-        if !netrc {
+        if !authenticationOptions.netrc {
             authProvider = nil
-        } else if let netrcFile {
-            guard FileManager.default.fileExists(atPath: netrcFile) else { throw "\(netrcFile) not found" }
+        } else if let netrcFile = authenticationOptions.netrcFile {
+            guard FileManager.default.fileExists(atPath: netrcFile) else {
+                throw "\(netrcFile) not found"
+            }
             let customNetrc = URL(fileURLWithPath: netrcFile)
             authProvider = try NetrcAuthorizationProvider(customNetrc)
         } else {
@@ -166,7 +194,8 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         } else {
             source = try await RegistryClient(
                 registry: baseImage.registry,
-                insecure: allowInsecureHttp == .source || allowInsecureHttp == .both,
+                insecure: authenticationOptions.allowInsecureHttp == .source
+                    || authenticationOptions.allowInsecureHttp == .both,
                 auth: .init(username: username, password: password, auth: authProvider)
             )
             if verbose { log("Connected to source registry: \(baseImage.registry)") }
@@ -174,7 +203,8 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
         let destination = try await RegistryClient(
             registry: destinationImage.registry,
-            insecure: allowInsecureHttp == .destination || allowInsecureHttp == .both,
+            insecure: authenticationOptions.allowInsecureHttp == .destination
+                || authenticationOptions.allowInsecureHttp == .both,
             auth: .init(username: username, password: password, auth: authProvider)
         )
 
@@ -189,8 +219,8 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
             source: source,
             architecture: architecture,
             os: os,
-            resources: resources,
-            tag: tag,
+            resources: imageBuildOptions.resources,
+            tag: repositoryOptions.tag,
             verbose: verbose,
             executableURL: executableURL
         )
