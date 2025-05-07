@@ -91,6 +91,21 @@ Wrap a binary in a container image and publish it.
   Base image on which to layer the application.
   (default: `swift:slim`)
 
+- term `CONTAINERTOOL_ARCHITECTURE`:
+  CPU architecture.
+
 - term `CONTAINERTOOL_OS`:
   Operating system to encode in the container image.
   (default: `Linux`)
+
+- term `CONTAINERTOOL_DEFAULT_USERNAME`:
+  Default username to use when logging into the registry.
+
+  This username is used if there is no matching `.netrc` entry for the registry, there is no `.netrc` file, or the `--disable-netrc` option is set.
+  The same username is used for the source and destination registries.
+
+- term `CONTAINERTOOL_DEFAULT_PASSWORD`:
+  Default password to use when logging into the registry.
+
+  This password is used if there is no matching `.netrc` entry for the registry, there is no `.netrc` file, or the `--disable-netrc` option is set.
+  The same password is used for the source and destination registries.
