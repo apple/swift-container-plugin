@@ -33,7 +33,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
     /// Options controlling the locations of the source and destination images
     struct RepositoryOptions: ParsableArguments {
-        @Option(help: "Default registry for image references which do not specify one")
+        @Option(help: "The default container registry to use when the image reference doesn't specify one")
         var defaultRegistry: String?
 
         @Option(help: "Destination image reference")
