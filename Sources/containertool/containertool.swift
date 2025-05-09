@@ -36,7 +36,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         @Option(help: "The default container registry to use when the image reference doesn't specify one")
         var defaultRegistry: String?
 
-        @Option(help: "Destination image reference")
+        @Option(help: "The name and optional tag for the generated container image")
         var repository: String?
 
         @Option(help: "The tag for the generated container image")
