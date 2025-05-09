@@ -42,7 +42,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         @Option(help: "The tag for the generated container image")
         var tag: String?
 
-        @Option(help: "Base image reference")
+        @Option(help: "The base container image name and optional tag")
         var from: String?
     }
 
