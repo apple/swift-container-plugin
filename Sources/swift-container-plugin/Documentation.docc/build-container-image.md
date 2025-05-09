@@ -31,7 +31,7 @@ Wrap a binary in a container image and publish it.
   The destination repository must be specified, either by setting the `--repository` option or the `CONTAINERTOOL_REPOSITORY` environment variable.
 
 - term  `--tag <tag>`:
-  Destination image tag.
+  The tag to apply to the destination image.
 
   The `latest` tag is automatically updated to refer to the published image.
 
