@@ -91,7 +91,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         )
         var password: String?
 
-        @Option(help: "Default password, used if there are no matching entries in .netrc")
+        @Option(help: "The default password to use if the tool can't find a matching entry in .netrc")
         var defaultPassword: String?
 
         @Flag(inversion: .prefixedEnableDisable, exclusivity: .exclusive, help: "Load credentials from a netrc file")
