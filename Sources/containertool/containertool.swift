@@ -39,7 +39,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         @Option(help: "Destination image reference")
         var repository: String?
 
-        @Option(help: "Destination image tag")
+        @Option(help: "The tag for the generated container image")
         var tag: String?
 
         @Option(help: "Base image reference")
