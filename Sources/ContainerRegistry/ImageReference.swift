@@ -14,13 +14,11 @@
 
 import RegexBuilder
 
-enum ReferenceError: Error { case unexpected(String) }
-
 // https://github.com/distribution/distribution/blob/v2.7.1/reference/reference.go
 // Split the image reference into a registry and a name part.
 func splitReference(_ reference: String) throws -> (String?, String) {
     let splits = reference.split(separator: "/", maxSplits: 1, omittingEmptySubsequences: false)
-    if splits.count == 0 { throw ReferenceError.unexpected("unexpected error") }
+    if splits.count == 0 { throw ImageReference.ValidationError.unexpected("unexpected error") }
 
     if splits.count == 1 { return (nil, reference) }
 
@@ -39,7 +37,7 @@ func splitName(_ name: String) throws -> (String, String) {
     if digestSplit.count == 2 { return (String(digestSplit[0]), String(digestSplit[1])) }
 
     let tagSplit = name.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
-    if tagSplit.count == 0 { throw ReferenceError.unexpected("unexpected error") }
+    if tagSplit.count == 0 { throw ImageReference.ValidationError.unexpected("unexpected error") }
 
     if tagSplit.count == 1 { return (name, "latest") }
 
@@ -52,9 +50,13 @@ public struct ImageReference: Sendable, Equatable, CustomStringConvertible, Cust
     /// The registry which contains this image
     public var registry: String
     /// The repository which contains this image
-    public var repository: String
+    public var repository: Repository
     /// The tag identifying the image.
     public var reference: String
+
+    public enum ValidationError: Error {
+        case unexpected(String)
+    }
 
     /// Creates an ImageReference from an image reference string.
     /// - Parameters:
@@ -72,19 +74,20 @@ public struct ImageReference: Sendable, Equatable, CustomStringConvertible, Cust
         // moby/moby assumes that these names refer to images in `library`: `library/swift` or `library/swift:slim`.
         // This special case only applies when using Docker Hub, so `example.com/swift` is not expanded `example.com/library/swift`
         if self.registry == "index.docker.io" && !repository.contains("/") {
-            self.repository = "library/\(repository)"
+            self.repository = try Repository("library/\(repository)")
         } else {
-            self.repository = repository
+            self.repository = try Repository(repository)
         }
         self.reference = reference
     }
 
     /// Creates an ImageReference from separate registry, repository and reference strings.
+    /// Used only in tests.
     /// - Parameters:
     ///   - registry: The registry which stores the image data.
     ///   - repository: The repository within the registry which holds the image.
     ///   - reference: The tag identifying the image.
-    public init(registry: String, repository: String, reference: String) {
+    init(registry: String, repository: Repository, reference: String) {
         self.registry = registry
         self.repository = repository
         self.reference = reference
@@ -102,5 +105,35 @@ public struct ImageReference: Sendable, Equatable, CustomStringConvertible, Cust
     /// Printable description of an ImageReference in a form suitable for debugging.
     public var debugDescription: String {
         "ImageReference(registry: \(registry), repository: \(repository), reference: \(reference))"
+    }
+}
+
+extension ImageReference {
+    /// Repository refers a repository (image namespace) on a container registry
+    public struct Repository: Sendable, Equatable, CustomStringConvertible, CustomDebugStringConvertible {
+        var value: String
+
+        public enum ValidationError: Error {
+            case emptyString
+        }
+
+        public init(_ rawValue: String) throws {
+            // Reference handling in github.com/distribution reports empty and uppercase as specific errors.
+            // All other errors caused are reported as generic format errors.
+            guard rawValue.count > 0 else {
+                throw ValidationError.emptyString
+            }
+
+            value = rawValue
+        }
+
+        public var description: String {
+            value
+        }
+
+        /// Printable description of an ImageReference in a form suitable for debugging.
+        public var debugDescription: String {
+            "Repository(\(value))"
+        }
     }
 }

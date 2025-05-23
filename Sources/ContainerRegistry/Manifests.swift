@@ -13,10 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 public extension RegistryClient {
-    func putManifest(repository: String, reference: String, manifest: ImageManifest) async throws -> String {
+    func putManifest(repository: ImageReference.Repository, reference: String, manifest: ImageManifest) async throws
+        -> String
+    {
         // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pushing-manifests
-        precondition(repository.count > 0, "repository must not be an empty string")
-        precondition(reference.count > 0, "reference must not be an empty string")
+        precondition("\(reference)".count > 0, "reference must not be an empty string")
 
         let httpResponse = try await executeRequestThrowing(
             // All blob uploads have Content-Type: application/octet-stream on the wire, even if mediatype is different
@@ -41,9 +42,8 @@ public extension RegistryClient {
             .absoluteString
     }
 
-    func getManifest(repository: String, reference: String) async throws -> ImageManifest {
+    func getManifest(repository: ImageReference.Repository, reference: String) async throws -> ImageManifest {
         // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pulling-manifests
-        precondition(repository.count > 0, "repository must not be an empty string")
         precondition(reference.count > 0, "reference must not be an empty string")
 
         return try await executeRequestThrowing(
@@ -60,8 +60,7 @@ public extension RegistryClient {
         .data
     }
 
-    func getIndex(repository: String, reference: String) async throws -> ImageIndex {
-        precondition(repository.count > 0, "repository must not be an empty string")
+    func getIndex(repository: ImageReference.Repository, reference: String) async throws -> ImageIndex {
         precondition(reference.count > 0, "reference must not be an empty string")
 
         return try await executeRequestThrowing(

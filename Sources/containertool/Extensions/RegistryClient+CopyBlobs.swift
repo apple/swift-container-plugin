@@ -24,9 +24,9 @@ extension RegistryClient {
     /// - Throws: If the copy cannot be completed.
     func copyBlob(
         digest: String,
-        fromRepository sourceRepository: String,
+        fromRepository sourceRepository: ImageReference.Repository,
         toClient destClient: RegistryClient,
-        toRepository destRepository: String
+        toRepository destRepository: ImageReference.Repository
     ) async throws {
         if try await destClient.blobExists(repository: destRepository, digest: digest) {
             log("Layer \(digest): already exists")
