@@ -113,8 +113,9 @@ extension ImageReference {
     public struct Repository: Sendable, Equatable, CustomStringConvertible, CustomDebugStringConvertible {
         var value: String
 
-        public enum ValidationError: Error {
+        public enum ValidationError: Error, Equatable {
             case emptyString
+            case containsUppercaseLetters(String)
         }
 
         public init(_ rawValue: String) throws {
@@ -122,6 +123,10 @@ extension ImageReference {
             // All other errors caused are reported as generic format errors.
             guard rawValue.count > 0 else {
                 throw ValidationError.emptyString
+            }
+
+            if (rawValue.contains { $0.isUppercase }) {
+                throw ValidationError.containsUppercaseLetters(rawValue)
             }
 
             value = rawValue

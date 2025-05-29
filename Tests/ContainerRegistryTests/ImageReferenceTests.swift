@@ -150,6 +150,16 @@ struct ReferenceTests {
                 reference: "1234/bar:1234"
             )
         ),
+
+        // Capitals are not allowed in repository names but are allowed in hostnames (matching podman's behaviour)
+        ReferenceTestCase(
+            reference: "EXAMPLE.COM/foo:latest",
+            expected: try! ImageReference(
+                registry: "EXAMPLE.COM",
+                repository: ImageReference.Repository("foo"),
+                reference: "latest"
+            )
+        ),
     ]
 
     @Test(arguments: tests)
@@ -169,6 +179,14 @@ struct ReferenceTests {
 
         #expect(throws: ImageReference.Repository.ValidationError.emptyString) {
             try ImageReference(fromString: "example.com/")
+        }
+
+        #expect(throws: ImageReference.Repository.ValidationError.containsUppercaseLetters("helloWorld")) {
+            try ImageReference(fromString: "helloWorld", defaultRegistry: "default")
+        }
+
+        #expect(throws: ImageReference.Repository.ValidationError.containsUppercaseLetters("helloWorld")) {
+            try ImageReference(fromString: "localhost:5555/helloWorld")
         }
     }
 
