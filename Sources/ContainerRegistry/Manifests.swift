@@ -13,12 +13,14 @@
 //===----------------------------------------------------------------------===//
 
 public extension RegistryClient {
-    func putManifest(repository: ImageReference.Repository, reference: String, manifest: ImageManifest) async throws
+    func putManifest(
+        repository: ImageReference.Repository,
+        reference: any ImageReference.Reference,
+        manifest: ImageManifest
+    ) async throws
         -> String
     {
         // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pushing-manifests
-        precondition("\(reference)".count > 0, "reference must not be an empty string")
-
         let httpResponse = try await executeRequestThrowing(
             // All blob uploads have Content-Type: application/octet-stream on the wire, even if mediatype is different
             .put(
@@ -42,11 +44,11 @@ public extension RegistryClient {
             .absoluteString
     }
 
-    func getManifest(repository: ImageReference.Repository, reference: String) async throws -> ImageManifest {
+    func getManifest(repository: ImageReference.Repository, reference: any ImageReference.Reference) async throws
+        -> ImageManifest
+    {
         // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pulling-manifests
-        precondition(reference.count > 0, "reference must not be an empty string")
-
-        return try await executeRequestThrowing(
+        try await executeRequestThrowing(
             .get(
                 repository,
                 path: "manifests/\(reference)",
@@ -60,10 +62,11 @@ public extension RegistryClient {
         .data
     }
 
-    func getIndex(repository: ImageReference.Repository, reference: String) async throws -> ImageIndex {
-        precondition(reference.count > 0, "reference must not be an empty string")
-
-        return try await executeRequestThrowing(
+    func getIndex(repository: ImageReference.Repository, reference: any ImageReference.Reference) async throws
+        -> ImageIndex
+    {
+        // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pulling-manifests
+        try await executeRequestThrowing(
             .get(
                 repository,
                 path: "manifests/\(reference)",
