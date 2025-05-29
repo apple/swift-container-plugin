@@ -158,7 +158,7 @@ public struct AuthHandler {
 
     public func auth(
         registry: URL,
-        repository: String,
+        repository: ImageReference.Repository,
         actions: [String],
         withScheme scheme: AuthChallenge,
         usingClient client: HTTPClient
