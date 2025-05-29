@@ -127,7 +127,8 @@ extension URL {
     ///   - repository: The name of the repository.   May include path separators.
     ///   - endpoint: The distribution endpoint e.g. "tags/list"
     /// - Returns: A fully-qualified URL for the endpoint.
-    func distributionEndpoint(forRepository repository: String, andEndpoint endpoint: String) -> URL {
+    func distributionEndpoint(forRepository repository: ImageReference.Repository, andEndpoint endpoint: String) -> URL
+    {
         self.appendingPathComponent("/v2/\(repository)/\(endpoint)")
     }
 }
@@ -141,7 +142,7 @@ extension RegistryClient {
         }
 
         var method: HTTPRequest.Method  // HTTP method
-        var repository: String  // Repository path on the registry
+        var repository: ImageReference.Repository  // Repository path on the registry
         var destination: Destination  // Destination of the operation: can be a subpath or remote URL
         var actions: [String]  // Actions required by this operation
         var accepting: [String] = []  // Acceptable response types
@@ -156,7 +157,7 @@ extension RegistryClient {
 
         // Convenience constructors
         static func get(
-            _ repository: String,
+            _ repository: ImageReference.Repository,
             path: String,
             actions: [String]? = nil,
             accepting: [String] = [],
@@ -173,7 +174,7 @@ extension RegistryClient {
         }
 
         static func get(
-            _ repository: String,
+            _ repository: ImageReference.Repository,
             url: URL,
             actions: [String]? = nil,
             accepting: [String] = [],
@@ -190,7 +191,7 @@ extension RegistryClient {
         }
 
         static func head(
-            _ repository: String,
+            _ repository: ImageReference.Repository,
             path: String,
             actions: [String]? = nil,
             accepting: [String] = [],
@@ -208,7 +209,7 @@ extension RegistryClient {
 
         /// This handles the 'put' case where the registry gives us a location URL which we must not alter, aside from adding the digest to it
         static func put(
-            _ repository: String,
+            _ repository: ImageReference.Repository,
             url: URL,
             actions: [String]? = nil,
             accepting: [String] = [],
@@ -225,7 +226,7 @@ extension RegistryClient {
         }
 
         static func put(
-            _ repository: String,
+            _ repository: ImageReference.Repository,
             path: String,
             actions: [String]? = nil,
             accepting: [String] = [],
@@ -242,7 +243,7 @@ extension RegistryClient {
         }
 
         static func post(
-            _ repository: String,
+            _ repository: ImageReference.Repository,
             path: String,
             actions: [String]? = nil,
             accepting: [String] = [],
