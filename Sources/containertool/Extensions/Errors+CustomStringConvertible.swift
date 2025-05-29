@@ -46,3 +46,17 @@ extension ContainerRegistry.DistributionErrors: Swift.CustomStringConvertible {
     /// A human-readable string describing a collection of unhandled distribution protocol errors
     public var description: String { errors.map { $0.description }.joined(separator: "\n") }
 }
+
+extension ContainerRegistry.ImageReference.Repository.ValidationError: Swift.CustomStringConvertible {
+    /// A human-readable string describing an image reference validation error
+    public var description: String {
+        switch self {
+        case .emptyString:
+            return "Invalid reference format: repository name cannot be empty"
+        case .containsUppercaseLetters(let rawValue):
+            return "Invalid reference format: repository name (\(rawValue)) must be lowercase"
+        case .invalidReferenceFormat(let rawValue):
+            return "Invalid reference format: repository name (\(rawValue)) contains invalid characters"
+        }
+    }
+}
