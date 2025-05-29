@@ -116,6 +116,7 @@ extension ImageReference {
         public enum ValidationError: Error, Equatable {
             case emptyString
             case containsUppercaseLetters(String)
+            case invalidReferenceFormat(String)
         }
 
         public init(_ rawValue: String) throws {
@@ -127,6 +128,12 @@ extension ImageReference {
 
             if (rawValue.contains { $0.isUppercase }) {
                 throw ValidationError.containsUppercaseLetters(rawValue)
+            }
+
+            // https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pulling-manifests
+            let regex = /[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*(\/[a-z0-9]+((\.|_|__|-+)[a-z0-9]+)*)*/
+            if try regex.wholeMatch(in: rawValue) == nil {
+                throw ValidationError.invalidReferenceFormat(rawValue)
             }
 
             value = rawValue

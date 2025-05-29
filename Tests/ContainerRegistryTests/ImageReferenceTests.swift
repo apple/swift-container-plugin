@@ -188,6 +188,10 @@ struct ReferenceTests {
         #expect(throws: ImageReference.Repository.ValidationError.containsUppercaseLetters("helloWorld")) {
             try ImageReference(fromString: "localhost:5555/helloWorld")
         }
+
+        #expect(throws: ImageReference.Repository.ValidationError.invalidReferenceFormat("hello^world")) {
+            try ImageReference(fromString: "localhost:5555/hello^world")
+        }
     }
 
     @Test
