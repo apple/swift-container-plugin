@@ -153,12 +153,23 @@ struct ReferenceTests {
     ]
 
     @Test(arguments: tests)
-    func testReferences(test: ReferenceTestCase) throws {
+    func testValidReferences(test: ReferenceTestCase) throws {
         let parsed = try! ImageReference(fromString: test.reference, defaultRegistry: "default")
         #expect(
             parsed == test.expected,
             "\(String(reflecting: parsed)) is not equal to \(String(reflecting: test.expected))"
         )
+    }
+
+    @Test
+    func testInvalidReferences() throws {
+        #expect(throws: ImageReference.Repository.ValidationError.emptyString) {
+            try ImageReference(fromString: "", defaultRegistry: "default")
+        }
+
+        #expect(throws: ImageReference.Repository.ValidationError.emptyString) {
+            try ImageReference(fromString: "example.com/")
+        }
     }
 
     @Test
