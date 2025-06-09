@@ -58,14 +58,18 @@ struct SmokeTests {
         )
 
         // After setting a tag, we should be able to retrieve it
-        let _ = try await client.putManifest(repository: repository, reference: "latest", manifest: test_manifest)
+        let _ = try await client.putManifest(
+            repository: repository,
+            reference: ImageReference.Tag("latest"),
+            manifest: test_manifest
+        )
         let firstTag = try await client.getTags(repository: repository).tags.sorted()
         #expect(firstTag == ["latest"])
 
         // After setting another tag, the original tag should still exist
         let _ = try await client.putManifest(
             repository: repository,
-            reference: "additional_tag",
+            reference: ImageReference.Tag("additional_tag"),
             manifest: test_manifest
         )
         let secondTag = try await client.getTags(repository: repository)
@@ -78,7 +82,7 @@ struct SmokeTests {
         do {
             let _ = try await client.getBlob(
                 repository: repository,
-                digest: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                digest: ImageReference.Digest("sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
             )
             Issue.record("should have thrown")
         } catch {}
@@ -89,7 +93,7 @@ struct SmokeTests {
 
         let exists = try await client.blobExists(
             repository: repository,
-            digest: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            digest: ImageReference.Digest("sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
         )
         #expect(!exists)
     }
@@ -102,10 +106,13 @@ struct SmokeTests {
         let descriptor = try await client.putBlob(repository: repository, data: blob_data)
         #expect(descriptor.digest == "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08")
 
-        let exists = try await client.blobExists(repository: repository, digest: descriptor.digest)
+        let exists = try await client.blobExists(
+            repository: repository,
+            digest: ImageReference.Digest(descriptor.digest)
+        )
         #expect(exists)
 
-        let blob = try await client.getBlob(repository: repository, digest: descriptor.digest)
+        let blob = try await client.getBlob(repository: repository, digest: ImageReference.Digest(descriptor.digest))
         #expect(blob == blob_data)
     }
 
@@ -135,9 +142,13 @@ struct SmokeTests {
             layers: [image_descriptor]
         )
 
-        let _ = try await client.putManifest(repository: repository, reference: "latest", manifest: test_manifest)
+        let _ = try await client.putManifest(
+            repository: repository,
+            reference: ImageReference.Tag("latest"),
+            manifest: test_manifest
+        )
 
-        let manifest = try await client.getManifest(repository: repository, reference: "latest")
+        let manifest = try await client.getManifest(repository: repository, reference: ImageReference.Tag("latest"))
         #expect(manifest.schemaVersion == 2)
         #expect(manifest.config.mediaType == "application/vnd.docker.container.image.v1+json")
         #expect(manifest.layers.count == 1)
@@ -172,11 +183,14 @@ struct SmokeTests {
 
         let _ = try await client.putManifest(
             repository: repository,
-            reference: test_manifest.digest,
+            reference: ImageReference.Digest(test_manifest.digest),
             manifest: test_manifest
         )
 
-        let manifest = try await client.getManifest(repository: repository, reference: test_manifest.digest)
+        let manifest = try await client.getManifest(
+            repository: repository,
+            reference: ImageReference.Digest(test_manifest.digest)
+        )
         #expect(manifest.schemaVersion == 2)
         #expect(manifest.config.mediaType == "application/vnd.docker.container.image.v1+json")
         #expect(manifest.layers.count == 1)
@@ -185,7 +199,11 @@ struct SmokeTests {
 
     @Test func testPutAndGetImageConfiguration() async throws {
         let repository = try ImageReference.Repository("testputandgetimageconfiguration")
-        let image = ImageReference(registry: "registry", repository: repository, reference: "latest")
+        let image = try ImageReference(
+            registry: "registry",
+            repository: repository,
+            reference: ImageReference.Tag("latest")
+        )
 
         let configuration = ImageConfiguration(
             created: "1996-12-19T16:39:57-08:00",
@@ -202,7 +220,7 @@ struct SmokeTests {
 
         let downloaded = try await client.getImageConfiguration(
             forImage: image,
-            digest: config_descriptor.digest
+            digest: ImageReference.Digest(config_descriptor.digest)
         )
 
         #expect(configuration == downloaded)

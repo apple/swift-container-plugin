@@ -176,7 +176,7 @@ extension RegistryClient {
 
             baseImageConfiguration = try await source.getImageConfiguration(
                 forImage: baseImage,
-                digest: baseImageManifest.config.digest
+                digest: ImageReference.Digest(baseImageManifest.config.digest)
             )
             log("Found base image configuration: \(baseImageManifest.config.digest)")
         } else {
@@ -276,7 +276,7 @@ extension RegistryClient {
         if let source {
             for layer in baseImageManifest.layers {
                 try await source.copyBlob(
-                    digest: layer.digest,
+                    digest: ImageReference.Digest(layer.digest),
                     fromRepository: baseImage.repository,
                     toClient: self,
                     toRepository: destinationImage.repository
@@ -289,7 +289,12 @@ extension RegistryClient {
         // Use the manifest's digest if the user did not provide a human-readable tag
         // To support multiarch images, we should also create an an index pointing to
         // this manifest.
-        let reference = tag ?? manifest.digest
+        let reference: ImageReference.Reference
+        if let tag {
+            reference = try ImageReference.Tag(tag)
+        } else {
+            reference = try ImageReference.Digest(manifest.digest)
+        }
         let location = try await self.putManifest(
             repository: destinationImage.repository,
             reference: destinationImage.reference,

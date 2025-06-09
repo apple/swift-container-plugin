@@ -23,7 +23,7 @@ extension RegistryClient {
     ///   - destRepository: The repository on this registry to which the blob should be copied.
     /// - Throws: If the copy cannot be completed.
     func copyBlob(
-        digest: String,
+        digest: ImageReference.Digest,
         fromRepository sourceRepository: ImageReference.Repository,
         toClient destClient: RegistryClient,
         toRepository destRepository: ImageReference.Repository
@@ -39,6 +39,6 @@ extension RegistryClient {
         log("Layer \(digest): pushing")
         let uploaded = try await destClient.putBlob(repository: destRepository, data: blob)
         log("Layer \(digest): done")
-        assert(digest == uploaded.digest)
+        assert("\(digest)" == uploaded.digest)
     }
 }
