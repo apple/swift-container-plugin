@@ -29,7 +29,7 @@ struct ReferenceTests {
             expected: try! ImageReference(
                 registry: "default",
                 repository: ImageReference.Repository("localhost"),
-                reference: "latest"
+                reference: ImageReference.Tag("latest")
             )
         ),
         ReferenceTestCase(
@@ -37,7 +37,7 @@ struct ReferenceTests {
             expected: try! ImageReference(
                 registry: "default",
                 repository: ImageReference.Repository("example.com"),
-                reference: "latest"
+                reference: ImageReference.Tag("latest")
             )
         ),
         ReferenceTestCase(
@@ -45,7 +45,7 @@ struct ReferenceTests {
             expected: try! ImageReference(
                 registry: "default",
                 repository: ImageReference.Repository("example"),
-                reference: "1234"
+                reference: ImageReference.Tag("1234")
             )
         ),
 
@@ -60,7 +60,7 @@ struct ReferenceTests {
             expected: try! ImageReference(
                 registry: "localhost",
                 repository: ImageReference.Repository("foo"),
-                reference: "latest"
+                reference: ImageReference.Tag("latest")
             )
         ),
         ReferenceTestCase(
@@ -68,7 +68,7 @@ struct ReferenceTests {
             expected: try! ImageReference(
                 registry: "localhost:1234",
                 repository: ImageReference.Repository("foo"),
-                reference: "latest"
+                reference: ImageReference.Tag("latest")
             )
         ),
         ReferenceTestCase(
@@ -76,7 +76,7 @@ struct ReferenceTests {
             expected: try! ImageReference(
                 registry: "example.com",
                 repository: ImageReference.Repository("foo"),
-                reference: "latest"
+                reference: ImageReference.Tag("latest")
             )
         ),
         ReferenceTestCase(
@@ -84,7 +84,7 @@ struct ReferenceTests {
             expected: try! ImageReference(
                 registry: "example.com:1234",
                 repository: ImageReference.Repository("foo"),
-                reference: "latest"
+                reference: ImageReference.Tag("latest")
             )
         ),
         ReferenceTestCase(
@@ -92,7 +92,7 @@ struct ReferenceTests {
             expected: try! ImageReference(
                 registry: "example.com:1234",
                 repository: ImageReference.Repository("foo"),
-                reference: "bar"
+                reference: ImageReference.Tag("bar")
             )
         ),
 
@@ -103,7 +103,7 @@ struct ReferenceTests {
             expected: try! ImageReference(
                 registry: "default",
                 repository: ImageReference.Repository("local/foo"),
-                reference: "latest"
+                reference: ImageReference.Tag("latest")
             )
         ),
         ReferenceTestCase(
@@ -111,7 +111,7 @@ struct ReferenceTests {
             expected: try! ImageReference(
                 registry: "default",
                 repository: ImageReference.Repository("example/foo"),
-                reference: "latest"
+                reference: ImageReference.Tag("latest")
             )
         ),
         ReferenceTestCase(
@@ -119,35 +119,28 @@ struct ReferenceTests {
             expected: try! ImageReference(
                 registry: "default",
                 repository: ImageReference.Repository("example/foo"),
-                reference: "1234"
+                reference: ImageReference.Tag("1234")
             )
         ),
 
         // Distribution spec tests
         ReferenceTestCase(
-            reference: "example.com/foo@sha256:0123456789abcdef01234567890abcdef",
+            reference: "example.com/foo@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
             expected: try! ImageReference(
                 registry: "example.com",
                 repository: ImageReference.Repository("foo"),
-                reference: "sha256:0123456789abcdef01234567890abcdef"
+                reference: ImageReference.Digest(
+                    "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+                )
             )
         ),
 
-        // This example goes against the distribution spec's regular expressions but matches observed client behaviour
         ReferenceTestCase(
             reference: "foo:1234/bar:1234",
             expected: try! ImageReference(
                 registry: "foo:1234",
                 repository: ImageReference.Repository("bar"),
-                reference: "1234"
-            )
-        ),
-        ReferenceTestCase(
-            reference: "localhost/foo:1234/bar:1234",
-            expected: try! ImageReference(
-                registry: "localhost",
-                repository: ImageReference.Repository("foo"),
-                reference: "1234/bar:1234"
+                reference: ImageReference.Tag("1234")
             )
         ),
 
@@ -157,7 +150,7 @@ struct ReferenceTests {
             expected: try! ImageReference(
                 registry: "EXAMPLE.COM",
                 repository: ImageReference.Repository("foo"),
-                reference: "latest"
+                reference: ImageReference.Tag("latest")
             )
         ),
     ]
@@ -205,7 +198,7 @@ struct ReferenceTests {
                 == ImageReference(
                     registry: "index.docker.io",
                     repository: ImageReference.Repository("library/swift"),
-                    reference: "slim"
+                    reference: ImageReference.Tag("slim")
                 )
         )
 
@@ -215,7 +208,7 @@ struct ReferenceTests {
                 == ImageReference(
                     registry: "index.docker.io",
                     repository: ImageReference.Repository("library/swift"),
-                    reference: "slim"
+                    reference: ImageReference.Tag("slim")
                 )
         )
 
@@ -225,7 +218,7 @@ struct ReferenceTests {
                 == ImageReference(
                     registry: "index.docker.io",
                     repository: ImageReference.Repository("library/swift"),
-                    reference: "slim"
+                    reference: ImageReference.Tag("slim")
                 )
         )
 
@@ -235,7 +228,7 @@ struct ReferenceTests {
                 == ImageReference(
                     registry: "index.docker.io",
                     repository: ImageReference.Repository("library/swift"),
-                    reference: "slim"
+                    reference: ImageReference.Tag("slim")
                 )
         )
 
@@ -245,7 +238,7 @@ struct ReferenceTests {
                 == ImageReference(
                     registry: "index.docker.io",
                     repository: ImageReference.Repository("library/swift"),
-                    reference: "latest"
+                    reference: ImageReference.Tag("latest")
                 )
         )
 
@@ -255,7 +248,7 @@ struct ReferenceTests {
                 == ImageReference(
                     registry: "localhost:5000",
                     repository: ImageReference.Repository("swift"),
-                    reference: "latest"
+                    reference: ImageReference.Tag("latest")
                 )
         )
 
@@ -264,7 +257,7 @@ struct ReferenceTests {
                 == ImageReference(
                     registry: "localhost:5000",
                     repository: ImageReference.Repository("swift"),
-                    reference: "latest"
+                    reference: ImageReference.Tag("latest")
                 )
         )
     }
