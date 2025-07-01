@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 import class Foundation.ProcessInfo
-import ContainerRegistry
+@testable import ContainerRegistry
 import Testing
 
 struct SmokeTests {
@@ -31,7 +31,7 @@ struct SmokeTests {
     }
 
     @Test func testGetTags() async throws {
-        let repository = "testgettags"
+        let repository = try ImageReference.Repository("testgettags")
 
         // registry:2 does not validate the contents of the config or image blobs
         // so a smoke test can use simple data.   Other registries are not so forgiving.
@@ -73,7 +73,7 @@ struct SmokeTests {
     }
 
     @Test func testGetNonexistentBlob() async throws {
-        let repository = "testgetnonexistentblob"
+        let repository = try ImageReference.Repository("testgetnonexistentblob")
 
         do {
             let _ = try await client.getBlob(
@@ -85,7 +85,7 @@ struct SmokeTests {
     }
 
     @Test func testCheckNonexistentBlob() async throws {
-        let repository = "testchecknonexistentblob"
+        let repository = try ImageReference.Repository("testchecknonexistentblob")
 
         let exists = try await client.blobExists(
             repository: repository,
@@ -95,7 +95,7 @@ struct SmokeTests {
     }
 
     @Test func testPutAndGetBlob() async throws {
-        let repository = "testputandgetblob"  // repository name must be lowercase
+        let repository = try ImageReference.Repository("testputandgetblob")
 
         let blob_data = "test".data(using: .utf8)!
 
@@ -110,7 +110,7 @@ struct SmokeTests {
     }
 
     @Test func testPutAndGetTaggedManifest() async throws {
-        let repository = "testputandgettaggedmanifest"  // repository name must be lowercase
+        let repository = try ImageReference.Repository("testputandgettaggedmanifest")
 
         // registry:2 does not validate the contents of the config or image blobs
         // so a smoke test can use simple data.   Other registries are not so forgiving.
@@ -145,7 +145,7 @@ struct SmokeTests {
     }
 
     @Test func testPutAndGetAnonymousManifest() async throws {
-        let repository = "testputandgetanonymousmanifest"  // repository name must be lowercase
+        let repository = try ImageReference.Repository("testputandgetanonymousmanifest")
 
         // registry:2 does not validate the contents of the config or image blobs
         // so a smoke test can use simple data.   Other registries are not so forgiving.
@@ -184,7 +184,7 @@ struct SmokeTests {
     }
 
     @Test func testPutAndGetImageConfiguration() async throws {
-        let repository = "testputandgetimageconfiguration"  // repository name must be lowercase
+        let repository = try ImageReference.Repository("testputandgetimageconfiguration")
         let image = ImageReference(registry: "registry", repository: repository, reference: "latest")
 
         let configuration = ImageConfiguration(

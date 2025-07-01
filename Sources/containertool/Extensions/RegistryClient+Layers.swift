@@ -45,7 +45,7 @@ extension RegistryClient {
     // A layer is a tarball, optionally compressed using gzip or zstd
     // See https://github.com/opencontainers/image-spec/blob/main/media-types.md
     func uploadLayer(
-        repository: String,
+        repository: ImageReference.Repository,
         contents: [UInt8],
         mediaType: String = "application/vnd.oci.image.layer.v1.tar+gzip"
     ) async throws -> ImageLayer {

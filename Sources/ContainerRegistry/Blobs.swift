@@ -28,9 +28,7 @@ public func digest<D: DataProtocol>(of data: D) -> String {
 
 extension RegistryClient {
     // Internal helper method to initiate a blob upload in 'two shot' mode
-    func startBlobUploadSession(repository: String) async throws -> URL {
-        precondition(repository.count > 0, "repository must not be an empty string")
-
+    func startBlobUploadSession(repository: ImageReference.Repository) async throws -> URL {
         // Upload in "two shot" mode.
         // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#post-then-put
         // - POST to obtain a session ID.
@@ -67,8 +65,7 @@ extension RegistryClient {
 extension HTTPField.Name { static let dockerContentDigest = Self("Docker-Content-Digest")! }
 
 public extension RegistryClient {
-    func blobExists(repository: String, digest: String) async throws -> Bool {
-        precondition(repository.count > 0, "repository must not be an empty string")
+    func blobExists(repository: ImageReference.Repository, digest: String) async throws -> Bool {
         precondition(digest.count > 0)
 
         do {
@@ -87,8 +84,7 @@ public extension RegistryClient {
     ///   - digest: Digest of the blob.
     /// - Returns: The downloaded data.
     /// - Throws: If the blob download fails.
-    func getBlob(repository: String, digest: String) async throws -> Data {
-        precondition(repository.count > 0, "repository must not be an empty string")
+    func getBlob(repository: ImageReference.Repository, digest: String) async throws -> Data {
         precondition(digest.count > 0, "digest must not be an empty string")
 
         return try await executeRequestThrowing(
@@ -110,8 +106,7 @@ public extension RegistryClient {
     /// in the registry as plain blobs with MIME type "application/octet-stream".
     /// This function attempts to decode the received data without reference
     /// to the MIME type.
-    func getBlob<Response: Decodable>(repository: String, digest: String) async throws -> Response {
-        precondition(repository.count > 0, "repository must not be an empty string")
+    func getBlob<Response: Decodable>(repository: ImageReference.Repository, digest: String) async throws -> Response {
         precondition(digest.count > 0, "digest must not be an empty string")
 
         return try await executeRequestThrowing(
@@ -132,11 +127,10 @@ public extension RegistryClient {
     /// - Returns: An ContentDescriptor object representing the
     ///            uploaded blob.
     /// - Throws: If the blob cannot be encoded or the upload fails.
-    func putBlob(repository: String, mediaType: String = "application/octet-stream", data: Data) async throws
+    func putBlob(repository: ImageReference.Repository, mediaType: String = "application/octet-stream", data: Data)
+        async throws
         -> ContentDescriptor
     {
-        precondition(repository.count > 0, "repository must not be an empty string")
-
         // Ask the server to open a session and tell us where to upload our data
         let location = try await startBlobUploadSession(repository: repository)
 
@@ -179,7 +173,11 @@ public extension RegistryClient {
     ///  Some JSON objects, such as ImageConfiguration, are stored
     /// in the registry as plain blobs with MIME type "application/octet-stream".
     /// This function encodes the data parameter and uploads it as a generic blob.
-    func putBlob<Body: Encodable>(repository: String, mediaType: String = "application/octet-stream", data: Body)
+    func putBlob<Body: Encodable>(
+        repository: ImageReference.Repository,
+        mediaType: String = "application/octet-stream",
+        data: Body
+    )
         async throws -> ContentDescriptor
     {
         let encoded = try encoder.encode(data)
