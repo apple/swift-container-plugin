@@ -339,12 +339,13 @@ let trailer = [UInt8](repeating: 0, count: trailerSize)
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     ]
 
-    @Test func testAppendingEmptyFile() async throws {
-        let archive = try Archive().appendingFile(name: "emptyfile", data: []).bytes
+    @Test func testAppendEmptyFile() async throws {
+        let archive = Archive()
+        try archive.appendFile(name: "emptyfile", data: [])
 
         // Expecting: member header, no file content, 2-block end of archive marker
-        #expect(archive.count == headerSize + trailerSize)
-        #expect(archive == emptyFile + trailer)
+        #expect(archive.bytes.count == headerSize + trailerSize)
+        #expect(archive.bytes == emptyFile + trailer)
     }
 
     let helloFile: [UInt8] =
@@ -456,21 +457,12 @@ let trailer = [UInt8](repeating: 0, count: trailerSize)
         ]
 
     @Test func testAppendFile() async throws {
-        var archive = Archive()
+        let archive = Archive()
         try archive.appendFile(name: "hellofile", data: [UInt8]("hello".utf8))
-        let output = archive.bytes
 
         // Expecting: member header, file content, 2-block end of archive marker
-        #expect(output.count == headerSize + blockSize + trailerSize)
-        #expect(output == helloFile + trailer)
-    }
-
-    @Test func testAppendingFile() async throws {
-        let archive = try Archive().appendingFile(name: "hellofile", data: [UInt8]("hello".utf8)).bytes
-
-        // Expecting: member header, file content, 2-block end of archive marker
-        #expect(archive.count == headerSize + blockSize + trailerSize)
-        #expect(archive == helloFile + trailer)
+        #expect(archive.bytes.count == headerSize + blockSize + trailerSize)
+        #expect(archive.bytes == helloFile + trailer)
     }
 
     let directoryWithPrefix: [UInt8] = [
@@ -547,47 +539,35 @@ let trailer = [UInt8](repeating: 0, count: trailerSize)
     ]
 
     @Test func testAppendDirectory() async throws {
-        var archive = Archive()
+        let archive = Archive()
         try archive.appendDirectory(name: "directory", prefix: "prefix")
-        let output = archive.bytes
 
         // Expecting: member header, no content, 2-block end of archive marker
-        #expect(output.count == headerSize + trailerSize)
-        #expect(output == directoryWithPrefix + trailer)
-    }
-
-    @Test func testAppendingDirectory() async throws {
-        let archive = try Archive().appendingDirectory(name: "directory", prefix: "prefix").bytes
-
-        // Expecting: member header, no content, 2-block end of archive marker
-        #expect(archive.count == headerSize + trailerSize)
-        #expect(archive == directoryWithPrefix + trailer)
+        #expect(archive.bytes.count == headerSize + trailerSize)
+        #expect(archive.bytes == directoryWithPrefix + trailer)
     }
 
     @Test func testAppendFilesAndDirectories() async throws {
-        var archive = Archive()
+        let archive = Archive()
         try archive.appendFile(name: "hellofile", data: [UInt8]("hello".utf8))
         try archive.appendFile(name: "emptyfile", data: [UInt8]())
         try archive.appendDirectory(name: "directory", prefix: "prefix")
 
-        let output = archive.bytes
-
         // Expecting: file member header, file content, file member header, no file content,
         //     directory member header, 2-block end of archive marker
-        #expect(output.count == headerSize + blockSize + headerSize + headerSize + trailerSize)
-        #expect(output == helloFile + emptyFile + directoryWithPrefix + trailer)
+        #expect(archive.bytes.count == headerSize + blockSize + headerSize + headerSize + trailerSize)
+        #expect(archive.bytes == helloFile + emptyFile + directoryWithPrefix + trailer)
     }
 
     @Test func testAppendingFilesAndDirectories() async throws {
-        let archive = try Archive()
-            .appendingFile(name: "hellofile", data: [UInt8]("hello".utf8))
-            .appendingFile(name: "emptyfile", data: [UInt8]())
-            .appendingDirectory(name: "directory", prefix: "prefix")
-            .bytes
+        let archive = Archive()
+        try archive.appendFile(name: "hellofile", data: [UInt8]("hello".utf8))
+        try archive.appendFile(name: "emptyfile", data: [UInt8]())
+        try archive.appendDirectory(name: "directory", prefix: "prefix")
 
         // Expecting: file member header, file content, file member header, no file content,
         //     directory member header, 2-block end of archive marker
-        #expect(archive.count == headerSize + blockSize + headerSize + headerSize + trailerSize)
-        #expect(archive == helloFile + emptyFile + directoryWithPrefix + trailer)
+        #expect(archive.bytes.count == headerSize + blockSize + headerSize + headerSize + trailerSize)
+        #expect(archive.bytes == helloFile + emptyFile + directoryWithPrefix + trailer)
     }
 }
