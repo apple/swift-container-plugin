@@ -60,3 +60,31 @@ extension ContainerRegistry.ImageReference.Repository.ValidationError: Swift.Cus
         }
     }
 }
+
+extension ContainerRegistry.ImageReference.Tag.ValidationError: Swift.CustomStringConvertible {
+    /// A human-readable string describing an image reference validation error
+    public var description: String {
+        switch self {
+        case .emptyString:
+            return "Invalid reference format: tag cannot be empty"
+        case .tooLong(let rawValue):
+            return "Invalid reference format: tag (\(rawValue)) is too long"
+        case .invalidReferenceFormat(let rawValue):
+            return "Invalid reference format: tag (\(rawValue)) contains invalid characters"
+        }
+    }
+}
+
+extension ContainerRegistry.ImageReference.Digest.ValidationError: Swift.CustomStringConvertible {
+    /// A human-readable string describing an image reference validation error
+    public var description: String {
+        switch self {
+        case .emptyString:
+            return "Invalid reference format: digest cannot be empty"
+        case .tooLong(let rawValue):
+            return "Invalid reference format: digest (\(rawValue)) is too long"
+        case .invalidReferenceFormat(let rawValue):
+            return "Invalid reference format: digest (\(rawValue)) is not a valid digest"
+        }
+    }
+}

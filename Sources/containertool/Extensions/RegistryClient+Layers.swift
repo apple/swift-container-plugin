@@ -26,13 +26,16 @@ extension RegistryClient {
             return try await getManifest(repository: image.repository, reference: image.reference)
         } catch {
             // Try again, treating the top level object as an index.
-            // This could be more efficient if the exception thrown by getManfiest() included the data it was unable to parse
+            // This could be more efficient if the exception thrown by getManifest() included the data it was unable to parse
             let index = try await getIndex(repository: image.repository, reference: image.reference)
             guard let manifest = index.manifests.first(where: { $0.platform?.architecture == architecture }) else {
                 throw "Could not find a suitable base image for \(architecture)"
             }
             // The index should not point to another index;   if it does, this call will throw a final error to be handled by the caller.
-            return try await getManifest(repository: image.repository, reference: manifest.digest)
+            return try await getManifest(
+                repository: image.repository,
+                reference: ImageReference.Digest(manifest.digest)
+            )
         }
     }
 

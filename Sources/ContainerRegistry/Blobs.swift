@@ -65,9 +65,7 @@ extension RegistryClient {
 extension HTTPField.Name { static let dockerContentDigest = Self("Docker-Content-Digest")! }
 
 public extension RegistryClient {
-    func blobExists(repository: ImageReference.Repository, digest: String) async throws -> Bool {
-        precondition(digest.count > 0)
-
+    func blobExists(repository: ImageReference.Repository, digest: ImageReference.Digest) async throws -> Bool {
         do {
             let _ = try await executeRequestThrowing(
                 .head(repository, path: "blobs/\(digest)"),
@@ -84,10 +82,8 @@ public extension RegistryClient {
     ///   - digest: Digest of the blob.
     /// - Returns: The downloaded data.
     /// - Throws: If the blob download fails.
-    func getBlob(repository: ImageReference.Repository, digest: String) async throws -> Data {
-        precondition(digest.count > 0, "digest must not be an empty string")
-
-        return try await executeRequestThrowing(
+    func getBlob(repository: ImageReference.Repository, digest: ImageReference.Digest) async throws -> Data {
+        try await executeRequestThrowing(
             .get(repository, path: "blobs/\(digest)", accepting: ["application/octet-stream"]),
             decodingErrors: [.notFound]
         )
@@ -106,10 +102,10 @@ public extension RegistryClient {
     /// in the registry as plain blobs with MIME type "application/octet-stream".
     /// This function attempts to decode the received data without reference
     /// to the MIME type.
-    func getBlob<Response: Decodable>(repository: ImageReference.Repository, digest: String) async throws -> Response {
-        precondition(digest.count > 0, "digest must not be an empty string")
-
-        return try await executeRequestThrowing(
+    func getBlob<Response: Decodable>(repository: ImageReference.Repository, digest: ImageReference.Digest) async throws
+        -> Response
+    {
+        try await executeRequestThrowing(
             .get(repository, path: "blobs/\(digest)", accepting: ["application/octet-stream"]),
             decodingErrors: [.notFound]
         )
