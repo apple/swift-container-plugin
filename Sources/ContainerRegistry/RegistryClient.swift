@@ -84,7 +84,7 @@ public struct RegistryClient {
             self.encoder = encoder
         } else {
             self.encoder = JSONEncoder()
-            self.encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
+            self.encoder.outputFormatting = [.sortedKeys, .prettyPrinted, .withoutEscapingSlashes]
             self.encoder.dateEncodingStrategy = .iso8601
         }
 

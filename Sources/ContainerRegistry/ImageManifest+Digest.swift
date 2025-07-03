@@ -18,7 +18,7 @@ import struct Crypto.SHA256
 public extension ImageManifest {
     var digest: String {
         let encoder = JSONEncoder()
-        encoder.outputFormatting = [.sortedKeys, .prettyPrinted]
+        encoder.outputFormatting = [.sortedKeys, .prettyPrinted, .withoutEscapingSlashes]
         encoder.dateEncodingStrategy = .iso8601
         let encoded = try! encoder.encode(self)
         return ContainerRegistry.digest(of: encoded)
