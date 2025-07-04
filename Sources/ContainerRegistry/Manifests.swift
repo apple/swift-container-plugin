@@ -15,31 +15,31 @@
 public extension RegistryClient {
     func putManifest(
         repository: ImageReference.Repository,
-        reference: any ImageReference.Reference,
+        reference: (any ImageReference.Reference)? = nil,
         manifest: ImageManifest
-    ) async throws -> String {
+    ) async throws -> ContentDescriptor {
         // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pushing-manifests
-        let httpResponse = try await executeRequestThrowing(
-            // All blob uploads have Content-Type: application/octet-stream on the wire, even if mediatype is different
+
+        let encoded = try encoder.encode(manifest)
+        let digest = digest(of: encoded)
+        let mediaType = manifest.mediaType ?? "application/vnd.oci.image.manifest.v1+json"
+
+        let _ = try await executeRequestThrowing(
             .put(
                 repository,
-                path: "manifests/\(reference)",
-                contentType: manifest.mediaType ?? "application/vnd.oci.image.manifest.v1+json"
+                path: "manifests/\(reference ?? digest)",
+                contentType: mediaType
             ),
-            uploading: manifest,
+            uploading: encoded,
             expectingStatus: .created,
             decodingErrors: [.notFound]
         )
 
-        // The distribution spec says the response MUST contain a Location header
-        // providing a URL from which the saved manifest can be downloaded.
-        // However some registries return URLs which cannot be fetched, and
-        // ECR does not set this header at all.
-        // If the header is not present, create a suitable value.
-        // https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pulling-manifests
-        return httpResponse.response.headerFields[.location]
-            ?? registryURL.distributionEndpoint(forRepository: repository, andEndpoint: "manifests/\(manifest.digest)")
-            .absoluteString
+        return ContentDescriptor(
+            mediaType: mediaType,
+            digest: "\(digest)",
+            size: Int64(encoded.count)
+        )
     }
 
     func getManifest(

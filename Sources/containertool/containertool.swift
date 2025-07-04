@@ -255,7 +255,7 @@ extension RegistryClient {
                 forImage: baseImage,
                 architecture: architecture
             )
-            log("Found base image manifest: \(baseImageDescriptor.digest)")
+            try log("Found base image manifest: \(ImageReference.Digest(baseImageDescriptor.digest))")
 
             baseImageConfiguration = try await source.getImageConfiguration(
                 forImage: baseImage,
@@ -369,6 +369,16 @@ extension RegistryClient {
 
         // MARK: Upload application manifest
 
+        let manifestDescriptor = try await self.putManifest(
+            repository: destinationImage.repository,
+            reference: destinationImage.reference,
+            manifest: manifest
+        )
+
+        if verbose {
+            log("manifest: \(manifestDescriptor.digest) (\(manifestDescriptor.size) bytes)")
+        }
+
         // Use the manifest's digest if the user did not provide a human-readable tag
         // To support multiarch images, we should also create an an index pointing to
         // this manifest.
@@ -376,15 +386,8 @@ extension RegistryClient {
         if let tag {
             reference = try ImageReference.Tag(tag)
         } else {
-            reference = manifest.digest
+            reference = try ImageReference.Digest(manifestDescriptor.digest)
         }
-        let location = try await self.putManifest(
-            repository: destinationImage.repository,
-            reference: destinationImage.reference,
-            manifest: manifest
-        )
-
-        if verbose { log(location) }
 
         var result = destinationImage
         result.reference = reference
