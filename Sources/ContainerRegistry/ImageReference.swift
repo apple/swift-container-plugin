@@ -214,12 +214,12 @@ extension ImageReference {
 
     /// Digest identifies a specific blob by the hash of the blob's contents.
     public struct Digest: Reference, Sendable, Equatable, CustomStringConvertible, CustomDebugStringConvertible {
+        var algorithm: String
         var value: String
 
         public enum ValidationError: Error, Equatable {
             case emptyString
             case invalidReferenceFormat(String)
-            case tooLong(String)
         }
 
         public init(_ rawValue: String) throws {
@@ -227,32 +227,38 @@ extension ImageReference {
                 throw ValidationError.emptyString
             }
 
-            if rawValue.count > 7 + 64 {
-                throw ValidationError.tooLong(rawValue)
+            // https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md#sha-256
+            let sha256digest = /(sha256):([a-fA-F0-9]{64})/
+            if let match = try sha256digest.wholeMatch(in: rawValue) {
+                algorithm = String(match.1)
+                value = String(match.2)
+                return
             }
 
-            // https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pulling-manifests
-            let regex = /sha256:[a-fA-F0-9]{64}/
-            if try regex.wholeMatch(in: rawValue) == nil {
-                throw ValidationError.invalidReferenceFormat(rawValue)
+            // https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md#sha-512
+            let sha512digest = /(sha512):([a-fA-F0-9]{128})/
+            if let match = try sha512digest.wholeMatch(in: rawValue) {
+                algorithm = String(match.1)
+                value = String(match.2)
+                return
             }
 
-            value = rawValue
+            throw ValidationError.invalidReferenceFormat(rawValue)
         }
 
         public static func == (lhs: Digest, rhs: Digest) -> Bool {
-            lhs.value == rhs.value
+            lhs.algorithm == rhs.algorithm && lhs.value == rhs.value
         }
 
         public var separator: String = "@"
 
         public var description: String {
-            "\(value)"
+            "\(algorithm):\(value)"
         }
 
         /// Printable description in a form suitable for debugging.
         public var debugDescription: String {
-            "Digest(\(value))"
+            "Digest(\(algorithm):\(value))"
         }
     }
 }
