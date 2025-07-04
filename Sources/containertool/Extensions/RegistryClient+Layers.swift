@@ -39,7 +39,7 @@ extension RegistryClient {
         }
     }
 
-    typealias DiffID = String
+    typealias DiffID = ImageReference.Digest
     struct ImageLayer {
         var descriptor: ContentDescriptor
         var diffID: DiffID

@@ -324,8 +324,8 @@ extension RegistryClient {
                 // It is used by the runtime, which might not store the layers in
                 // the compressed form in which it received them from the registry.
                 diff_ids: baseImageConfiguration.rootfs.diff_ids
-                    + resourceLayers.map { $0.diffID }
-                    + [applicationLayer.diffID]
+                    + resourceLayers.map { "\($0.diffID)" }
+                    + ["\(applicationLayer.diffID)"]
             ),
             history: [.init(created: timestamp, created_by: "containertool")]
         )
@@ -375,7 +375,7 @@ extension RegistryClient {
         if let tag {
             reference = try ImageReference.Tag(tag)
         } else {
-            reference = try ImageReference.Digest(manifest.digest)
+            reference = manifest.digest
         }
         let location = try await self.putManifest(
             repository: destinationImage.repository,

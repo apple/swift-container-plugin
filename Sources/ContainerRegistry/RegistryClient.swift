@@ -23,6 +23,7 @@ enum RegistryClientError: Error {
     case registryParseError(String)
     case invalidRegistryPath(String)
     case invalidUploadLocation(String)
+    case invalidDigestAlgorithm(String)
 }
 
 extension RegistryClientError: CustomStringConvertible {
@@ -31,6 +32,7 @@ extension RegistryClientError: CustomStringConvertible {
         case let .registryParseError(reference): return "Unable to parse registry: \(reference)"
         case let .invalidRegistryPath(path): return "Unable to construct URL for registry path: \(path)"
         case let .invalidUploadLocation(location): return "Received invalid upload location from registry: \(location)"
+        case let .invalidDigestAlgorithm(digest): return "Invalid or unsupported digest algorithm: \(digest)"
         }
     }
 }

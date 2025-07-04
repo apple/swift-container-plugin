@@ -19,11 +19,11 @@ import struct Crypto.SHA256
 /// Calculates the digest of a blob of data.
 /// - Parameter data: Blob of data to digest.
 /// - Returns: The blob's digest, in the format expected by the distribution protocol.
-public func digest<D: DataProtocol>(of data: D) -> String {
+public func digest<D: DataProtocol>(of data: D) -> ImageReference.Digest {
     // SHA256 is required; some registries might also support SHA512
     let hash = SHA256.hash(data: data)
     let digest = hash.compactMap { String(format: "%02x", $0) }.joined()
-    return "sha256:" + digest
+    return try! ImageReference.Digest("sha256:" + digest)
 }
 
 extension RegistryClient {
@@ -134,7 +134,7 @@ public extension RegistryClient {
         // The server's URL is arbitrary and might already contain query items which we must not overwrite.
         // The URL could even point to a different host.
         let digest = digest(of: data)
-        let uploadURL = location.appending(queryItems: [.init(name: "digest", value: "\(digest.utf8)")])
+        let uploadURL = location.appending(queryItems: [.init(name: "digest", value: "\(digest)")])
 
         let httpResponse = try await executeRequestThrowing(
             // All blob uploads have Content-Type: application/octet-stream on the wire, even if mediatype is different
@@ -148,9 +148,9 @@ public extension RegistryClient {
         // as the canonical digest for linking blobs.   If the registry sends a digest we
         // should check that it matches our locally-calculated digest.
         if let serverDigest = httpResponse.response.headerFields[.dockerContentDigest] {
-            assert(digest == serverDigest)
+            assert("\(digest)" == serverDigest)
         }
-        return .init(mediaType: mediaType, digest: digest, size: Int64(data.count))
+        return .init(mediaType: mediaType, digest: "\(digest)", size: Int64(data.count))
     }
 
     /// Uploads a blob to the registry.
