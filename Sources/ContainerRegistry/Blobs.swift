@@ -14,17 +14,6 @@
 
 import Foundation
 import HTTPTypes
-import struct Crypto.SHA256
-
-/// Calculates the digest of a blob of data.
-/// - Parameter data: Blob of data to digest.
-/// - Returns: The blob's digest, in the format expected by the distribution protocol.
-public func digest<D: DataProtocol>(of data: D) -> ImageReference.Digest {
-    // SHA256 is required; some registries might also support SHA512
-    let hash = SHA256.hash(data: data)
-    let digest = hash.compactMap { String(format: "%02x", $0) }.joined()
-    return try! ImageReference.Digest("sha256:" + digest)
-}
 
 extension RegistryClient {
     // Internal helper method to initiate a blob upload in 'two shot' mode
@@ -60,9 +49,6 @@ extension RegistryClient {
         return locationURL
     }
 }
-
-// The spec says that Docker- prefix headers are no longer to be used, but also specifies that the registry digest is returned in this header.
-extension HTTPField.Name { static let dockerContentDigest = Self("Docker-Content-Digest")! }
 
 public extension RegistryClient {
     func blobExists(repository: ImageReference.Repository, digest: ImageReference.Digest) async throws -> Bool {
