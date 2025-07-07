@@ -39,6 +39,9 @@ extension RegistryClient {
         log("Layer \(digest): pushing")
         let uploaded = try await destClient.putBlob(repository: destRepository, data: blob)
         log("Layer \(digest): done")
-        assert("\(digest)" == uploaded.digest)
+
+        guard "\(digest)" == uploaded.digest else {
+            throw RegistryClientError.digestMismatch(expected: "\(digest)", registry: uploaded.digest)
+        }
     }
 }
