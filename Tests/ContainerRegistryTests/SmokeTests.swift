@@ -183,13 +183,13 @@ struct SmokeTests {
 
         let _ = try await client.putManifest(
             repository: repository,
-            reference: ImageReference.Digest(test_manifest.digest),
+            reference: test_manifest.digest,
             manifest: test_manifest
         )
 
         let manifest = try await client.getManifest(
             repository: repository,
-            reference: ImageReference.Digest(test_manifest.digest)
+            reference: test_manifest.digest
         )
         #expect(manifest.schemaVersion == 2)
         #expect(manifest.config.mediaType == "application/vnd.docker.container.image.v1+json")

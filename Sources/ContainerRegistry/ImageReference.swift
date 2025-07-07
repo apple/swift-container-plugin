@@ -24,7 +24,7 @@ func splitReference(_ reference: String) throws -> (String?, String) {
     // Hostname heuristic: contains a '.' or a ':', or is localhost
     if splits[0] != "localhost", !splits[0].contains("."), !splits[0].contains(":") { return (nil, reference) }
 
-    return (String(splits[0]), String(splits[1]))
+    return ("\(splits[0])", "\(splits[1])")
 }
 
 // Split the name into repository and tag parts
@@ -35,8 +35,8 @@ func parseName(_ name: String) throws -> (ImageReference.Repository, any ImageRe
     let digestSplit = name.split(separator: "@", maxSplits: 1, omittingEmptySubsequences: false)
     if digestSplit.count == 2 {
         return (
-            try ImageReference.Repository(String(digestSplit[0])),
-            try ImageReference.Digest(String(digestSplit[1]))
+            try ImageReference.Repository("\(digestSplit[0])"),
+            try ImageReference.Digest("\(digestSplit[1])")
         )
     }
 
@@ -51,8 +51,8 @@ func parseName(_ name: String) throws -> (ImageReference.Repository, any ImageRe
 
     // assert splits == 2
     return (
-        try ImageReference.Repository(String(tagSplit[0])),
-        try ImageReference.Tag(String(tagSplit[1]))
+        try ImageReference.Repository("\(tagSplit[0])"),
+        try ImageReference.Tag("\(tagSplit[1])")
     )
 }
 
@@ -214,12 +214,24 @@ extension ImageReference {
 
     /// Digest identifies a specific blob by the hash of the blob's contents.
     public struct Digest: Reference, Sendable, Equatable, CustomStringConvertible, CustomDebugStringConvertible {
+        public enum Algorithm: String, Sendable {
+            case sha256 = "sha256"
+            case sha512 = "sha512"
+
+            init(fromString rawValue: String) throws {
+                guard let algorithm = Algorithm(rawValue: rawValue) else {
+                    throw RegistryClientError.invalidDigestAlgorithm(rawValue)
+                }
+                self = algorithm
+            }
+        }
+
+        var algorithm: Algorithm
         var value: String
 
         public enum ValidationError: Error, Equatable {
             case emptyString
             case invalidReferenceFormat(String)
-            case tooLong(String)
         }
 
         public init(_ rawValue: String) throws {
@@ -227,32 +239,38 @@ extension ImageReference {
                 throw ValidationError.emptyString
             }
 
-            if rawValue.count > 7 + 64 {
-                throw ValidationError.tooLong(rawValue)
+            // https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md#sha-256
+            let sha256digest = /(sha256):([a-fA-F0-9]{64})/
+            if let match = try sha256digest.wholeMatch(in: rawValue) {
+                algorithm = try Algorithm(fromString: "\(match.1)")
+                value = "\(match.2)"
+                return
             }
 
-            // https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pulling-manifests
-            let regex = /sha256:[a-fA-F0-9]{64}/
-            if try regex.wholeMatch(in: rawValue) == nil {
-                throw ValidationError.invalidReferenceFormat(rawValue)
+            // https://github.com/opencontainers/image-spec/blob/v1.0.1/descriptor.md#sha-512
+            let sha512digest = /(sha512):([a-fA-F0-9]{128})/
+            if let match = try sha512digest.wholeMatch(in: rawValue) {
+                algorithm = try Algorithm(fromString: "\(match.1)")
+                value = "\(match.2)"
+                return
             }
 
-            value = rawValue
+            throw ValidationError.invalidReferenceFormat(rawValue)
         }
 
         public static func == (lhs: Digest, rhs: Digest) -> Bool {
-            lhs.value == rhs.value
+            lhs.algorithm == rhs.algorithm && lhs.value == rhs.value
         }
 
         public var separator: String = "@"
 
         public var description: String {
-            "\(value)"
+            "\(algorithm):\(value)"
         }
 
         /// Printable description in a form suitable for debugging.
         public var debugDescription: String {
-            "Digest(\(value))"
+            "Digest(\(algorithm):\(value))"
         }
     }
 }

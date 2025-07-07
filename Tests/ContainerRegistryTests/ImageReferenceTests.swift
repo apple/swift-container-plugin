@@ -136,6 +136,18 @@ struct ReferenceTests {
         ),
 
         ReferenceTestCase(
+            reference:
+                "example.com/foo@sha512:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            expected: try! ImageReference(
+                registry: "example.com",
+                repository: ImageReference.Repository("foo"),
+                reference: ImageReference.Digest(
+                    "sha512:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+                )
+            )
+        ),
+
+        ReferenceTestCase(
             reference: "foo:1234/bar:1234",
             expected: try! ImageReference(
                 registry: "foo:1234",
@@ -260,5 +272,61 @@ struct ReferenceTests {
                     reference: ImageReference.Tag("latest")
                 )
         )
+    }
+}
+
+struct DigestTests {
+    @Test(arguments: [
+        (
+            digest: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            algorithm: "sha256", value: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        ),
+        (
+            digest: "sha512:"
+                + "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+                + "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            algorithm: "sha512",
+            value: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+                + "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        ),
+    ])
+    func testParseValidDigest(digest: String, algorithm: String, value: String) throws {
+        let parsed = try! ImageReference.Digest(digest)
+
+        #expect("\(parsed.algorithm)" == algorithm)
+        #expect(parsed.value == value)
+        #expect("\(parsed)" == digest)
+    }
+
+    @Test(arguments: [
+        "sha256:0123456789abcdef0123456789abcdef0123456789abcdef",  // short digest
+        "foo:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",  // bad algorithm
+        "sha256-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",  // bad separator
+    ])
+    func testParseInvalidDigest(digest: String) throws {
+        #expect(throws: ImageReference.Digest.ValidationError.invalidReferenceFormat(digest)) {
+            try ImageReference.Digest(digest)
+        }
+    }
+
+    @Test
+    func testDigestEquality() throws {
+        let digest1 = "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        let digest2 = "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
+        let digest3 =
+            "sha512:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+            + "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+        #expect(try ImageReference.Digest(digest1) != ImageReference.Digest(digest2))
+        #expect(try ImageReference.Digest(digest1) != ImageReference.Digest(digest3))
+
+        // Same string, parsed twice, should yield the same digest
+        let sha256left = try ImageReference.Digest(digest1)
+        let sha256right = try ImageReference.Digest(digest1)
+        #expect(sha256left == sha256right)
+
+        let sha512left = try ImageReference.Digest(digest3)
+        let sha512right = try ImageReference.Digest(digest3)
+        #expect(sha512left == sha512right)
     }
 }
