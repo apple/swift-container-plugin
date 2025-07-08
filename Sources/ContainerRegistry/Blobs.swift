@@ -76,28 +76,6 @@ public extension RegistryClient {
         .data
     }
 
-    /// Fetches a blob and tries to decode it as a JSON object.
-    ///
-    /// - Parameters:
-    ///   - repository: Name of the repository containing the blob.
-    ///   - digest: Digest of the blob.
-    /// - Returns: The decoded object.
-    /// - Throws: If the blob download fails or the blob cannot be decoded.
-    ///
-    /// Some JSON objects, such as ImageConfiguration, are stored
-    /// in the registry as plain blobs with MIME type "application/octet-stream".
-    /// This function attempts to decode the received data without reference
-    /// to the MIME type.
-    func getBlob<Response: Decodable>(repository: ImageReference.Repository, digest: ImageReference.Digest) async throws
-        -> Response
-    {
-        try await executeRequestThrowing(
-            .get(repository, path: "blobs/\(digest)", accepting: ["application/octet-stream"]),
-            decodingErrors: [.notFound]
-        )
-        .data
-    }
-
     /// Uploads a blob to the registry.
     ///
     /// This function uploads a blob of unstructured data to the registry.

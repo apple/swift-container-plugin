@@ -17,9 +17,7 @@ public extension RegistryClient {
         repository: ImageReference.Repository,
         reference: any ImageReference.Reference,
         manifest: ImageManifest
-    ) async throws
-        -> String
-    {
+    ) async throws -> String {
         // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pushing-manifests
         let httpResponse = try await executeRequestThrowing(
             // All blob uploads have Content-Type: application/octet-stream on the wire, even if mediatype is different
@@ -44,11 +42,12 @@ public extension RegistryClient {
             .absoluteString
     }
 
-    func getManifest(repository: ImageReference.Repository, reference: any ImageReference.Reference) async throws
-        -> ImageManifest
-    {
+    func getManifest(
+        repository: ImageReference.Repository,
+        reference: any ImageReference.Reference
+    ) async throws -> ImageManifest {
         // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pulling-manifests
-        try await executeRequestThrowing(
+        let (data, _) = try await executeRequestThrowing(
             .get(
                 repository,
                 path: "manifests/\(reference)",
@@ -59,14 +58,15 @@ public extension RegistryClient {
             ),
             decodingErrors: [.notFound]
         )
-        .data
+        return try decoder.decode(ImageManifest.self, from: data)
     }
 
-    func getIndex(repository: ImageReference.Repository, reference: any ImageReference.Reference) async throws
-        -> ImageIndex
-    {
+    func getIndex(
+        repository: ImageReference.Repository,
+        reference: any ImageReference.Reference
+    ) async throws -> ImageIndex {
         // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pulling-manifests
-        try await executeRequestThrowing(
+        let (data, _) = try await executeRequestThrowing(
             .get(
                 repository,
                 path: "manifests/\(reference)",
@@ -77,6 +77,6 @@ public extension RegistryClient {
             ),
             decodingErrors: [.notFound]
         )
-        .data
+        return try decoder.decode(ImageIndex.self, from: data)
     }
 }

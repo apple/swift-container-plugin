@@ -15,6 +15,10 @@
 public extension RegistryClient {
     func getTags(repository: ImageReference.Repository) async throws -> Tags {
         // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#listing-tags
-        try await executeRequestThrowing(.get(repository, path: "tags/list"), decodingErrors: [.notFound]).data
+        let (data, _) = try await executeRequestThrowing(
+            .get(repository, path: "tags/list"),
+            decodingErrors: [.notFound]
+        )
+        return try decoder.decode(Tags.self, from: data)
     }
 }
