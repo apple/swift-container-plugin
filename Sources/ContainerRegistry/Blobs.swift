@@ -91,11 +91,11 @@ public extension RegistryClient {
     func getBlob<Response: Decodable>(repository: ImageReference.Repository, digest: ImageReference.Digest) async throws
         -> Response
     {
-        try await executeRequestThrowing(
+        let (data, _) = try await executeRequestThrowing(
             .get(repository, path: "blobs/\(digest)", accepting: ["application/octet-stream"]),
             decodingErrors: [.notFound]
         )
-        .data
+        return try decoder.decode(Response.self, from: data)
     }
 
     /// Uploads a blob to the registry.

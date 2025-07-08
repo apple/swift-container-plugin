@@ -308,27 +308,6 @@ extension RegistryClient {
         }
     }
 
-    /// Execute an HTTP request with no request body, decoding the JSON response
-    /// - Parameters:
-    ///   - request: The HTTP request to execute.
-    ///   - success: The HTTP status code expected if the request is successful.
-    ///   - errors: Expected error codes for which the registry sends structured error messages.
-    /// - Returns: An asynchronously-delivered tuple that contains the raw response body as a Data instance, and a HTTPURLResponse.
-    /// - Throws: If the server response is unexpected or indicates that an error occurred.
-    func executeRequestThrowing<Response: Decodable>(
-        _ request: RegistryOperation,
-        expectingStatus success: HTTPResponse.Status = .ok,
-        decodingErrors errors: [HTTPResponse.Status]
-    ) async throws -> (data: Response, response: HTTPResponse) {
-        let (data, httpResponse) = try await executeRequestThrowing(
-            request,
-            expectingStatus: success,
-            decodingErrors: errors
-        )
-        let decoded = try decoder.decode(Response.self, from: data)
-        return (decoded, httpResponse)
-    }
-
     /// Execute an HTTP request uploading a request body.
     /// - Parameters:
     ///   - operation: The Registry operation to execute.
@@ -337,9 +316,6 @@ extension RegistryClient {
     ///   - errors: Expected error codes for which the registry sends structured error messages.
     /// - Returns: An asynchronously-delivered tuple that contains the raw response body as a Data instance, and a HTTPURLResponse.
     /// - Throws: If the server response is unexpected or indicates that an error occurred.
-    ///
-    /// A plain Data version of this function is required because Data is Encodable and encodes to base64.
-    /// Accidentally encoding data blobs will cause digests to fail and runtimes to be unable to run the images.
     func executeRequestThrowing(
         _ operation: RegistryOperation,
         uploading payload: Data,
