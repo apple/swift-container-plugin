@@ -148,7 +148,10 @@ struct SmokeTests {
             manifest: test_manifest
         )
 
-        let manifest = try await client.getManifest(repository: repository, reference: ImageReference.Tag("latest"))
+        let (manifest, _) = try await client.getManifest(
+            repository: repository,
+            reference: ImageReference.Tag("latest")
+        )
         #expect(manifest.schemaVersion == 2)
         #expect(manifest.config.mediaType == "application/vnd.docker.container.image.v1+json")
         #expect(manifest.layers.count == 1)
@@ -181,15 +184,14 @@ struct SmokeTests {
             layers: [image_descriptor]
         )
 
-        let _ = try await client.putManifest(
+        let descriptor = try await client.putManifest(
             repository: repository,
-            reference: test_manifest.digest,
             manifest: test_manifest
         )
 
-        let manifest = try await client.getManifest(
+        let (manifest, _) = try await client.getManifest(
             repository: repository,
-            reference: test_manifest.digest
+            reference: ImageReference.Digest(descriptor.digest)
         )
         #expect(manifest.schemaVersion == 2)
         #expect(manifest.config.mediaType == "application/vnd.docker.container.image.v1+json")

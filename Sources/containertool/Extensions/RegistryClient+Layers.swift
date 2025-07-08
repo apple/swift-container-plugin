@@ -16,10 +16,9 @@ import struct Foundation.Data
 import ContainerRegistry
 
 extension RegistryClient {
-    func getImageManifest(forImage image: ImageReference, architecture: String) async throws -> ImageManifest {
-        // We pushed the amd64 tag but it points to a single-architecture index, not directly to a manifest
-        // if we get an index we should get a manifest, otherwise we might get a manifest directly
-
+    func getImageManifest(forImage image: ImageReference, architecture: String) async throws -> (
+        ImageManifest, ContentDescriptor
+    ) {
         do {
             // Try to retrieve a manifest.   If the object with this reference is actually an index, the content-type will not match and
             // an error will be thrown.
