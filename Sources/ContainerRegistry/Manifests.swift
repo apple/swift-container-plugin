@@ -21,7 +21,7 @@ public extension RegistryClient {
         // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pushing-manifests
 
         let encoded = try encoder.encode(manifest)
-        let digest = digest(of: encoded)
+        let digest = ImageReference.Digest(of: encoded)
         let mediaType = manifest.mediaType ?? "application/vnd.oci.image.manifest.v1+json"
 
         let _ = try await executeRequestThrowing(
@@ -62,7 +62,7 @@ public extension RegistryClient {
             try decoder.decode(ImageManifest.self, from: data),
             ContentDescriptor(
                 mediaType: response.headerFields[.contentType] ?? "application/vnd.oci.image.manifest.v1+json",
-                digest: "\(digest(of: data))",
+                digest: "\(ImageReference.Digest(of: data))",
                 size: Int64(data.count)
             )
         )

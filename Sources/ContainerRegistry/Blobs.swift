@@ -97,7 +97,7 @@ public extension RegistryClient {
         // Append the digest to the upload location, as the specification requires.
         // The server's URL is arbitrary and might already contain query items which we must not overwrite.
         // The URL could even point to a different host.
-        let digest = digest(of: data)
+        let digest = ImageReference.Digest(of: data)
         let uploadURL = location.appending(queryItems: [.init(name: "digest", value: "\(digest)")])
 
         let httpResponse = try await executeRequestThrowing(
