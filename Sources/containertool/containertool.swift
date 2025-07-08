@@ -249,12 +249,13 @@ extension RegistryClient {
 
         let baseImageManifest: ImageManifest
         let baseImageConfiguration: ImageConfiguration
+        let baseImageDescriptor: ContentDescriptor
         if let source {
-            baseImageManifest = try await source.getImageManifest(
+            (baseImageManifest, baseImageDescriptor) = try await source.getImageManifest(
                 forImage: baseImage,
                 architecture: architecture
             )
-            log("Found base image manifest: \(baseImageManifest.digest)")
+            log("Found base image manifest: \(baseImageDescriptor.digest)")
 
             baseImageConfiguration = try await source.getImageConfiguration(
                 forImage: baseImage,

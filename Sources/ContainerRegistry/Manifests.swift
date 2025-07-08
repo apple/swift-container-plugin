@@ -45,9 +45,9 @@ public extension RegistryClient {
     func getManifest(
         repository: ImageReference.Repository,
         reference: any ImageReference.Reference
-    ) async throws -> ImageManifest {
+    ) async throws -> (ImageManifest, ContentDescriptor) {
         // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pulling-manifests
-        let (data, _) = try await executeRequestThrowing(
+        let (data, response) = try await executeRequestThrowing(
             .get(
                 repository,
                 path: "manifests/\(reference)",
@@ -58,7 +58,14 @@ public extension RegistryClient {
             ),
             decodingErrors: [.notFound]
         )
-        return try decoder.decode(ImageManifest.self, from: data)
+        return (
+            try decoder.decode(ImageManifest.self, from: data),
+            ContentDescriptor(
+                mediaType: response.headerFields[.contentType] ?? "application/vnd.oci.image.manifest.v1+json",
+                digest: "\(digest(of: data))",
+                size: Int64(data.count)
+            )
+        )
     }
 
     func getIndex(
