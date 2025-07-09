@@ -15,10 +15,17 @@
 import struct Foundation.Data
 import ContainerRegistry
 
-extension RegistryClient {
-    func getImageManifest(forImage image: ImageReference, architecture: String) async throws -> (
-        ImageManifest, ContentDescriptor
-    ) {
+extension ImageSource {
+    // A single-architecture image may begin with a manifest;  a multi-architecture
+    // image begins with an index which points to one or more manifests.   The client
+    // could receive either type of object:
+    // * if the registry sends a manifest, this function returns it
+    // * if the registry sends an index, this function chooses the
+    //   appropriate architecture-specific manifest and returns it.
+    func getImageManifest(
+        forImage image: ImageReference,
+        architecture: String
+    ) async throws -> (ImageManifest, ContentDescriptor) {
         do {
             // Try to retrieve a manifest.   If the object with this reference is actually an index, the content-type will not match and
             // an error will be thrown.

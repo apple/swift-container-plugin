@@ -14,7 +14,7 @@
 
 import ContainerRegistry
 
-extension RegistryClient {
+extension ImageSource {
     /// Copies a blob from another registry to this one.
     /// - Parameters:
     ///   - digest: The digest of the blob to copy.

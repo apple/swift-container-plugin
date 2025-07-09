@@ -18,10 +18,10 @@ import struct Foundation.URL
 import ContainerRegistry
 import Tar
 
-func publishContainerImage<Destination: ImageDestination>(
+func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
     baseImage: ImageReference,
     destinationImage: ImageReference,
-    source: RegistryClient?,
+    source: Source?,
     destination: Destination,
     architecture: String,
     os: String,
