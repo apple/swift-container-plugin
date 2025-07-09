@@ -146,14 +146,40 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
         log("manifest: \(manifestDescriptor.digest) (\(manifestDescriptor.size) bytes)")
     }
 
-    // Use the manifest's digest if the user did not provide a human-readable tag
+    // MARK: Create application index
+
+    let index = ImageIndex(
+        schemaVersion: 2,
+        mediaType: "application/vnd.oci.image.index.v1+json",
+        manifests: [
+            ContentDescriptor(
+                mediaType: manifestDescriptor.mediaType,
+                digest: manifestDescriptor.digest,
+                size: Int64(manifestDescriptor.size)
+            )
+        ]
+    )
+
+    // MARK: Upload application manifest
+
+    let indexDescriptor = try await destination.putIndex(
+        repository: destinationImage.repository,
+        reference: destinationImage.reference,
+        index: index
+    )
+
+    if verbose {
+        log("index: \(indexDescriptor.digest) (\(indexDescriptor.size) bytes)")
+    }
+
+    // Use the index digest if the user did not provide a human-readable tag
     // To support multiarch images, we should also create an an index pointing to
     // this manifest.
     let reference: ImageReference.Reference
     if let tag {
         reference = try ImageReference.Tag(tag)
     } else {
-        reference = try ImageReference.Digest(manifestDescriptor.digest)
+        reference = try ImageReference.Digest(indexDescriptor.digest)
     }
 
     var result = destinationImage
