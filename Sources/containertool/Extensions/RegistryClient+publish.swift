@@ -160,7 +160,10 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
                 mediaType: manifestDescriptor.mediaType,
                 digest: manifestDescriptor.digest,
                 size: Int64(manifestDescriptor.size),
-                platform: .init(architecture: architecture, os: os)
+                platform: .init(architecture: architecture, os: os),
+                annotations: [
+                    "org.opencontainers.image.ref.name": "\(destinationImage)"
+                ]
             )
         ]
     )
