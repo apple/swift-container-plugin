@@ -277,7 +277,7 @@ let trailer = [UInt8](repeating: 0, count: trailerSize)
         0, 0, 0, 0,
 
         // mode: 8 bytes
-        48, 48, 48, 53, 53, 53, 32, 0,
+        48, 48, 48, 55, 53, 53, 32, 0,
 
         // uid: 8 bytes
         48, 48, 48, 48, 48, 48, 32, 0,
@@ -292,7 +292,7 @@ let trailer = [UInt8](repeating: 0, count: trailerSize)
         48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 32,
 
         // chksum: 8 bytes
-        48, 49, 49, 48, 55, 53, 0, 32,
+        48, 49, 49, 48, 55, 55, 0, 32,
 
         // typeflag: 1 byte
         48,
@@ -360,7 +360,7 @@ let trailer = [UInt8](repeating: 0, count: trailerSize)
             0, 0, 0, 0,
 
             // mode: 8 bytes
-            48, 48, 48, 53, 53, 53, 32, 0,
+            48, 48, 48, 55, 53, 53, 32, 0,
 
             // uid: 8 bytes
             48, 48, 48, 48, 48, 48, 32, 0,
@@ -375,7 +375,7 @@ let trailer = [UInt8](repeating: 0, count: trailerSize)
             48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 32,
 
             // chksum: 8 bytes
-            48, 49, 49, 48, 52, 55, 0, 32,
+            48, 49, 49, 48, 53, 49, 0, 32,
 
             // typeflag: 1 byte
             48,
@@ -476,7 +476,7 @@ let trailer = [UInt8](repeating: 0, count: trailerSize)
         0, 0, 0, 0,
 
         // mode: 8 bytes
-        48, 48, 48, 53, 53, 53, 32, 0,
+        48, 48, 48, 55, 53, 53, 32, 0,
 
         // uid: 8 bytes
         48, 48, 48, 48, 48, 48, 32, 0,
@@ -491,7 +491,7 @@ let trailer = [UInt8](repeating: 0, count: trailerSize)
         48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 32,
 
         // chksum: 8 bytes
-        48, 49, 50, 51, 50, 54, 0, 32,
+        48, 49, 50, 51, 51, 48, 0, 32,
 
         // typeflag: 1 byte
         53,

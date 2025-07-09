@@ -415,7 +415,7 @@ extension Archive {
     /// - prefix: Path prefix
     /// - data: File contents
     public func appendFile(name: String, prefix: String = "", data: [UInt8]) throws {
-        try append(.init(header: .init(name: name, size: data.count, prefix: prefix), data: data))
+        try append(.init(header: .init(name: name, mode: 0o755, size: data.count, prefix: prefix), data: data))
     }
 
     /// Adds a new directory member at the end of the archive
@@ -423,6 +423,6 @@ extension Archive {
     /// - name: Directory name
     /// - prefix: Path prefix
     public func appendDirectory(name: String, prefix: String = "") throws {
-        try append(.init(header: .init(name: name, typeflag: .DIRTYPE, prefix: prefix)))
+        try append(.init(header: .init(name: name, mode: 0o755, typeflag: .DIRTYPE, prefix: prefix)))
     }
 }
