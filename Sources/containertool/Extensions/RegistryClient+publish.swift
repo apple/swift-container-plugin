@@ -21,7 +21,7 @@ import Tar
 func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
     baseImage: ImageReference,
     destinationImage: ImageReference,
-    source: Source?,
+    source: Source,
     destination: Destination,
     architecture: String,
     os: String,
@@ -33,34 +33,17 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
 
     // MARK: Find the base image
 
-    let baseImageManifest: ImageManifest
-    let baseImageConfiguration: ImageConfiguration
-    let baseImageDescriptor: ContentDescriptor
-    if let source {
-        (baseImageManifest, baseImageDescriptor) = try await source.getImageManifest(
-            forImage: baseImage,
-            architecture: architecture
-        )
-        try log("Found base image manifest: \(ImageReference.Digest(baseImageDescriptor.digest))")
+    let (baseImageManifest, baseImageDescriptor) = try await source.getImageManifest(
+        forImage: baseImage,
+        architecture: architecture
+    )
+    try log("Found base image manifest: \(ImageReference.Digest(baseImageDescriptor.digest))")
 
-        baseImageConfiguration = try await source.getImageConfiguration(
-            forImage: baseImage,
-            digest: ImageReference.Digest(baseImageManifest.config.digest)
-        )
-        log("Found base image configuration: \(baseImageManifest.config.digest)")
-    } else {
-        baseImageManifest = .init(
-            schemaVersion: 2,
-            config: .init(mediaType: "scratch", digest: "scratch", size: 0),
-            layers: []
-        )
-        baseImageConfiguration = .init(
-            architecture: architecture,
-            os: os,
-            rootfs: .init(_type: "layers", diff_ids: [])
-        )
-        if verbose { log("Using scratch as base image") }
-    }
+    let baseImageConfiguration = try await source.getImageConfiguration(
+        forImage: baseImage,
+        digest: ImageReference.Digest(baseImageManifest.config.digest)
+    )
+    log("Found base image configuration: \(baseImageManifest.config.digest)")
 
     // MARK: Upload resource layers
 
@@ -142,15 +125,13 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
     // Copy the base image layers to the destination repository
     // Layers could be checked and uploaded concurrently
     // This could also happen in parallel with the application image build
-    if let source {
-        for layer in baseImageManifest.layers {
-            try await source.copyBlob(
-                digest: ImageReference.Digest(layer.digest),
-                fromRepository: baseImage.repository,
-                toClient: destination,
-                toRepository: destinationImage.repository
-            )
-        }
+    for layer in baseImageManifest.layers {
+        try await source.copyBlob(
+            digest: ImageReference.Digest(layer.digest),
+            fromRepository: baseImage.repository,
+            toClient: destination,
+            toRepository: destinationImage.repository
+        )
     }
 
     // MARK: Upload application manifest
