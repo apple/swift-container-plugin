@@ -45,7 +45,7 @@ FILETYPE=$(file "$PKGPATH/.build/x86_64-swift-linux-musl/debug/hello")
 log "Executable type: $FILETYPE"
 
 IMGREF=$(swift run containertool --repository localhost:5000/elf_test "$PKGPATH/.build/x86_64-swift-linux-musl/debug/hello" --from scratch)
-$RUNTIME pull "$IMGREF"
+$RUNTIME pull --platform=linux/amd64 "$IMGREF"
 IMGARCH=$($RUNTIME inspect "$IMGREF" --format "{{.Architecture}}")
 if [ "$IMGARCH" = "amd64" ] ; then
   log "x86_64 detection: PASSED"
@@ -61,7 +61,7 @@ FILETYPE=$(file "$PKGPATH/.build/x86_64-swift-linux-musl/debug/hello")
 log "Executable type: $FILETYPE"
 
 IMGREF=$(swift run containertool --repository localhost:5000/elf_test "$PKGPATH/.build/aarch64-swift-linux-musl/debug/hello" --from scratch)
-$RUNTIME pull "$IMGREF"
+$RUNTIME pull --platform=linux/arm64 "$IMGREF"
 IMGARCH=$($RUNTIME inspect "$IMGREF" --format "{{.Architecture}}")
 if [ "$IMGARCH" = "arm64" ] ; then
   log "aarch64 detection: PASSED"

@@ -155,7 +155,8 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
             ContentDescriptor(
                 mediaType: manifestDescriptor.mediaType,
                 digest: manifestDescriptor.digest,
-                size: Int64(manifestDescriptor.size)
+                size: Int64(manifestDescriptor.size),
+                platform: .init(architecture: architecture, os: os)
             )
         ]
     )
