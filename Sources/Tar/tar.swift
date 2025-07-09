@@ -349,8 +349,8 @@ public struct Archive: ~Copyable {
     var output: OutputStream
 
     /// Creates an empty Archive
-    public init() {
-        output = OutputStream.toMemory()
+    public init(toStream: OutputStream = .toMemory()) {
+        output = toStream
         output.open()
         output.schedule(in: .current, forMode: .default)  // is this needed?
     }

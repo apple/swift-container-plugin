@@ -43,6 +43,9 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
         @Option(help: "The base container image name and optional tag")
         var from: String?
+
+        @Option(name: [.long, .short], help: "File in which the container image should be saved")
+        var output: URL
     }
 
     @OptionGroup(title: "Source and destination repository options")
@@ -203,12 +206,17 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
             if verbose { log("Connected to source registry: \(baseImage.registry)") }
         }
 
-        let destination = try await RegistryClient(
-            registry: destinationImage.registry,
-            insecure: authenticationOptions.allowInsecureHttp == .destination
-                || authenticationOptions.allowInsecureHttp == .both,
-            auth: .init(username: username, password: password, auth: authProvider)
-        )
+        // let destination = try await RegistryClient(
+        //     registry: destinationImage.registry,
+        //     insecure: authenticationOptions.allowInsecureHttp == .destination
+        //         || authenticationOptions.allowInsecureHttp == .both,
+        //     auth: .init(username: username, password: password, auth: authProvider)
+        // )
+
+        guard let saveStream = OutputStream(url: repositoryOptions.output, append: false) else {
+            fatalError("failed to create tarball")
+        }
+        let destination = try TarImageDestination(toStream: saveStream)
 
         if verbose { log("Connected to destination registry: \(destinationImage.registry)") }
         if verbose { log("Using base image: \(baseImage)") }
@@ -229,5 +237,13 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         )
 
         print(finalImage)
+    }
+}
+
+// Parse URL path arguments
+extension Foundation.URL: ArgumentParser.ExpressibleByArgument {
+    /// Construct a URL from an argument string
+    public init?(argument: String) {
+        self.init(fileURLWithPath: argument)
     }
 }
