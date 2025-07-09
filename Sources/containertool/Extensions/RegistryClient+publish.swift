@@ -18,11 +18,11 @@ import struct Foundation.URL
 import ContainerRegistry
 import Tar
 
-func publishContainerImage(
+func publishContainerImage<Destination: ImageDestination>(
     baseImage: ImageReference,
     destinationImage: ImageReference,
     source: RegistryClient?,
-    destination: RegistryClient,
+    destination: Destination,
     architecture: String,
     os: String,
     resources: [String],
@@ -64,7 +64,7 @@ func publishContainerImage(
 
     // MARK: Upload resource layers
 
-    var resourceLayers: [RegistryClient.ImageLayer] = []
+    var resourceLayers: [(descriptor: ContentDescriptor, diffID: ImageReference.Digest)] = []
     for resourceDir in resources {
         let resourceTardiff = try Archive().appendingRecursively(atPath: resourceDir).bytes
         let resourceLayer = try await destination.uploadLayer(

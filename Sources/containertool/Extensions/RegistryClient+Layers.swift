@@ -37,25 +37,21 @@ extension RegistryClient {
             )
         }
     }
+}
 
-    typealias DiffID = ImageReference.Digest
-    struct ImageLayer {
-        var descriptor: ContentDescriptor
-        var diffID: DiffID
-    }
-
+extension ImageDestination {
     // A layer is a tarball, optionally compressed using gzip or zstd
     // See https://github.com/opencontainers/image-spec/blob/main/media-types.md
     func uploadLayer(
         repository: ImageReference.Repository,
         contents: [UInt8],
         mediaType: String = "application/vnd.oci.image.layer.v1.tar+gzip"
-    ) async throws -> ImageLayer {
+    ) async throws -> (descriptor: ContentDescriptor, diffID: ImageReference.Digest) {
         // The diffID is the hash of the unzipped layer tarball
         let diffID = ImageReference.Digest(of: contents)
         // The layer blob is the gzipped tarball;  the descriptor is the hash of this gzipped blob
         let blob = Data(gzip(contents))
         let descriptor = try await putBlob(repository: repository, mediaType: mediaType, data: blob)
-        return ImageLayer(descriptor: descriptor, diffID: diffID)
+        return (descriptor: descriptor, diffID: diffID)
     }
 }

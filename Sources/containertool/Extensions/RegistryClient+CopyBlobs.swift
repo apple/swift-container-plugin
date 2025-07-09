@@ -25,7 +25,7 @@ extension RegistryClient {
     func copyBlob(
         digest: ImageReference.Digest,
         fromRepository sourceRepository: ImageReference.Repository,
-        toClient destClient: RegistryClient,
+        toClient destClient: ImageDestination,
         toRepository destRepository: ImageReference.Repository
     ) async throws {
         if try await destClient.blobExists(repository: destRepository, digest: digest) {
