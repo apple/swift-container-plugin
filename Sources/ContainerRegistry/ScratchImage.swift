@@ -28,9 +28,7 @@ public struct ScratchImage {
     var index: ImageIndex
 
     public init(architecture: String, os: String) {
-        self.encoder = JSONEncoder()
-        self.encoder.outputFormatting = [.sortedKeys, .prettyPrinted, .withoutEscapingSlashes]
-        self.encoder.dateEncodingStrategy = .iso8601
+        self.encoder = containerJSONEncoder()
 
         self.architecture = architecture
         self.os = os
