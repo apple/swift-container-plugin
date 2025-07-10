@@ -29,8 +29,8 @@ extension ImageReference.Digest {
     /// - Parameters:
     ///   - data: Blob of data to digest.
     ///   - algorithm: Digest algorithm to use.
-    public init(
-        of data: any DataProtocol,
+    public init<Blob: DataProtocol>(
+        of data: Blob,
         algorithm: ImageReference.Digest.Algorithm = .sha256
     ) {
         // SHA256 is required; some registries might also support SHA512
