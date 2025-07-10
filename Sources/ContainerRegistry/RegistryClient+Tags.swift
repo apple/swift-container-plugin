@@ -12,8 +12,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-public extension RegistryClient {
-    func getTags(repository: ImageReference.Repository) async throws -> Tags {
+extension RegistryClient {
+    /// Fetches all tags defined on a particular repository.
+    ///
+    /// - Parameter repository: Name of the repository to list.
+    /// - Returns: a list of tags.
+    /// - Throws: If the tag request fails or the response cannot be decoded.
+    public func getTags(repository: ImageReference.Repository) async throws -> Tags {
         // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#listing-tags
         let (data, _) = try await executeRequestThrowing(
             .get(repository, path: "tags/list"),

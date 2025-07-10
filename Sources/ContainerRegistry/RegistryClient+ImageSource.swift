@@ -12,37 +12,35 @@
 //
 //===----------------------------------------------------------------------===//
 
-public extension RegistryClient {
-    func putManifest(
+import struct Foundation.Data
+
+extension RegistryClient: ImageSource {
+    /// Fetches an unstructured blob of data from the registry.
+    ///
+    /// - Parameters:
+    ///   - repository: Name of the repository containing the blob.
+    ///   - digest: Digest of the blob.
+    /// - Returns: The downloaded data.
+    /// - Throws: If the blob download fails.
+    public func getBlob(
         repository: ImageReference.Repository,
-        reference: (any ImageReference.Reference)? = nil,
-        manifest: ImageManifest
-    ) async throws -> ContentDescriptor {
-        // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pushing-manifests
-
-        let encoded = try encoder.encode(manifest)
-        let digest = ImageReference.Digest(of: encoded)
-        let mediaType = manifest.mediaType ?? "application/vnd.oci.image.manifest.v1+json"
-
-        let _ = try await executeRequestThrowing(
-            .put(
-                repository,
-                path: "manifests/\(reference ?? digest)",
-                contentType: mediaType
-            ),
-            uploading: encoded,
-            expectingStatus: .created,
+        digest: ImageReference.Digest
+    ) async throws -> Data {
+        try await executeRequestThrowing(
+            .get(repository, path: "blobs/\(digest)", accepting: ["application/octet-stream"]),
             decodingErrors: [.notFound]
         )
-
-        return ContentDescriptor(
-            mediaType: mediaType,
-            digest: "\(digest)",
-            size: Int64(encoded.count)
-        )
+        .data
     }
 
-    func getManifest(
+    /// Fetches an image manifest.
+    ///
+    /// - Parameters:
+    ///   - repository: Name of the source repository.
+    ///   - reference: Tag or digest of the manifest to fetch.
+    /// - Returns: The downloaded manifest.
+    /// - Throws: If the download fails or the manifest cannot be decoded.
+    public func getManifest(
         repository: ImageReference.Repository,
         reference: any ImageReference.Reference
     ) async throws -> (ImageManifest, ContentDescriptor) {
@@ -68,7 +66,14 @@ public extension RegistryClient {
         )
     }
 
-    func getIndex(
+    /// Fetches an image index.
+    ///
+    /// - Parameters:
+    ///   - repository: Name of the source repository.
+    ///   - reference: Tag or digest of the index to fetch.
+    /// - Returns: The downloaded index.
+    /// - Throws: If the download fails or the index cannot be decoded.
+    public func getIndex(
         repository: ImageReference.Repository,
         reference: any ImageReference.Reference
     ) async throws -> ImageIndex {
@@ -85,5 +90,21 @@ public extension RegistryClient {
             decodingErrors: [.notFound]
         )
         return try decoder.decode(ImageIndex.self, from: data)
+    }
+
+    /// Get an image configuration record from the registry.
+    /// - Parameters:
+    ///   - image: Reference to the image containing the record.
+    ///   - digest: Digest of the record.
+    /// - Returns: The image confguration record stored in `repository` with digest `digest`.
+    /// - Throws: If the blob cannot be decoded as an `ImageConfiguration`.
+    ///
+    /// Image configuration records are stored as blobs in the registry.  This function retrieves the requested blob and tries to decode it as a configuration record.
+    public func getImageConfiguration(
+        forImage image: ImageReference,
+        digest: ImageReference.Digest
+    ) async throws -> ImageConfiguration {
+        let data = try await getBlob(repository: image.repository, digest: digest)
+        return try decoder.decode(ImageConfiguration.self, from: data)
     }
 }

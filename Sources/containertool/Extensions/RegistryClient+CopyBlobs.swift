@@ -14,7 +14,7 @@
 
 import ContainerRegistry
 
-extension RegistryClient {
+extension ImageSource {
     /// Copies a blob from another registry to this one.
     /// - Parameters:
     ///   - digest: The digest of the blob to copy.
@@ -25,7 +25,7 @@ extension RegistryClient {
     func copyBlob(
         digest: ImageReference.Digest,
         fromRepository sourceRepository: ImageReference.Repository,
-        toClient destClient: RegistryClient,
+        toClient destClient: ImageDestination,
         toRepository destRepository: ImageReference.Repository
     ) async throws {
         if try await destClient.blobExists(repository: destRepository, digest: digest) {

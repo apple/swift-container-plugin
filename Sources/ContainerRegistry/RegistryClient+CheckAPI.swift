@@ -12,13 +12,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
+import struct Foundation.URL
 
-public extension RegistryClient {
+extension RegistryClient {
     /// Checks whether the registry supports v2 of the distribution specification.
     /// - Returns: an `true` if the registry supports the distribution specification.
     /// - Throws: if the registry does not support the distribution specification.
-    static func checkAPI(client: HTTPClient, registryURL: URL) async throws -> AuthChallenge {
+    public static func checkAPI(client: HTTPClient, registryURL: URL) async throws -> AuthChallenge {
         // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#determining-support
 
         // The registry indicates that it supports the v2 protocol by returning a 200 OK response.

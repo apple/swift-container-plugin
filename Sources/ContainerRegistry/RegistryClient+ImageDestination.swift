@@ -12,10 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-import Foundation
+import struct Foundation.Data
+import struct Foundation.URL
 import HTTPTypes
 
-extension RegistryClient {
+extension RegistryClient: ImageDestination {
     // Internal helper method to initiate a blob upload in 'two shot' mode
     func startBlobUploadSession(repository: ImageReference.Repository) async throws -> URL {
         // Upload in "two shot" mode.
@@ -48,10 +49,18 @@ extension RegistryClient {
 
         return locationURL
     }
-}
 
-public extension RegistryClient {
-    func blobExists(repository: ImageReference.Repository, digest: ImageReference.Digest) async throws -> Bool {
+    /// Checks whether a blob exists.
+    ///
+    /// - Parameters:
+    ///   - repository: Name of the destination repository.
+    ///   - digest: Digest of the requested blob.
+    /// - Returns: True if the blob exists, otherwise false.
+    /// - Throws: If the destination encounters an error.
+    public func blobExists(
+        repository: ImageReference.Repository,
+        digest: ImageReference.Digest
+    ) async throws -> Bool {
         do {
             let _ = try await executeRequestThrowing(
                 .head(repository, path: "blobs/\(digest)"),
@@ -59,21 +68,6 @@ public extension RegistryClient {
             )
             return true
         } catch HTTPClientError.unexpectedStatusCode(status: .notFound, _, _) { return false }
-    }
-
-    /// Fetches an unstructured blob of data from the registry.
-    ///
-    /// - Parameters:
-    ///   - repository: Name of the repository containing the blob.
-    ///   - digest: Digest of the blob.
-    /// - Returns: The downloaded data.
-    /// - Throws: If the blob download fails.
-    func getBlob(repository: ImageReference.Repository, digest: ImageReference.Digest) async throws -> Data {
-        try await executeRequestThrowing(
-            .get(repository, path: "blobs/\(digest)", accepting: ["application/octet-stream"]),
-            decodingErrors: [.notFound]
-        )
-        .data
     }
 
     /// Uploads a blob to the registry.
@@ -87,10 +81,11 @@ public extension RegistryClient {
     /// - Returns: An ContentDescriptor object representing the
     ///            uploaded blob.
     /// - Throws: If the blob cannot be encoded or the upload fails.
-    func putBlob(repository: ImageReference.Repository, mediaType: String = "application/octet-stream", data: Data)
-        async throws
-        -> ContentDescriptor
-    {
+    public func putBlob(
+        repository: ImageReference.Repository,
+        mediaType: String = "application/octet-stream",
+        data: Data
+    ) async throws -> ContentDescriptor {
         // Ask the server to open a session and tell us where to upload our data
         let location = try await startBlobUploadSession(repository: repository)
 
@@ -133,14 +128,53 @@ public extension RegistryClient {
     ///  Some JSON objects, such as ImageConfiguration, are stored
     /// in the registry as plain blobs with MIME type "application/octet-stream".
     /// This function encodes the data parameter and uploads it as a generic blob.
-    func putBlob<Body: Encodable>(
+    public func putBlob<Body: Encodable>(
         repository: ImageReference.Repository,
         mediaType: String = "application/octet-stream",
         data: Body
-    )
-        async throws -> ContentDescriptor
-    {
+    ) async throws -> ContentDescriptor {
         let encoded = try encoder.encode(data)
         return try await putBlob(repository: repository, mediaType: mediaType, data: encoded)
+    }
+
+    /// Encodes and uploads an image manifest.
+    ///
+    /// - Parameters:
+    ///   - repository: Name of the destination repository.
+    ///   - reference: Optional tag to apply to this manifest.
+    ///   - manifest: Manifest to be uploaded.
+    /// - Returns: An ContentDescriptor object representing the
+    ///            uploaded blob.
+    /// - Throws: If the blob cannot be encoded or the upload fails.
+    ///
+    /// Manifests are not treated as blobs by the distribution specification.
+    /// They have their own MIME types and are uploaded to different
+    public func putManifest(
+        repository: ImageReference.Repository,
+        reference: (any ImageReference.Reference)? = nil,
+        manifest: ImageManifest
+    ) async throws -> ContentDescriptor {
+        // See https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pushing-manifests
+
+        let encoded = try encoder.encode(manifest)
+        let digest = ImageReference.Digest(of: encoded)
+        let mediaType = manifest.mediaType ?? "application/vnd.oci.image.manifest.v1+json"
+
+        let _ = try await executeRequestThrowing(
+            .put(
+                repository,
+                path: "manifests/\(reference ?? digest)",
+                contentType: mediaType
+            ),
+            uploading: encoded,
+            expectingStatus: .created,
+            decodingErrors: [.notFound]
+        )
+
+        return ContentDescriptor(
+            mediaType: mediaType,
+            digest: "\(digest)",
+            size: Int64(encoded.count)
+        )
     }
 }
