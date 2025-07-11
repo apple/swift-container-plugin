@@ -273,6 +273,36 @@ struct ReferenceTests {
                 )
         )
     }
+
+    @Test
+    func testScratchReferences() throws {
+        // The unqualified "scratch" image is handled locally so should not be expanded.
+        #expect(
+            try! ImageReference(fromString: "scratch", defaultRegistry: "localhost:5000")
+                == ImageReference(
+                    registry: "",
+                    repository: ImageReference.Repository("scratch"),
+                    reference: ImageReference.Tag("latest")
+                )
+        )
+    }
+
+    @Test
+    func testReferenceDescription() throws {
+        #expect(
+            "\(try! ImageReference(fromString: "swift", defaultRegistry: "localhost:5000"))"
+                == "localhost:5000/swift:latest"
+        )
+
+        #expect(
+            "\(try! ImageReference(fromString: "library/swift:slim", defaultRegistry: "docker.io"))"
+                == "index.docker.io/library/swift:slim"
+        )
+
+        #expect(
+            "\(try! ImageReference(fromString: "scratch", defaultRegistry: "localhost:5000"))" == "scratch:latest"
+        )
+    }
 }
 
 struct DigestTests {

@@ -13,6 +13,15 @@
 //===----------------------------------------------------------------------===//
 
 import struct Foundation.Data
+import class Foundation.JSONEncoder
+
+/// Create a JSONEncoder configured according to the requirements of the image specification.
+func containerJSONEncoder() -> JSONEncoder {
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.sortedKeys, .prettyPrinted, .withoutEscapingSlashes]
+    encoder.dateEncodingStrategy = .iso8601
+    return encoder
+}
 
 /// A source, such as a registry, from which container images can be fetched.
 public protocol ImageSource {

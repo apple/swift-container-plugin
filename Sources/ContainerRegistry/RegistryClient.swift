@@ -66,16 +66,12 @@ public struct RegistryClient {
     ///   - registry: HTTP URL of the registry's API endpoint.
     ///   - client: HTTPClient object to use to connect to the registry.
     ///   - auth: An authentication handler which can provide authentication credentials.
-    ///   - encoder: JSONEncoder to use when encoding messages to the registry.
-    ///   - decoder: JSONDecoder to use when decoding messages from the registry.
     /// - Throws: If the registry name is invalid.
     /// - Throws: If a connection to the registry cannot be established.
     public init(
         registry: URL,
         client: HTTPClient,
-        auth: AuthHandler? = nil,
-        encodingWith encoder: JSONEncoder? = nil,
-        decodingWith decoder: JSONDecoder? = nil
+        auth: AuthHandler? = nil
     ) async throws {
         registryURL = registry
         self.client = client
@@ -83,20 +79,8 @@ public struct RegistryClient {
 
         // The registry server does not normalize JSON and calculates digests over the raw message text.
         // We must use consistent encoder settings when encoding and calculating digests.
-        //
-        // We must also configure the date encoding strategy otherwise the dates are printed as
-        // fractional numbers of seconds, whereas the container image requires ISO8601.
-        if let encoder {
-            self.encoder = encoder
-        } else {
-            self.encoder = JSONEncoder()
-            self.encoder.outputFormatting = [.sortedKeys, .prettyPrinted, .withoutEscapingSlashes]
-            self.encoder.dateEncodingStrategy = .iso8601
-        }
-
-        // No special configuration is required for the decoder, but we should use a single instance
-        // rather than creating new instances where we need them.
-        self.decoder = decoder ?? JSONDecoder()
+        self.encoder = containerJSONEncoder()
+        self.decoder = JSONDecoder()
 
         // Verify that we can talk to the registry
         self.authChallenge = try await RegistryClient.checkAPI(client: self.client, registryURL: self.registryURL)

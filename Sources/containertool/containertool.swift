@@ -190,9 +190,9 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
         // The base image may be stored on a different registry to the final destination, so two clients are needed.
         // `scratch` is a special case and requires no source client.
-        let source: RegistryClient?
+        let source: ImageSource
         if from == "scratch" {
-            source = nil
+            source = ScratchImage(architecture: architecture, os: os)
         } else {
             source = try await RegistryClient(
                 registry: baseImage.registry,
