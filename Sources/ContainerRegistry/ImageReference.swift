@@ -78,9 +78,18 @@ public struct ImageReference: Sendable, Equatable, CustomStringConvertible, Cust
     public init(fromString reference: String, defaultRegistry: String = "localhost:5000") throws {
         let (registry, remainder) = try splitReference(reference)
         let (repository, reference) = try parseName(remainder)
+
+        // As a special case, do not expand the reference for the unqualified 'scratch' image as it is handled locally.
+        if registry == nil && repository.value == "scratch" {
+            self.registry = ""
+            self.repository = repository
+            self.reference = reference
+            return
+        }
+
         self.registry = registry ?? defaultRegistry
         if self.registry == "docker.io" {
-            self.registry = "index.docker.io"  // Special case for docker client, there is no network-level redirect
+            self.registry = "index.docker.io"  // Special case for Docker Hub, there is no network-level redirect
         }
         // As a special case, official images can be referred to by a single name, such as `swift` or `swift:slim`.
         // moby/moby assumes that these names refer to images in `library`: `library/swift` or `library/swift:slim`.
@@ -111,7 +120,11 @@ public struct ImageReference: Sendable, Equatable, CustomStringConvertible, Cust
 
     /// Printable description of an ImageReference in a form which can be understood by a runtime
     public var description: String {
-        "\(registry)/\(repository)\(reference.separator)\(reference)"
+        if registry == "" {
+            "\(repository)\(reference.separator)\(reference)"
+        } else {
+            "\(registry)/\(repository)\(reference.separator)\(reference)"
+        }
     }
 
     /// Printable description of an ImageReference in a form suitable for debugging.
