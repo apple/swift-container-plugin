@@ -82,6 +82,25 @@ public protocol ImageDestination {
         reference: (any ImageReference.Reference)?,
         manifest: ImageManifest
     ) async throws -> ContentDescriptor
+
+    /// Encodes and uploads an image index.
+    ///
+    /// - Parameters:
+    ///   - repository: Name of the destination repository.
+    ///   - reference: Optional tag to apply to this index.
+    ///   - index: Index to be uploaded.
+    /// - Returns: An ContentDescriptor object representing the
+    ///            uploaded index.
+    /// - Throws: If the index cannot be encoded or the upload fails.
+    ///
+    /// An index is a type of manifest.   Manifests are not treated as blobs
+    /// by the distribution specification.   They have their own MIME types
+    /// and are uploaded to different endpoint.
+    func putIndex(
+        repository: ImageReference.Repository,
+        reference: (any ImageReference.Reference)?,
+        index: ImageIndex
+    ) async throws -> ContentDescriptor
 }
 
 extension ImageDestination {
