@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+import Foundation
+
 // This file defines a basic tar writer which produces POSIX tar files.
 // This avoids the need to depend on a system-provided tar binary.
 //
@@ -342,44 +344,40 @@ public func tar(_ bytes: [UInt8], filename: String = "app") throws -> [UInt8] {
 }
 
 /// Represents a tar archive
-public struct Archive {
+public struct Archive: ~Copyable {
     /// The files, directories and other members of the archive
-    var members: [ArchiveMember]
+    var output: OutputStream
 
     /// Creates an empty Archive
-    public init() {
-        members = []
+    public init(toStream: OutputStream = .toMemory()) {
+        output = toStream
+        output.open()
+        output.schedule(in: .current, forMode: .default)  // is this needed?
+    }
+
+    deinit {
+        output.close()
     }
 
     /// Appends a member to the archive
     /// Parameters:
     /// - member: The member to append
-    public mutating func append(_ member: ArchiveMember) {
-        self.members.append(member)
-    }
-
-    /// Returns a new archive made by appending a member to the receiver
-    /// Parameters:
-    /// - member: The member to append
-    /// Returns: A new archive made by appending `member` to the receiver.
-    public func appending(_ member: ArchiveMember) -> Self {
-        var ret = self
-        ret.members += [member]
-        return ret
+    public func append(_ member: ArchiveMember) {
+        let written = output.write(member.bytes, maxLength: member.bytes.count)
+        if written != member.bytes.count {
+            fatalError("count: \(member.bytes.count), written: \(written)")
+        }
     }
 
     /// The serialized byte representation of the archive, including padding and end-of-archive marker.
     public var bytes: [UInt8] {
-        var ret: [UInt8] = []
-        for member in members {
-            ret.append(contentsOf: member.bytes)
+        guard let data = output.property(forKey: .dataWrittenToMemoryStreamKey) as? Data else {
+            fatalError("retrieving memory stream contents")
         }
 
         // Append the end of file marker
         let marker = [UInt8](repeating: 0, count: 2 * blockSize)
-        ret.append(contentsOf: marker)
-
-        return ret
+        return [UInt8](data) + marker
     }
 }
 
@@ -416,32 +414,15 @@ extension Archive {
     /// - name: File name
     /// - prefix: Path prefix
     /// - data: File contents
-    public mutating func appendFile(name: String, prefix: String = "", data: [UInt8]) throws {
-        try append(.init(header: .init(name: name, size: data.count, prefix: prefix), data: data))
-    }
-
-    /// Adds a new file member at the end of the archive
-    /// parameters:
-    /// - name: File name
-    /// - prefix: Path prefix
-    /// - data: File contents
-    public func appendingFile(name: String, prefix: String = "", data: [UInt8]) throws -> Self {
-        try appending(.init(header: .init(name: name, size: data.count, prefix: prefix), data: data))
+    public func appendFile(name: String, prefix: String = "", data: [UInt8]) throws {
+        try append(.init(header: .init(name: name, mode: 0o755, size: data.count, prefix: prefix), data: data))
     }
 
     /// Adds a new directory member at the end of the archive
     /// parameters:
     /// - name: Directory name
     /// - prefix: Path prefix
-    public mutating func appendDirectory(name: String, prefix: String = "") throws {
-        try append(.init(header: .init(name: name, typeflag: .DIRTYPE, prefix: prefix)))
-    }
-
-    /// Adds a new directory member at the end of the archive
-    /// parameters:
-    /// - name: Directory name
-    /// - prefix: Path prefix
-    public func appendingDirectory(name: String, prefix: String = "") throws -> Self {
-        try self.appending(.init(header: .init(name: name, typeflag: .DIRTYPE, prefix: prefix)))
+    public func appendDirectory(name: String, prefix: String = "") throws {
+        try append(.init(header: .init(name: name, mode: 0o755, typeflag: .DIRTYPE, prefix: prefix)))
     }
 }

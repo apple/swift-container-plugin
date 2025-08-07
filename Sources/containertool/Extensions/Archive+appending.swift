@@ -30,12 +30,12 @@ extension Archive {
     /// Parameters:
     /// - root: The path to the file or directory to add.
     /// Returns:  A new archive made by appending `root` to the receiver.
-    public func appendingRecursively(atPath root: String) throws -> Self {
+    public func appendRecursively(atPath root: String) throws {
         let url = URL(fileURLWithPath: root)
         if url.isDirectory {
-            return try self.appendingDirectoryTree(at: url)
+            try self.appendDirectoryTree(at: url)
         } else {
-            return try self.appendingFile(at: url)
+            try self.appendFile(at: url)
         }
     }
 
@@ -43,17 +43,15 @@ extension Archive {
     /// Parameters:
     /// - path: The path to the file to add.
     /// Returns:  A new archive made by appending `path` to the receiver.
-    func appendingFile(at path: URL) throws -> Self {
-        try self.appendingFile(name: path.lastPathComponent, data: try [UInt8](Data(contentsOf: path)))
+    func appendFile(at path: URL) throws {
+        try self.appendFile(name: path.lastPathComponent, data: try [UInt8](Data(contentsOf: path)))
     }
 
     /// Recursively append a single directory tree to the archive.
     /// Parameters:
     /// - root: The path to the directory to add.
     /// Returns:  A new archive made by appending `root` to the receiver.
-    func appendingDirectoryTree(at root: URL) throws -> Self {
-        var ret = self
-
+    func appendDirectoryTree(at root: URL) throws {
         guard let enumerator = FileManager.default.enumerator(atPath: root.path) else {
             throw ("Unable to read \(root.path)")
         }
@@ -69,16 +67,14 @@ extension Archive {
             switch filetype {
             case .typeRegular:
                 let resource = try [UInt8](Data(contentsOf: root.appending(path: subpath)))
-                try ret.appendFile(name: subpath, prefix: root.lastPathComponent, data: resource)
+                try self.appendFile(name: subpath, prefix: root.lastPathComponent, data: resource)
 
             case .typeDirectory:
-                try ret.appendDirectory(name: subpath, prefix: root.lastPathComponent)
+                try self.appendDirectory(name: subpath, prefix: root.lastPathComponent)
 
             default:
                 throw "Resource file \(subpath) of type \(filetype) is not supported"
             }
         }
-
-        return ret
     }
 }

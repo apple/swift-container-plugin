@@ -49,10 +49,11 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
 
     var resourceLayers: [(descriptor: ContentDescriptor, diffID: ImageReference.Digest)] = []
     for resourceDir in resources {
-        let resourceTardiff = try Archive().appendingRecursively(atPath: resourceDir).bytes
+        let resourceTardiff = Archive()
+        try resourceTardiff.appendRecursively(atPath: resourceDir)
         let resourceLayer = try await destination.uploadLayer(
             repository: destinationImage.repository,
-            contents: resourceTardiff
+            contents: resourceTardiff.bytes
         )
 
         if verbose {
@@ -64,9 +65,12 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
 
     // MARK: Upload the application layer
 
+    let applicationTardiff = Archive()
+    try applicationTardiff.appendFile(at: executableURL)
+
     let applicationLayer = try await destination.uploadLayer(
         repository: destinationImage.repository,
-        contents: try Archive().appendingFile(at: executableURL).bytes
+        contents: applicationTardiff.bytes
     )
     if verbose {
         log("application layer: \(applicationLayer.descriptor.digest) (\(applicationLayer.descriptor.size) bytes)")
@@ -156,7 +160,10 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
                 mediaType: manifestDescriptor.mediaType,
                 digest: manifestDescriptor.digest,
                 size: Int64(manifestDescriptor.size),
-                platform: .init(architecture: architecture, os: os)
+                platform: .init(architecture: architecture, os: os),
+                annotations: [
+                    "org.opencontainers.image.ref.name": "\(destinationImage)"
+                ]
             )
         ]
     )

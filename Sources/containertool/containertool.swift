@@ -19,43 +19,53 @@ import ContainerRegistry
 
 extension Swift.String: Swift.Error {}
 
-enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, destination, both }
+enum AllowHTTP: String, ExpressibleByArgument, CaseIterable {
+    case source
+    case destination
+    case both
+}
 
-@main struct ContainerTool: AsyncParsableCommand {
+@main
+struct ContainerTool: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "containertool",
-        abstract: "Build and publish a container image"
+        abstract: "Build and publish a container image",
+        subcommands: [
+            Publish.self,
+            Save.self,
+        ],
+        defaultSubcommand: Publish.self
     )
 
-    @Argument(help: "Executable to package")
-    private var executable: String
-
     /// Options controlling the locations of the source and destination images
-    struct RepositoryOptions: ParsableArguments {
+    struct RegistryOptions: ParsableArguments {
         @Option(help: "The default container registry to use when the image reference doesn't specify one")
         var defaultRegistry: String?
+    }
 
+    struct SourceImageOptions: ParsableArguments {
+        @Option(help: "The base container image name and optional tag")
+        var from: String?
+    }
+
+    struct DestinationImageOptions: ParsableArguments {
         @Option(help: "The name and optional tag for the generated container image")
         var repository: String?
 
         @Option(help: "The tag for the generated container image")
         var tag: String?
-
-        @Option(help: "The base container image name and optional tag")
-        var from: String?
     }
 
-    @OptionGroup(title: "Source and destination repository options")
-    var repositoryOptions: RepositoryOptions
+    struct DestinationArchiveOptions: ParsableArguments {
+        @Option(name: [.long, .short], help: "File in which the container image should be saved")
+        var output: URL
+    }
 
     /// Options controlling how the destination image is built
     struct ImageBuildOptions: ParsableArguments {
         @Option(help: "Directory of resources to include in the image")
         var resources: [String] = []
     }
-
-    @OptionGroup(title: "Image build options")
-    var imageBuildOptions: ImageBuildOptions
 
     // Options controlling the destination image's runtime configuration
     struct ImageConfigurationOptions: ParsableArguments {
@@ -65,9 +75,6 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         @Option(help: "Operating system")
         var os: String?
     }
-
-    @OptionGroup(title: "Image configuration options")
-    var imageConfigurationOptions: ImageConfigurationOptions
 
     /// Options controlling how containertool authenticates to registries
     struct AuthenticationOptions: ParsableArguments {
@@ -130,104 +137,265 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         }
     }
 
-    @OptionGroup(title: "Authentication options")
-    var authenticationOptions: AuthenticationOptions
+    /// Publish an image to a container registry
+    struct Publish: AsyncParsableCommand {
+        static let configuration = CommandConfiguration(
+            abstract: "Publish a container image to a registry"
+        )
 
-    // General options
+        @Argument(help: "Executable to package")
+        private var executable: String
 
-    @Flag(name: .shortAndLong, help: "Verbose output")
-    private var verbose: Bool = false
+        @OptionGroup(title: "Registry options")
+        var registryOptions: RegistryOptions
 
-    func run() async throws {
-        // MARK: Apply defaults for unspecified configuration flags
+        @OptionGroup(title: "Source image options")
+        var sourceImageOptions: SourceImageOptions
 
-        let env = ProcessInfo.processInfo.environment
+        @OptionGroup(title: "Destination image options")
+        var destinationImageOptions: DestinationImageOptions
 
-        let defaultRegistry = repositoryOptions.defaultRegistry ?? env["CONTAINERTOOL_DEFAULT_REGISTRY"] ?? "docker.io"
-        guard let repository = repositoryOptions.repository ?? env["CONTAINERTOOL_REPOSITORY"] else {
-            throw ValidationError(
-                "Please specify the destination repository using --repository or CONTAINERTOOL_REPOSITORY"
-            )
-        }
+        @OptionGroup(title: "Image build options")
+        var imageBuildOptions: ImageBuildOptions
 
-        let username = authenticationOptions.defaultUsername ?? env["CONTAINERTOOL_DEFAULT_USERNAME"]
-        let password = authenticationOptions.defaultPassword ?? env["CONTAINERTOOL_DEFAULT_PASSWORD"]
-        let from = repositoryOptions.from ?? env["CONTAINERTOOL_BASE_IMAGE"] ?? "swift:slim"
-        let os = imageConfigurationOptions.os ?? env["CONTAINERTOOL_OS"] ?? "linux"
+        @OptionGroup(title: "Image configuration options")
+        var imageConfigurationOptions: ImageConfigurationOptions
 
-        // Try to detect the architecture of the application executable so a suitable base image can be selected.
-        // This reduces the risk of accidentally creating an image which stacks an aarch64 executable on top of an x86_64 base image.
-        let executableURL = URL(fileURLWithPath: executable)
-        let elfheader = try ELF.read(at: executableURL)
+        @OptionGroup(title: "Authentication options")
+        var authenticationOptions: AuthenticationOptions
 
-        let architecture =
-            imageConfigurationOptions.architecture
-            ?? env["CONTAINERTOOL_ARCHITECTURE"]
-            ?? elfheader?.ISA.containerArchitecture
-            ?? "amd64"
-        if verbose { log("Base image architecture: \(architecture)") }
+        // General options
 
-        // MARK: Load netrc
+        @Flag(name: .shortAndLong, help: "Verbose output")
+        private var verbose: Bool = false
 
-        let authProvider: AuthorizationProvider?
-        if !authenticationOptions.netrc {
-            authProvider = nil
-        } else if let netrcFile = authenticationOptions.netrcFile {
-            guard FileManager.default.fileExists(atPath: netrcFile) else {
-                throw "\(netrcFile) not found"
+        func run() async throws {
+            // MARK: Apply defaults for unspecified configuration flags
+
+            let env = ProcessInfo.processInfo.environment
+
+            let defaultRegistry =
+                registryOptions.defaultRegistry ?? env["CONTAINERTOOL_DEFAULT_REGISTRY"] ?? "docker.io"
+            guard let repository = destinationImageOptions.repository ?? env["CONTAINERTOOL_REPOSITORY"] else {
+                throw ValidationError(
+                    "Please specify the destination repository using --repository or CONTAINERTOOL_REPOSITORY"
+                )
             }
-            let customNetrc = URL(fileURLWithPath: netrcFile)
-            authProvider = try NetrcAuthorizationProvider(customNetrc)
-        } else {
-            let defaultNetrc = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".netrc")
-            authProvider = try NetrcAuthorizationProvider(defaultNetrc)
-        }
 
-        // MARK: Create registry clients
+            let username = authenticationOptions.defaultUsername ?? env["CONTAINERTOOL_DEFAULT_USERNAME"]
+            let password = authenticationOptions.defaultPassword ?? env["CONTAINERTOOL_DEFAULT_PASSWORD"]
+            let from = sourceImageOptions.from ?? env["CONTAINERTOOL_BASE_IMAGE"] ?? "swift:slim"
+            let os = imageConfigurationOptions.os ?? env["CONTAINERTOOL_OS"] ?? "linux"
 
-        let baseImage = try ImageReference(fromString: from, defaultRegistry: defaultRegistry)
-        let destinationImage = try ImageReference(fromString: repository, defaultRegistry: defaultRegistry)
+            // Try to detect the architecture of the application executable so a suitable base image can be selected.
+            // This reduces the risk of accidentally creating an image which stacks an aarch64 executable on top of an x86_64 base image.
+            let executableURL = URL(fileURLWithPath: executable)
+            let elfheader = try ELF.read(at: executableURL)
 
-        // The base image may be stored on a different registry to the final destination, so two clients are needed.
-        // `scratch` is a special case and requires no source client.
-        let source: ImageSource
-        if from == "scratch" {
-            source = ScratchImage(architecture: architecture, os: os)
-        } else {
-            source = try await RegistryClient(
-                registry: baseImage.registry,
-                insecure: authenticationOptions.allowInsecureHttp == .source
+            let architecture =
+                imageConfigurationOptions.architecture
+                ?? env["CONTAINERTOOL_ARCHITECTURE"]
+                ?? elfheader?.ISA.containerArchitecture
+                ?? "amd64"
+            if verbose { log("Base image architecture: \(architecture)") }
+
+            // MARK: Load netrc
+
+            let authProvider: AuthorizationProvider?
+            if !authenticationOptions.netrc {
+                authProvider = nil
+            } else if let netrcFile = authenticationOptions.netrcFile {
+                guard FileManager.default.fileExists(atPath: netrcFile) else {
+                    throw "\(netrcFile) not found"
+                }
+                let customNetrc = URL(fileURLWithPath: netrcFile)
+                authProvider = try NetrcAuthorizationProvider(customNetrc)
+            } else {
+                let defaultNetrc = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".netrc")
+                authProvider = try NetrcAuthorizationProvider(defaultNetrc)
+            }
+
+            // MARK: Create registry clients
+
+            let baseImage = try ImageReference(fromString: from, defaultRegistry: defaultRegistry)
+            let destinationImage = try ImageReference(fromString: repository, defaultRegistry: defaultRegistry)
+
+            // The base image may be stored on a different registry to the final destination, so two clients are needed.
+            // `scratch` is a special case and requires no source client.
+            let source: ImageSource
+            if from == "scratch" {
+                source = ScratchImage(architecture: architecture, os: os)
+            } else {
+                source = try await RegistryClient(
+                    registry: baseImage.registry,
+                    insecure: authenticationOptions.allowInsecureHttp == .source
+                        || authenticationOptions.allowInsecureHttp == .both,
+                    auth: .init(username: username, password: password, auth: authProvider)
+                )
+                if verbose { log("Connected to source registry: \(baseImage.registry)") }
+            }
+
+            let destination = try await RegistryClient(
+                registry: destinationImage.registry,
+                insecure: authenticationOptions.allowInsecureHttp == .destination
                     || authenticationOptions.allowInsecureHttp == .both,
                 auth: .init(username: username, password: password, auth: authProvider)
             )
-            if verbose { log("Connected to source registry: \(baseImage.registry)") }
+
+            if verbose { log("Connected to destination registry: \(destinationImage.registry)") }
+            if verbose { log("Using base image: \(baseImage)") }
+
+            // MARK: Build the image
+
+            let finalImage = try await publishContainerImage(
+                baseImage: baseImage,
+                destinationImage: destinationImage,
+                source: source,
+                destination: destination,
+                architecture: architecture,
+                os: os,
+                resources: imageBuildOptions.resources,
+                tag: destinationImageOptions.tag,
+                verbose: verbose,
+                executableURL: executableURL
+            )
+
+            print(finalImage)
         }
+    }
 
-        let destination = try await RegistryClient(
-            registry: destinationImage.registry,
-            insecure: authenticationOptions.allowInsecureHttp == .destination
-                || authenticationOptions.allowInsecureHttp == .both,
-            auth: .init(username: username, password: password, auth: authProvider)
+    /// Save an image to an archive file
+    struct Save: AsyncParsableCommand {
+        static let configuration = CommandConfiguration(
+            abstract: "Save a container image to an archive file"
         )
 
-        if verbose { log("Connected to destination registry: \(destinationImage.registry)") }
-        if verbose { log("Using base image: \(baseImage)") }
+        @Argument(help: "Executable to package")
+        private var executable: String
 
-        // MARK: Build the image
+        @OptionGroup(title: "Registry options")
+        var registryOptions: RegistryOptions
 
-        let finalImage = try await publishContainerImage(
-            baseImage: baseImage,
-            destinationImage: destinationImage,
-            source: source,
-            destination: destination,
-            architecture: architecture,
-            os: os,
-            resources: imageBuildOptions.resources,
-            tag: repositoryOptions.tag,
-            verbose: verbose,
-            executableURL: executableURL
-        )
+        @OptionGroup(title: "Source image options")
+        var sourceImageOptions: SourceImageOptions
 
-        print(finalImage)
+        @OptionGroup(title: "Destination image options")
+        var destinationImageOptions: DestinationImageOptions
+
+        @OptionGroup(title: "Destination archive options")
+        var destinationArchiveOptions: DestinationArchiveOptions
+
+        @OptionGroup(title: "Image build options")
+        var imageBuildOptions: ImageBuildOptions
+
+        @OptionGroup(title: "Image configuration options")
+        var imageConfigurationOptions: ImageConfigurationOptions
+
+        @OptionGroup(title: "Authentication options")
+        var authenticationOptions: AuthenticationOptions
+
+        // General options
+
+        @Flag(name: .shortAndLong, help: "Verbose output")
+        private var verbose: Bool = false
+
+        func run() async throws {
+            // MARK: Apply defaults for unspecified configuration flags
+
+            let env = ProcessInfo.processInfo.environment
+
+            let defaultRegistry =
+                registryOptions.defaultRegistry ?? env["CONTAINERTOOL_DEFAULT_REGISTRY"] ?? "docker.io"
+            guard let repository = destinationImageOptions.repository ?? env["CONTAINERTOOL_REPOSITORY"] else {
+                throw ValidationError(
+                    "Please specify the destination repository using --repository or CONTAINERTOOL_REPOSITORY"
+                )
+            }
+
+            let username = authenticationOptions.defaultUsername ?? env["CONTAINERTOOL_DEFAULT_USERNAME"]
+            let password = authenticationOptions.defaultPassword ?? env["CONTAINERTOOL_DEFAULT_PASSWORD"]
+            let from = sourceImageOptions.from ?? env["CONTAINERTOOL_BASE_IMAGE"] ?? "swift:slim"
+            let os = imageConfigurationOptions.os ?? env["CONTAINERTOOL_OS"] ?? "linux"
+
+            // Try to detect the architecture of the application executable so a suitable base image can be selected.
+            // This reduces the risk of accidentally creating an image which stacks an aarch64 executable on top of an x86_64 base image.
+            let executableURL = URL(fileURLWithPath: executable)
+            let elfheader = try ELF.read(at: executableURL)
+
+            let architecture =
+                imageConfigurationOptions.architecture
+                ?? env["CONTAINERTOOL_ARCHITECTURE"]
+                ?? elfheader?.ISA.containerArchitecture
+                ?? "amd64"
+            if verbose { log("Base image architecture: \(architecture)") }
+
+            // MARK: Load netrc
+
+            let authProvider: AuthorizationProvider?
+            if !authenticationOptions.netrc {
+                authProvider = nil
+            } else if let netrcFile = authenticationOptions.netrcFile {
+                guard FileManager.default.fileExists(atPath: netrcFile) else {
+                    throw "\(netrcFile) not found"
+                }
+                let customNetrc = URL(fileURLWithPath: netrcFile)
+                authProvider = try NetrcAuthorizationProvider(customNetrc)
+            } else {
+                let defaultNetrc = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".netrc")
+                authProvider = try NetrcAuthorizationProvider(defaultNetrc)
+            }
+
+            // MARK: Create registry clients
+
+            let baseImage = try ImageReference(fromString: from, defaultRegistry: defaultRegistry)
+            let destinationImage = try ImageReference(fromString: repository, defaultRegistry: defaultRegistry)
+
+            // The base image may be stored on a different registry to the final destination, so two clients are needed.
+            // `scratch` is a special case and requires no source client.
+            let source: ImageSource
+            if from == "scratch" {
+                source = ScratchImage(architecture: architecture, os: os)
+            } else {
+                source = try await RegistryClient(
+                    registry: baseImage.registry,
+                    insecure: authenticationOptions.allowInsecureHttp == .source
+                        || authenticationOptions.allowInsecureHttp == .both,
+                    auth: .init(username: username, password: password, auth: authProvider)
+                )
+                if verbose { log("Connected to source registry: \(baseImage.registry)") }
+            }
+
+            guard let saveStream = OutputStream(url: destinationArchiveOptions.output, append: false) else {
+                fatalError("failed to create tarball")
+            }
+            let destination = try TarImageDestination(toStream: saveStream)
+
+            if verbose { log("Using base image: \(baseImage)") }
+
+            // MARK: Build the image
+
+            let finalImage = try await publishContainerImage(
+                baseImage: baseImage,
+                destinationImage: destinationImage,
+                source: source,
+                destination: destination,
+                architecture: architecture,
+                os: os,
+                resources: imageBuildOptions.resources,
+                tag: nil,
+                verbose: verbose,
+                executableURL: executableURL
+            )
+
+            print(finalImage)
+        }
+    }
+}
+
+// Parse URL path arguments
+extension Foundation.URL: ArgumentParser.ExpressibleByArgument {
+    /// Construct a URL from an argument string
+    public init?(argument: String) {
+        self.init(fileURLWithPath: argument)
     }
 }
