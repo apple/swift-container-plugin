@@ -56,6 +56,10 @@ Wrap a binary in a container image and publish it.
 - term  `--os <os>`:
   Operating system required to run the image. (default: `linux`)
 
+- term  `--cmd <cmd1> <cmd2> …`:
+  Default arguments to pass to the entrypoint process.
+  This MUST be the last option present as all following arguments are considered part of the CMD entry. 
+
 ### Authentication options
 
 - term  `--default-username <username>`:
