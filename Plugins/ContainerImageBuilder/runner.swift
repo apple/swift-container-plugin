@@ -14,6 +14,7 @@
 
 import Foundation
 
+/// Error code returned if the process terminates because of an uncaught signal.
 public enum ExitCode: Error { case rawValue(Int32) }
 
 /// Runs `command` with the given arguments and environment variables, capturing standard output and standard error.

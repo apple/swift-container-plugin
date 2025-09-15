@@ -27,6 +27,10 @@ public struct ScratchImage {
     var manifestDescriptor: ContentDescriptor
     var index: ImageIndex
 
+    /// Construct a `ScratchImage` structure, representing a scratch container image with no contents.
+    /// - Parameters:
+    ///   - architecture: The CPU architecture encoded in the scratch image layer.   The scratch layer is empty, but this value should match any layers stacked on top of it.
+    ///   - os: The operating system name encoded in the scratch image layer.   The scratch layer is empty, but this value should match any layers stacked on top of it.
     public init(architecture: String, os: String) {
         self.encoder = containerJSONEncoder()
 
