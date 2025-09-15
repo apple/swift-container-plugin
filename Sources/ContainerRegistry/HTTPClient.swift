@@ -19,7 +19,9 @@ import FoundationNetworking
 import HTTPTypes
 import HTTPTypesFoundation
 
-// HEAD does not include a response body so if an error is thrown, data will be nil
+/// An error encountered while making an HTTP request
+///
+/// The response to a `HEAD` request does not include a body so if an error is thrown, `data` will be `nil`
 public enum HTTPClientError: Error {
     case unexpectedStatusCode(status: HTTPResponse.Status, response: HTTPResponse, data: Data?)
     case unexpectedContentType(String)

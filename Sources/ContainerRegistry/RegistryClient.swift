@@ -19,6 +19,7 @@ import FoundationNetworking
 import HTTPTypes
 import Basics
 
+/// An error encountered while communicating with a container registry.
 public enum RegistryClientError: Error {
     case registryParseError(String)
     case invalidRegistryPath(String)

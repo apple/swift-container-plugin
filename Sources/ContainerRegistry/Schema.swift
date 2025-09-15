@@ -176,6 +176,7 @@ public struct ImageConfigurationRootFS: Codable, Hashable, Sendable {
         self.diff_ids = diff_ids
     }
 
+    /// Field name mapping
     public enum CodingKeys: String, CodingKey {
         case _type = "type"
         case diff_ids
@@ -400,6 +401,7 @@ public struct Platform: Codable, Hashable, Sendable {
         self.features = features
     }
 
+    /// Field name mapping
     public enum CodingKeys: String, CodingKey {
         case architecture
         case os
