@@ -110,6 +110,7 @@ func parseChallenge(_ s: String) throws -> BearerChallenge {
     return res
 }
 
+/// AuthChallenge represents an HTTP `WWW-Authenticate` challenge header.
 public enum AuthChallenge: Equatable {
     case none
     case basic(String)
@@ -156,6 +157,15 @@ public struct AuthHandler {
         return nil
     }
 
+    /// Respond to an HTTP `WWW-Authenticate` challenge header sent by a container registry.
+    /// - Parameters:
+    ///   - registry: The registry which issued the challenge.
+    ///   - repository: The repository path within the registry for which permission is to be requested.
+    ///   - actions: The repository actions for which permission is to be requested.
+    ///   - scheme: The challenge header to which to respond.
+    ///   - client: An HTTPClient instance to use when contacting the registry.
+    /// - Returns: An `Authorization` header appropriate to the challenge.
+    /// - Throws: If scheme is `Bearer` and an error occurs when contacting the OAuth server.
     public func auth(
         registry: URL,
         repository: ImageReference.Repository,
