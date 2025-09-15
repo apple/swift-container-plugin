@@ -81,5 +81,6 @@ Trying to pull registry.example.com/myservice@sha256:a3f75d0932d052dd9d448a1c904
 
 * Watch some talks:
 
+    * [How to put Swift in a box](https://www.youtube.com/watch?v=MV0wACpikyw) at [Open Source Summit North America 2025](https://events.linuxfoundation.org/archive/2025/open-source-summit-north-america/).
     * [How to put Swift in a box](https://fosdem.org/2025/schedule/event/fosdem-2025-5116-how-to-put-swift-in-a-box-building-container-images-with-swift-container-plugin/) at [FOSDEM 2025](https://fosdem.org/2025/schedule/track/swift/).
     * [Swift to the cloud in a single step](https://www.youtube.com/watch?v=9AaINsCfZzw) at [ServerSide.Swift 2024](https://www.serversideswift.info/2024/speakers/euan-harris/).
