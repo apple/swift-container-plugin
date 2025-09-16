@@ -99,8 +99,8 @@ extension PluginError: CustomStringConvertible {
         let helperURL = try context.tool(named: "containertool").url
         let helperArgs =
             (FileManager.default.fileExists(atPath: resources.path) ? ["--resources", resources.path] : [])
-            + extractor.remainingArguments
             + builtExecutables.map { $0.url.path }
+            + extractor.remainingArguments
         let helperEnv = ProcessInfo.processInfo.environment.filter { $0.key.starts(with: "CONTAINERTOOL_") }
 
         let err = Pipe()

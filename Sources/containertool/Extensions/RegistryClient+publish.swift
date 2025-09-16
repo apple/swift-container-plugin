@@ -25,6 +25,7 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
     destination: Destination,
     architecture: String,
     os: String,
+    cmd: [String],
     resources: [String],
     tag: String?,
     verbose: Bool,
@@ -80,7 +81,7 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
     // and override the entrypoint.
     var inheritedConfiguration = baseImageConfiguration.config ?? .init()
     inheritedConfiguration.Entrypoint = ["/\(executableURL.lastPathComponent)"]
-    inheritedConfiguration.Cmd = []
+    inheritedConfiguration.Cmd = cmd
     inheritedConfiguration.WorkingDir = "/"
 
     let configuration = ImageConfiguration(
