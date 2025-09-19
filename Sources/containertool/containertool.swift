@@ -64,6 +64,9 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
         @Option(help: "Operating system")
         var os: String?
+
+        @Option(parsing: .remaining, help: "Default arguments to pass to the entrypoint process")
+        var cmd: [String] = []
     }
 
     @OptionGroup(title: "Image configuration options")
@@ -222,6 +225,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
             destination: destination,
             architecture: architecture,
             os: os,
+            cmd: imageConfigurationOptions.cmd,
             resources: imageBuildOptions.resources,
             tag: repositoryOptions.tag,
             verbose: verbose,

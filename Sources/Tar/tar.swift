@@ -242,6 +242,22 @@ public struct TarHeader {
     /// Filename prefix - prepended to name
     var prefix: String = ""
 
+    /// Construct a Tar archive header block
+    /// - Parameters:
+    ///   - name: File name
+    ///   - mode: Access mode
+    ///   - uid: File owner's user ID
+    ///   - gid: File's group ID
+    ///   - size: File size in octets
+    ///   - mtime: Last modification time
+    ///   - typeflag: Type of file represented by this header
+    ///   - linkname: Reference to a previous file in the archive.   Only valid when `typeflag` is `.LNKTYPE`.   This is an internal link in the archive file, _not_ a symbolic link.
+    ///   - uname: File owner's user name
+    ///   - gname: File's group name
+    ///   - devmajor: Device major number.   Only valid when `typeflag` is `.BLKTYPE` or `.CHRTYPE`.
+    ///   - devminor: Device minor number.   Only valid when `typeflag` is `.BLKTYPE` or `.CHRTYPE`.
+    ///   - prefix: Optional filename prefix, allowing file names longer than 100 octets to be stored.
+    /// - Throws: If the value of any field cannot be represented in a Tar header.
     public init(
         name: String,
         mode: Int = 0o555,

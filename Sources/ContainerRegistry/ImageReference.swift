@@ -66,6 +66,7 @@ public struct ImageReference: Sendable, Equatable, CustomStringConvertible, Cust
     /// The tag or digest identifying the image.
     public var reference: Reference
 
+    /// Error thrown when an `ImageReference` string cannot be parsed.
     public enum ValidationError: Error {
         case unexpected(String)
     }
@@ -114,6 +115,11 @@ public struct ImageReference: Sendable, Equatable, CustomStringConvertible, Cust
         self.reference = reference
     }
 
+    /// Returns a Boolean value indicating whether two `ImageReference` values are equal.
+    /// - Parameters:
+    ///   - lhs: First `ImageReference` to compare
+    ///   - rhs: Second `ImageReference` to compare
+    /// - Returns: `True` if the `ImageReferences` are equal, otherwise `false`
     public static func == (lhs: ImageReference, rhs: ImageReference) -> Bool {
         "\(lhs)" == "\(rhs)"
     }
@@ -138,12 +144,16 @@ extension ImageReference {
     public struct Repository: Sendable, Equatable, CustomStringConvertible, CustomDebugStringConvertible {
         var value: String
 
+        /// Error thrown when a `Repository` string cannot be parsed.
         public enum ValidationError: Error, Equatable {
             case emptyString
             case containsUppercaseLetters(String)
             case invalidReferenceFormat(String)
         }
 
+        /// Creates an `ImageReference.Repository` instance from a string.
+        /// - Parameter rawValue: A repository string
+        /// - Throws: If `rawValue` cannot be parsed
         public init(_ rawValue: String) throws {
             // Reference handling in github.com/distribution reports empty and uppercase as specific errors.
             // All other errors caused are reported as generic format errors.
@@ -164,6 +174,7 @@ extension ImageReference {
             value = rawValue
         }
 
+        /// Printable description of a Reference in a form which can be understood by a runtime
         public var description: String {
             value
         }
@@ -185,12 +196,16 @@ extension ImageReference {
     public struct Tag: Reference, Sendable, Equatable, CustomStringConvertible, CustomDebugStringConvertible {
         var value: String
 
+        /// Error thrown when a `Tag` cannot be parsed.
         public enum ValidationError: Error, Equatable {
             case emptyString
             case invalidReferenceFormat(String)
             case tooLong(String)
         }
 
+        /// Creates a `Tag` instance from a string.
+        /// - Parameter rawValue: A tag string
+        /// - Throws: If `rawValue` cannot be parsed
         public init(_ rawValue: String) throws {
             guard rawValue.count > 0 else {
                 throw ValidationError.emptyString
@@ -209,12 +224,19 @@ extension ImageReference {
             value = rawValue
         }
 
+        /// Returns a Boolean value indicating whether two `Tag` values are equal.
+        /// - Parameters:
+        ///   - lhs: First `Tag` to compare
+        ///   - rhs: Second `Tag` to compare
+        /// - Returns: `True` if the `Tag` are equal, otherwise `false`
         public static func == (lhs: Tag, rhs: Tag) -> Bool {
             lhs.value == rhs.value
         }
 
+        /// Value which separates the `tag` from the registry and repository parts of a image reference with a human readable tag
         public var separator: String = ":"
 
+        /// Printable description of a Tag in a form which can be understood by a runtime
         public var description: String {
             "\(value)"
         }
@@ -227,10 +249,14 @@ extension ImageReference {
 
     /// Digest identifies a specific blob by the hash of the blob's contents.
     public struct Digest: Reference, Sendable, Equatable, CustomStringConvertible, CustomDebugStringConvertible {
+        /// Represents a digest algorithm
         public enum Algorithm: String, Sendable {
             case sha256 = "sha256"
             case sha512 = "sha512"
 
+            /// Creates an `Algorithm` instance from a string.
+            /// - Parameter rawValue: An algorithm string
+            /// - Throws: If `rawValue` cannot be parsed
             init(fromString rawValue: String) throws {
                 guard let algorithm = Algorithm(rawValue: rawValue) else {
                     throw RegistryClientError.invalidDigestAlgorithm(rawValue)
@@ -242,11 +268,15 @@ extension ImageReference {
         var algorithm: Algorithm
         var value: String
 
+        /// Error thrown when a `Digest` cannot be parsed.
         public enum ValidationError: Error, Equatable {
             case emptyString
             case invalidReferenceFormat(String)
         }
 
+        /// Creates a `Digest` instance from a string.
+        /// - Parameter rawValue: A digest string
+        /// - Throws: If `rawValue` cannot be parsed
         public init(_ rawValue: String) throws {
             guard rawValue.count > 0 else {
                 throw ValidationError.emptyString
@@ -271,12 +301,19 @@ extension ImageReference {
             throw ValidationError.invalidReferenceFormat(rawValue)
         }
 
+        /// Returns a Boolean value indicating whether two `Digest` values are equal.
+        /// - Parameters:
+        ///   - lhs: First `Digest` to compare
+        ///   - rhs: Second `Digest` to compare
+        /// - Returns: `True` if the `Digest` are equal, otherwise `false`
         public static func == (lhs: Digest, rhs: Digest) -> Bool {
             lhs.algorithm == rhs.algorithm && lhs.value == rhs.value
         }
 
+        /// Value which separates the `digest` from the registry and repository parts of an image reference with a digest
         public var separator: String = "@"
 
+        /// Printable description of a Digest in a form which can be understood by a runtime
         public var description: String {
             "\(algorithm):\(value)"
         }
