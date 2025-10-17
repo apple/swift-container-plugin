@@ -1,5 +1,8 @@
 name: End to end tests
 
+permissions:
+    contents: read
+
 on:
     workflow_call:
 #        inputs:
