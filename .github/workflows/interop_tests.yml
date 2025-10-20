@@ -1,5 +1,8 @@
 name: Interop tests
 
+permissions:
+    contents: read
+
 on:
     workflow_call:
 
