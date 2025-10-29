@@ -21,6 +21,9 @@ jobs:
                     - 5000:5000
         strategy:
             matrix:
+                from:
+                    - scratch
+                    - swift:slim
                 example:
                     - Examples/HelloWorldVapor
                     - Examples/HelloWorldHummingbird
@@ -52,7 +55,7 @@ jobs:
                       --allow-network-connections all \
                       build-container-image \
                       --repository localhost:5000/example \
-                      --from scratch
+                      --from ${{ matrix.from }}
 
             - name: Run the example
               run: |
