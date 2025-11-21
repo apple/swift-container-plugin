@@ -104,8 +104,89 @@ public struct RegistryClient {
         // URLSessionConfiguration.default allows request and credential caching, making testing confusing.
         // The SwiftPM sandbox also prevents URLSession from writing to the cache, which causes warnings.
         // .ephemeral has no caches.
-        let urlsession = URLSession(configuration: .ephemeral)
+        // A delegate is needed to remove the Authorization header when following HTTP redirects on Linux.
+        let urlsession = URLSession(
+            configuration: .ephemeral,
+            delegate: RegistryURLSessionDelegate(),
+            delegateQueue: nil
+        )
         try await self.init(registry: registryURL, client: urlsession, auth: auth)
+    }
+}
+
+final class RegistryURLSessionDelegate: NSObject {}
+
+extension RegistryURLSessionDelegate: URLSessionDelegate, URLSessionTaskDelegate {
+    /// Called if the RegistryClient receives an HTTP redirect from the registry.
+    /// - Parameters:
+    ///   - session: The session containing the task whose request resulted in a redirect.
+    ///   - task: The task whose request resulted in a redirect.
+    ///   - response: An object containing the server’s response to the original request.
+    ///   - request: A URL request object filled out with the new location.
+    ///   - completionHandler: A block that your handler should call with either the value
+    ///     of the request parameter, a modified URL request object, or NULL to refuse the
+    ///     redirect and return the body of the redirect response.
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest,
+        completionHandler: @escaping (URLRequest?) -> Swift.Void
+    ) {
+        // The Authorization header should be removed when following a redirect:
+        //
+        //   https://fetch.spec.whatwg.org/#http-redirect-fetch
+        //
+        // URLSession on macOS does this, but on Linux the header is left in place.
+        // This causes problems when pulling images from Docker Hub on Linux.
+        //
+        // Docker Hub redirects to AWS S3 via CloudFlare.   Including the Authorization header
+        // in the redirected request causes a 400 error to be returned with the XML message:
+        //
+        //    InvalidRequest: Missing x-amz-content-sha256
+        //
+        // Removing the Authorization header makes the redirected request work.
+        //
+        // The spec also requires that if the redirected request is a POST, the method
+        // should be changed to GET and the body should be deleted:
+        //
+        //   https://datatracker.ietf.org/doc/html/rfc7231#section-6.4
+        //
+        // URLSession makes these changes before calling this delegate method:
+        //
+        //    https://github.com/swiftlang/swift-corelibs-foundation/blob/265274a4be41b3d4d74fe4626d970898e4df330f/Sources/FoundationNetworking/URLSession/HTTP/HTTPURLProtocol.swift#L567C1-L572C1
+        //
+        // In the delegate:
+        //   - response.url is origin of the redirect response
+        //   - request.url is value of the redirect response's Location header
+        //
+        // URLSession also limits redirect loops:
+        //
+        //    https://github.com/swiftlang/swift-corelibs-foundation/blob/265274a4be41b3d4d74fe4626d970898e4df330f/Sources/FoundationNetworking/URLSession/HTTP/HTTPURLProtocol.swift#L459C1-L460C38
+
+        var request = request
+
+        guard let origin = response.url, let redirect = request.url else {
+            // Reject the redirect if either URL is missing
+            completionHandler(nil)
+            return
+        }
+
+        // https://fetch.spec.whatwg.org/#http-redirect-fetch
+        if !origin.hasSameOrigin(as: redirect) {
+            // Header names are case-insensitive
+            request.allHTTPHeaderFields = request.allHTTPHeaderFields?
+                .filter({ $0.key.lowercased() != "authorization" })
+        }
+
+        completionHandler(request)
+    }
+}
+
+extension URL {
+    // https://html.spec.whatwg.org/multipage/browsers.html#same-origin
+    func hasSameOrigin(as other: URL) -> Bool {
+        self.scheme == other.scheme && self.host == other.host && self.port == other.port
     }
 }
 
