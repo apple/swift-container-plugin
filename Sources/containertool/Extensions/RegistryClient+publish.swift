@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+import class Foundation.FileManager
+import struct Foundation.ObjCBool
 import struct Foundation.Date
 import struct Foundation.URL
 
@@ -25,6 +27,7 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
     destination: Destination,
     architecture: String,
     os: String,
+    entrypoint: String?,
     cmd: [String],
     resources: [String],
     tag: String?,
@@ -50,17 +53,53 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
 
     var resourceLayers: [(descriptor: ContentDescriptor, diffID: ImageReference.Digest)] = []
     for resourceDir in resources {
-        let resourceTardiff = try Archive().appendingRecursively(atPath: resourceDir).bytes
-        let resourceLayer = try await destination.uploadLayer(
-            repository: destinationImage.repository,
-            contents: resourceTardiff
-        )
+        let paths = resourceDir.split(separator: ":", maxSplits: 1)
+        switch paths.count {
+        case 1:
+            let resourceTardiff = try Archive().appendingRecursively(atPath: resourceDir).bytes
+            let resourceLayer = try await destination.uploadLayer(
+                repository: destinationImage.repository,
+                contents: resourceTardiff
+            )
 
-        if verbose {
-            log("resource layer: \(resourceLayer.descriptor.digest) (\(resourceLayer.descriptor.size) bytes)")
+            if verbose {
+                log("resource layer: \(resourceLayer.descriptor.digest) (\(resourceLayer.descriptor.size) bytes)")
+            }
+
+            resourceLayers.append(resourceLayer)
+        case 2:
+            let sourcePath = paths[0]
+            let destinationPath = paths[1]
+
+            var isDirectory: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: String(sourcePath), isDirectory: &isDirectory) else {
+                preconditionFailure("Source does not exist: \(source)")
+            }
+
+            let archive: Archive
+            if isDirectory.boolValue {
+                // archive = try Archive().appendingDirectoryTree(at: URL(fileURLWithPath: String(sourcePath)))
+                preconditionFailure("Directory trees are not supported yet")
+            } else {
+                archive = try Archive().appendingFile(
+                    at: URL(fileURLWithPath: String(sourcePath)),
+                    to: URL(fileURLWithPath: String(destinationPath))
+                )
+            }
+
+            let resourceLayer = try await destination.uploadLayer(
+                repository: destinationImage.repository,
+                contents: archive.bytes
+            )
+
+            if verbose {
+                log("resource layer: \(resourceLayer.descriptor.digest) (\(resourceLayer.descriptor.size) bytes)")
+            }
+
+            resourceLayers.append(resourceLayer)
+        default:
+            preconditionFailure("Invalid resource directory: \(resourceDir)")
         }
-
-        resourceLayers.append(resourceLayer)
     }
 
     // MARK: Upload the application layer
@@ -80,7 +119,11 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
     // Inherit the configuration of the base image - UID, GID, environment etc -
     // and override the entrypoint.
     var inheritedConfiguration = baseImageConfiguration.config ?? .init()
-    inheritedConfiguration.Entrypoint = ["/\(executableURL.lastPathComponent)"]
+    if let entrypoint {
+        inheritedConfiguration.Entrypoint = [entrypoint]
+    } else {
+        inheritedConfiguration.Entrypoint = ["/\(executableURL.lastPathComponent)"]
+    }
     inheritedConfiguration.Cmd = cmd
     inheritedConfiguration.WorkingDir = "/"
 
