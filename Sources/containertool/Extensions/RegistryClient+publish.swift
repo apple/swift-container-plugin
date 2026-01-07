@@ -179,56 +179,58 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
         )
     }
 
-    // MARK: Upload application manifest
-
-    let manifestDescriptor = try await destination.putManifest(
-        repository: destinationImage.repository,
-        reference: destinationImage.reference,
-        manifest: manifest
-    )
-
-    if verbose {
-        log("manifest: \(manifestDescriptor.digest) (\(manifestDescriptor.size) bytes)")
-    }
-
-    // MARK: Create application index
-
-    let index = ImageIndex(
-        schemaVersion: 2,
-        mediaType: "application/vnd.oci.image.index.v1+json",
-        manifests: [
-            ContentDescriptor(
-                mediaType: manifestDescriptor.mediaType,
-                digest: manifestDescriptor.digest,
-                size: Int64(manifestDescriptor.size),
-                platform: .init(architecture: architecture, os: os)
-            )
-        ]
-    )
-
-    // MARK: Upload application manifest
-
-    let indexDescriptor = try await destination.putIndex(
-        repository: destinationImage.repository,
-        reference: destinationImage.reference,
-        index: index
-    )
-
-    if verbose {
-        log("index: \(indexDescriptor.digest) (\(indexDescriptor.size) bytes)")
-    }
-
-    // Use the index digest if the user did not provide a human-readable tag
-    // To support multiarch images, we should also create an an index pointing to
-    // this manifest.
-    let reference: ImageReference.Reference
+    // Determine the tags to push. Always include the reference from --repository (defaults to 'latest').
+    // If --tag is provided and differs from the repository reference, push to both.
+    var tagsToPublish: [any ImageReference.Reference] = [destinationImage.reference]
     if let tag {
-        reference = try ImageReference.Tag(tag)
-    } else {
-        reference = try ImageReference.Digest(indexDescriptor.digest)
+        let tagReference = try ImageReference.Tag(tag)
+        // Avoid duplicates if --tag matches the reference already in --repository
+        if "\(tagReference)" != "\(destinationImage.reference)" {
+            tagsToPublish.insert(tagReference, at: 0)
+        }
     }
 
+    // MARK: Upload application manifest and index for each tag
+
+    for tagReference in tagsToPublish {
+        let manifestDescriptor = try await destination.putManifest(
+            repository: destinationImage.repository,
+            reference: tagReference,
+            manifest: manifest
+        )
+
+        if verbose {
+            log("manifest (\(tagReference)): \(manifestDescriptor.digest) (\(manifestDescriptor.size) bytes)")
+        }
+
+        let index = ImageIndex(
+            schemaVersion: 2,
+            mediaType: "application/vnd.oci.image.index.v1+json",
+            manifests: [
+                ContentDescriptor(
+                    mediaType: manifestDescriptor.mediaType,
+                    digest: manifestDescriptor.digest,
+                    size: Int64(manifestDescriptor.size),
+                    platform: .init(architecture: architecture, os: os)
+                )
+            ]
+        )
+
+        let indexDescriptor = try await destination.putIndex(
+            repository: destinationImage.repository,
+            reference: tagReference,
+            index: index
+        )
+
+        if verbose {
+            log("index (\(tagReference)): \(indexDescriptor.digest) (\(indexDescriptor.size) bytes)")
+        }
+    }
+
+    // Return the primary tag (--tag if provided, otherwise the repository reference)
     var result = destinationImage
-    result.reference = reference
+    if let tag {
+        result.reference = try ImageReference.Tag(tag)
+    }
     return result
 }
