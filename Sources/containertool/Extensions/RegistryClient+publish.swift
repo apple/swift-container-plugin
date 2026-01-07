@@ -81,10 +81,11 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
                 // archive = try Archive().appendingDirectoryTree(at: URL(fileURLWithPath: String(sourcePath)))
                 preconditionFailure("Directory trees are not supported yet")
             } else {
-                archive = try Archive().appendingFile(
-                    at: URL(fileURLWithPath: String(sourcePath)),
-                    to: URL(fileURLWithPath: String(destinationPath))
-                )
+                archive = try Archive()
+                    .appendingFile(
+                        at: URL(fileURLWithPath: String(sourcePath)),
+                        to: URL(fileURLWithPath: String(destinationPath))
+                    )
             }
 
             let resourceLayer = try await destination.uploadLayer(

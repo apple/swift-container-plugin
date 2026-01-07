@@ -27,8 +27,10 @@ public struct Netrc: Sendable {
     /// - Parameters:
     ///   - url: The url to retrieve authorization information for.
     public func authorization(for url: URL) -> Authorization? {
-        guard let index = machines.firstIndex(where: { $0.name == url.host }) ?? machines
-            .firstIndex(where: { $0.isDefault })
+        guard
+            let index = machines.firstIndex(where: { $0.name == url.host })
+                ?? machines
+                .firstIndex(where: { $0.isDefault })
         else {
             return .none
         }
@@ -53,8 +55,10 @@ public struct Netrc: Sendable {
         }
 
         init?(for match: NSTextCheckingResult, string: String, variant: String = "") {
-            guard let name = RegexUtil.Token.machine.capture(in: match, string: string) ?? RegexUtil.Token.default
-                .capture(in: match, string: string),
+            guard
+                let name = RegexUtil.Token.machine.capture(in: match, string: string)
+                    ?? RegexUtil.Token.default
+                    .capture(in: match, string: string),
                 let login = RegexUtil.Token.login.capture(prefix: variant, in: match, string: string),
                 let password = RegexUtil.Token.password.capture(prefix: variant, in: match, string: string)
             else {
@@ -87,11 +91,12 @@ public struct NetrcParser {
         let matches = regex.matches(
             in: content,
             options: [],
-            range: NSRange(content.startIndex ..< content.endIndex, in: content)
+            range: NSRange(content.startIndex..<content.endIndex, in: content)
         )
 
         let machines: [Netrc.Machine] = matches.compactMap {
-            Netrc.Machine(for: $0, string: content, variant: "lp") ?? Netrc
+            Netrc.Machine(for: $0, string: content, variant: "lp")
+                ?? Netrc
                 .Machine(for: $0, string: content, variant: "pl")
         }
 
@@ -116,7 +121,8 @@ public struct NetrcParser {
         let matches = regex.matches(in: text, range: range)
         var trimmedCommentsText = text
         matches.forEach {
-            trimmedCommentsText = trimmedCommentsText
+            trimmedCommentsText =
+                trimmedCommentsText
                 .replacingOccurrences(of: nsString.substring(with: $0.range), with: "")
         }
         return trimmedCommentsText

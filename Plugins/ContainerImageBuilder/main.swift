@@ -95,8 +95,8 @@ extension PluginError: CustomStringConvertible {
             .appendingPathComponent(
                 "\(context.package.displayName)_\(productName).resources"
             )
-        
-        var resources = [String]()
+
+        var resources: [String] = []
         if FileManager.default.fileExists(atPath: resourcesBundle.path) {
             resources.append(resourcesBundle.path)
         }

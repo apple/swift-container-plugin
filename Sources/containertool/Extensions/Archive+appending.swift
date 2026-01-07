@@ -56,7 +56,7 @@ extension Archive {
             let directoryPath = components[..<i].joined(separator: "/")
             try ret.appendDirectory(name: directoryPath)
         }
-        
+
         try ret.appendFile(name: destinationPath.path(), data: data)
         return ret
     }
