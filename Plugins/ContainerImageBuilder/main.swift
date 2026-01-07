@@ -48,6 +48,7 @@ extension PluginError: CustomStringConvertible {
 
                 OPTIONS
                   --product      Product to include in the image
+                  --resources    Directory of resources to include in the image
 
                 Other arguments are passed to the containertool helper.
                 """
@@ -89,16 +90,29 @@ extension PluginError: CustomStringConvertible {
 
         for built in builtExecutables { Diagnostics.remark("Built product: \(built.url.path)") }
 
-        let resources = builtExecutables[0].url
+        let resourcesBundle = builtExecutables[0].url
             .deletingLastPathComponent()
             .appendingPathComponent(
                 "\(context.package.displayName)_\(productName).resources"
             )
 
+        var resources: [String] = []
+        if FileManager.default.fileExists(atPath: resourcesBundle.path) {
+            resources.append(resourcesBundle.path)
+        }
+
+        for resource in extractor.extractOption(named: "resources") {
+            let paths = resource.split(separator: ":", maxSplits: 1)
+            if paths.count >= 1 && !FileManager.default.fileExists(atPath: String(paths[0])) {
+                throw PluginError.argumentError("Resource directory \(resource) does not exist")
+            }
+            resources.append(resource)
+        }
+
         // Run a command line helper to upload the image
         let helperURL = try context.tool(named: "containertool").url
         let helperArgs =
-            (FileManager.default.fileExists(atPath: resources.path) ? ["--resources", resources.path] : [])
+            resources.map { "--resources=\($0)" }
             + builtExecutables.map { $0.url.path }
             + extractor.remainingArguments
         let helperEnv = ProcessInfo.processInfo.environment.filter { $0.key.starts(with: "CONTAINERTOOL_") }

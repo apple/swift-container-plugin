@@ -18,7 +18,7 @@ import struct Foundation.Data
 import struct Foundation.Date
 import struct Foundation.URL
 #if canImport(Security)
-    import Security
+import Security
 #endif
 
 public protocol AuthorizationProvider: Sendable {
@@ -56,14 +56,14 @@ public final class NetrcAuthorizationProvider: AuthorizationProvider {
     }
 
     public func authentication(for url: URL) -> (user: String, password: String)? {
-        return self.machine(for: url).map { (user: $0.login, password: $0.password) }
+        self.machine(for: url).map { (user: $0.login, password: $0.password) }
     }
 
     private func machine(for url: URL) -> Basics.Netrc.Machine? {
         // Since updates are appended to the end of the file, we
         // take the _last_ match to use the most recent entry.
         if let machine = NetrcAuthorizationProvider.machine(for: url),
-           let existing = self.netrc?.machines.last(where: { $0.name.lowercased() == machine })
+            let existing = self.netrc?.machines.last(where: { $0.name.lowercased() == machine })
         {
             return existing
         }

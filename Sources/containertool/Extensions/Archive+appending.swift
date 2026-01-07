@@ -47,11 +47,25 @@ extension Archive {
         try self.appendingFile(name: path.lastPathComponent, data: try [UInt8](Data(contentsOf: path)))
     }
 
+    func appendingFile(at path: URL, to destinationPath: URL) throws -> Self {
+        var ret = self
+        let data = try [UInt8](Data(contentsOf: path))
+        let components = destinationPath.pathComponents
+        precondition(!components.isEmpty, "Destination path is empty")
+        for i in 1..<components.count - 1 {
+            let directoryPath = components[..<i].joined(separator: "/")
+            try ret.appendDirectory(name: directoryPath)
+        }
+
+        try ret.appendFile(name: destinationPath.path(), data: data)
+        return ret
+    }
+
     /// Recursively append a single directory tree to the archive.
     /// Parameters:
     /// - root: The path to the directory to add.
     /// Returns:  A new archive made by appending `root` to the receiver.
-    func appendingDirectoryTree(at root: URL) throws -> Self {
+    func appendingDirectoryTree(at root: URL, to destinationPath: URL = URL(filePath: "/")) throws -> Self {
         var ret = self
 
         guard let enumerator = FileManager.default.enumerator(atPath: root.path) else {
@@ -66,6 +80,7 @@ extension Archive {
                 throw ("Unable to get file type for \(subpath)")
             }
 
+            let subpath = destinationPath.appending(path: subpath).path()
             switch filetype {
             case .typeRegular:
                 let resource = try [UInt8](Data(contentsOf: root.appending(path: subpath)))
