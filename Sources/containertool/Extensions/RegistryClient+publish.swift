@@ -29,6 +29,7 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
     os: String,
     entrypoint: String?,
     cmd: [String],
+    additionalEnv: [String],
     resources: [String],
     tag: String?,
     verbose: Bool,
@@ -127,6 +128,13 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
     }
     inheritedConfiguration.Cmd = cmd
     inheritedConfiguration.WorkingDir = "/"
+
+    if var env = inheritedConfiguration.Env {
+        env.append(contentsOf: additionalEnv)
+        inheritedConfiguration.Env = env
+    } else {
+        inheritedConfiguration.Env = additionalEnv
+    }
 
     let configuration = ImageConfiguration(
         created: timestamp,
