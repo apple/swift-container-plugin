@@ -26,6 +26,7 @@ public enum RegistryClientError: Error {
     case invalidUploadLocation(String)
     case invalidDigestAlgorithm(String)
     case digestMismatch(expected: String, registry: String)
+    case unexpectedRegistryResponse(status: Int, body: String)
 }
 
 extension RegistryClientError: CustomStringConvertible {
@@ -38,6 +39,8 @@ extension RegistryClientError: CustomStringConvertible {
         case let .invalidDigestAlgorithm(digest): return "Invalid or unsupported digest algorithm: \(digest)"
         case let .digestMismatch(expected, registry):
             return "Digest mismatch: expected \(expected), registry sent \(registry)"
+        case let .unexpectedRegistryResponse(status, body):
+            return "Registry returned HTTP \(status): \(body)"
         }
     }
 }
@@ -369,8 +372,14 @@ extension RegistryClient {
         } catch HTTPClientError.unexpectedStatusCode(let status, _, let .some(responseData))
             where errors.contains(status)
         {
-            let decoded = try decoder.decode(DistributionErrors.self, from: responseData)
-            throw decoded
+            // Try to decode as JSON; if that fails, throw a generic error with the raw response body
+            do {
+                let decoded = try decoder.decode(DistributionErrors.self, from: responseData)
+                throw decoded
+            } catch is DecodingError {
+                let bodyText = String(data: responseData, encoding: .utf8) ?? "<non-UTF8 response>"
+                throw RegistryClientError.unexpectedRegistryResponse(status: status.code, body: bodyText)
+            }
         }
     }
 
@@ -410,8 +419,14 @@ extension RegistryClient {
         } catch HTTPClientError.unexpectedStatusCode(let status, _, let .some(responseData))
             where errors.contains(status)
         {
-            let decoded = try decoder.decode(DistributionErrors.self, from: responseData)
-            throw decoded
+            // Try to decode as JSON; if that fails, throw a generic error with the raw response body
+            do {
+                let decoded = try decoder.decode(DistributionErrors.self, from: responseData)
+                throw decoded
+            } catch is DecodingError {
+                let bodyText = String(data: responseData, encoding: .utf8) ?? "<non-UTF8 response>"
+                throw RegistryClientError.unexpectedRegistryResponse(status: status.code, body: bodyText)
+            }
         }
     }
 
