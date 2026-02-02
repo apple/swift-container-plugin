@@ -68,6 +68,9 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         @Option(help: "Entrypoint process")
         var entrypoint: String?
 
+        @Option(parsing: .singleValue, help: "Additional environment variables to set in the container")
+        var env: [String] = []
+
         @Option(parsing: .remaining, help: "Default arguments to pass to the entrypoint process")
         var cmd: [String] = []
     }
@@ -230,6 +233,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
             os: os,
             entrypoint: imageConfigurationOptions.entrypoint,
             cmd: imageConfigurationOptions.cmd,
+            additionalEnv: imageConfigurationOptions.env,
             resources: imageBuildOptions.resources,
             tag: repositoryOptions.tag,
             verbose: verbose,
