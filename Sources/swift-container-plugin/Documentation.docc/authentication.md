@@ -24,7 +24,7 @@ The following examples show how to set up the plugin for some popular registry p
 ### Docker Hub
 
 > Don't use your Docker Hub account password to push and pull images.
-> Create a Personal Access Token, which has restricted privileges, for each integration you use. 
+> Create a Personal Access Token, which has restricted privileges, for each integration you use.
 > By using separate tokens, you can monitor them independently and revoke one at any time.
 To create a `.netrc` entry for Docker Hub:
 
@@ -68,6 +68,32 @@ machine ghcr.io
 > Amazon Elastic Container Registry uses [short-lived authorization tokens](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html#registry-auth-token) which expire after 12 hours.
 >
 > To generate an ECR authentication token, you must [first install the AWS CLI tools.](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+
+#### Using environment variables
+
+Environment variables are a convenient way to store short-lived credentials.
+
+1. **Remove any existing ECR credentials from your `.netrc` file.**   If any entries in `.netrc` match your ECR registry hostname, these will be used in preference to the credentials in environment variables.
+
+2. Set the ECR username.
+
+    **The login name must be `AWS`**.
+
+    ```
+    export CONTAINERTOOL_DEFAULT_USERNAME=AWS
+    ```
+
+3. Use the `aws` CLI tool to [generate an authentication token](https://docs.aws.amazon.com/AmazonECR/latest/userguide/registry_auth.html#registry-auth-token).
+You'll need to know the name of the [AWS region](https://docs.aws.amazon.com/global-infrastructure/latest/regions/aws-regions.html) in which your registry is hosted.
+Registries in different AWS regions are separate and require different authentication tokens.
+
+    For example, the following command generates a token for ECR in the `us-west-2` region:
+
+    ```
+    export CONTAINERTOOL_DEFAULT_PASSWORD=$(aws ecr get-login-password --region us-west-2)
+    ```
+
+#### Using the netrc file
 
 To create a `.netrc` entry for Amazon Elastic Container Registry:
 
