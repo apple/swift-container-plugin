@@ -432,8 +432,8 @@ extension Archive {
     /// - name: File name
     /// - prefix: Path prefix
     /// - data: File contents
-    public mutating func appendFile(name: String, prefix: String = "", data: [UInt8]) throws {
-        try append(.init(header: .init(name: name, size: data.count, prefix: prefix), data: data))
+    public mutating func appendFile(name: String, prefix: String = "", data: [UInt8], mtime: Int = 0) throws {
+        try append(.init(header: .init(name: name, size: data.count, prefix: prefix, mtime: mtime), data: data))
     }
 
     /// Adds a new file member at the end of the archive
@@ -441,23 +441,23 @@ extension Archive {
     /// - name: File name
     /// - prefix: Path prefix
     /// - data: File contents
-    public func appendingFile(name: String, prefix: String = "", data: [UInt8]) throws -> Self {
-        try appending(.init(header: .init(name: name, size: data.count, prefix: prefix), data: data))
+    public func appendingFile(name: String, prefix: String = "", data: [UInt8], mtime: Int = 0) throws -> Self {
+        try appending(.init(header: .init(name: name, size: data.count, prefix: prefix, mtime: mtime), data: data))
     }
 
     /// Adds a new directory member at the end of the archive
     /// parameters:
     /// - name: Directory name
     /// - prefix: Path prefix
-    public mutating func appendDirectory(name: String, prefix: String = "") throws {
-        try append(.init(header: .init(name: name, typeflag: .DIRTYPE, prefix: prefix)))
+    public mutating func appendDirectory(name: String, prefix: String = "", mtime: Int = 0) throws {
+        try append(.init(header: .init(name: name, typeflag: .DIRTYPE, prefix: prefix, mtime: mtime)))
     }
 
     /// Adds a new directory member at the end of the archive
     /// parameters:
     /// - name: Directory name
     /// - prefix: Path prefix
-    public func appendingDirectory(name: String, prefix: String = "") throws -> Self {
-        try self.appending(.init(header: .init(name: name, typeflag: .DIRTYPE, prefix: prefix)))
+    public func appendingDirectory(name: String, prefix: String = "", mtime: Int = 0) throws -> Self {
+        try self.appending(.init(header: .init(name: name, typeflag: .DIRTYPE, prefix: prefix, mtime: mtime)))
     }
 }

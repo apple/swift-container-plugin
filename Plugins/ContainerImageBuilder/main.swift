@@ -115,7 +115,9 @@ extension PluginError: CustomStringConvertible {
             resources.map { "--resources=\($0)" }
             + builtExecutables.map { $0.url.path }
             + extractor.remainingArguments
-        let helperEnv = ProcessInfo.processInfo.environment.filter { $0.key.starts(with: "CONTAINERTOOL_") }
+        let helperEnv = ProcessInfo.processInfo.environment.filter {
+                        $0.key.starts(with: "CONTAINERTOOL_") || $0.key == "SOURCE_DATE_EPOCH"
+        }
 
         let err = Pipe()
 

@@ -14,6 +14,7 @@
 
 import class Foundation.FileManager
 import struct Foundation.ObjCBool
+import class Foundation.ProcessInfo
 import struct Foundation.Date
 import struct Foundation.URL
 
@@ -50,6 +51,14 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
     )
     log("Found base image configuration: \(baseImageManifest.config.digest)")
 
+        // Honour SOURCE_DATE_EPOCH for reproducible builds if set.
+        let sourceEpoch: Int
+        if let epochStr = ProcessInfo.processInfo.environment["SOURCE_DATE_EPOCH"],
+           let epochValue = Int(epochStr) {
+                       sourceEpoch = epochValue
+           } else {
+                       sourceEpoch = 0
+           }
     // MARK: Upload resource layers
 
     var resourceLayers: [(descriptor: ContentDescriptor, diffID: ImageReference.Digest)] = []
@@ -57,7 +66,7 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
         let paths = resourceDir.split(separator: ":", maxSplits: 1)
         switch paths.count {
         case 1:
-            let resourceTardiff = try Archive().appendingRecursively(atPath: resourceDir).bytes
+            let resourceTardiff = try Archive().appendingRecursively(atPath: resourceDir, mtime: sourceEpoch).bytes
             let resourceLayer = try await destination.uploadLayer(
                 repository: destinationImage.repository,
                 contents: resourceTardiff
@@ -85,7 +94,8 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
                 archive = try Archive()
                     .appendingFile(
                         at: URL(fileURLWithPath: String(sourcePath)),
-                        to: URL(fileURLWithPath: String(destinationPath))
+                        to: URL(fileURLWithPath: String(destinationPath)),
+                        mtime: sourceEpoch
                     )
             }
 
@@ -108,7 +118,7 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
 
     let applicationLayer = try await destination.uploadLayer(
         repository: destinationImage.repository,
-        contents: try Archive().appendingFile(at: executableURL).bytes
+        contents: try Archive().appendingFile(at: executableURL, mtime: sourceEpoch).bytes
     )
     if verbose {
         log("application layer: \(applicationLayer.descriptor.digest) (\(applicationLayer.descriptor.size) bytes)")
@@ -116,7 +126,7 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
 
     // MARK: Create the application configuration
 
-    let timestamp = Date(timeIntervalSince1970: 0).ISO8601Format()
+    let timestamp = Date(timeIntervalSince1970: TimeInterval(sourceEpoch)).ISO8601Format()
 
     // Inherit the configuration of the base image - UID, GID, environment etc -
     // and override the entrypoint.
