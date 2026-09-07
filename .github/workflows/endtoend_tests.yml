@@ -28,6 +28,9 @@ jobs:
                     - Examples/HelloWorldVapor
                     - Examples/HelloWorldHummingbird
                     - Examples/HelloWorldWithResources
+                runtime:
+                    - docker
+                    - podman
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
@@ -37,6 +40,16 @@ jobs:
             - name: Mark the workspace as safe
               # https://github.com/actions/checkout/issues/766
               run: git config --global --add safe.directory ${GITHUB_WORKSPACE}
+
+            - name: Configure podman to allow the local registry
+              if: matrix.runtime == 'podman'
+              run: |
+                  # The registry service runs over plain HTTP on localhost:5000.
+                  # Podman rejects insecure registries by default, so we register
+                  # localhost:5000 as a trusted insecure source.
+                  sudo mkdir -p /etc/containers/registries.conf.d
+                  printf '[registries.insecure]\nregistries = ["localhost:5000"]\n' | \
+                      sudo tee /etc/containers/registries.conf.d/local-registry.conf
 
             - name: Install the static SDK
               run: |
@@ -57,9 +70,9 @@ jobs:
                       --repository localhost:5000/example \
                       --from ${{ matrix.from }}
 
-            - name: Run the example
+            - name: Run the example with ${{ matrix.runtime }}
               run: |
-                  docker run -d --platform linux/amd64 -p 8080:8080 localhost:5000/example
+                  ${{ matrix.runtime }} run -d --platform linux/amd64 -p 8080:8080 localhost:5000/example
 
             - name: Check that the service is running
               run: |
