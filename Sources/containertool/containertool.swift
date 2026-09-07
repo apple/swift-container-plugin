@@ -73,6 +73,34 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
         @Option(parsing: .remaining, help: "Default arguments to pass to the entrypoint process")
         var cmd: [String] = []
+
+        @Option(
+            parsing: .singleValue,
+            help: ArgumentHelp(
+                "Network port to expose at runtime (e.g. 80, 8080/tcp, 53/udp). Repeatable.",
+                valueName: "port"
+            )
+        )
+        var expose: [String] = []
+
+        @Option(
+            parsing: .singleValue,
+            help: ArgumentHelp(
+                "Label to apply to the image in key=value format. Repeatable.",
+                valueName: "key=value"
+            )
+        )
+        var label: [String] = []
+
+        mutating func validate() throws {
+            for entry in label {
+                guard entry.contains("=") else {
+                    throw ValidationError(
+                        "Invalid --label value '\(entry)': expected key=value format"
+                    )
+                }
+            }
+        }
     }
 
     @OptionGroup(title: "Image configuration options")
@@ -222,6 +250,14 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         if verbose { log("Connected to destination registry: \(destinationImage.registry)") }
         if verbose { log("Using base image: \(baseImage)") }
 
+        // Parse --label key=value pairs into a dictionary.
+        var parsedLabels: [String: String] = [:]
+        for entry in imageConfigurationOptions.label {
+            // validate() guarantees every entry contains "="; split on first occurrence only.
+            let parts = entry.split(separator: "=", maxSplits: 1)
+            parsedLabels[String(parts[0])] = String(parts[1])
+        }
+
         // MARK: Build the image
 
         let finalImage = try await publishContainerImage(
@@ -234,6 +270,8 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
             entrypoint: imageConfigurationOptions.entrypoint,
             cmd: imageConfigurationOptions.cmd,
             additionalEnv: imageConfigurationOptions.env,
+            exposedPorts: imageConfigurationOptions.expose,
+            labels: parsedLabels,
             resources: imageBuildOptions.resources,
             tag: repositoryOptions.tag,
             verbose: verbose,
