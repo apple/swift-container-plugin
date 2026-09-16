@@ -22,30 +22,32 @@ import Testing
         try withTemporaryDirectory { directory in
             let url = directory.appendingPathComponent(ContainerToolConfiguration.filename)
             try """
-                {
-                  "defaultRegistry": "ghcr.io",
-                  "repository": "example/service",
-                  "tag": "1.2.3",
-                  "from": "swift:slim",
-                  "architecture": "arm64",
-                  "os": "linux",
-                  "defaultUsername": "user",
-                  "defaultPassword": "secret"
-                }
-                """.write(to: url, atomically: true, encoding: .utf8)
+            {
+              "defaultRegistry": "ghcr.io",
+              "repository": "example/service",
+              "tag": "1.2.3",
+              "from": "swift:slim",
+              "architecture": "arm64",
+              "os": "linux",
+              "defaultUsername": "user",
+              "defaultPassword": "secret"
+            }
+            """
+            .write(to: url, atomically: true, encoding: .utf8)
 
             let config = try ContainerToolConfiguration.load(from: url)
             #expect(
-                config == ContainerToolConfiguration(
-                    defaultRegistry: "ghcr.io",
-                    repository: "example/service",
-                    tag: "1.2.3",
-                    from: "swift:slim",
-                    architecture: "arm64",
-                    os: "linux",
-                    defaultUsername: "user",
-                    defaultPassword: "secret"
-                )
+                config
+                    == ContainerToolConfiguration(
+                        defaultRegistry: "ghcr.io",
+                        repository: "example/service",
+                        tag: "1.2.3",
+                        from: "swift:slim",
+                        architecture: "arm64",
+                        os: "linux",
+                        defaultUsername: "user",
+                        defaultPassword: "secret"
+                    )
             )
         }
     }
@@ -54,12 +56,13 @@ import Testing
         try withTemporaryDirectory { directory in
             let url = directory.appendingPathComponent(ContainerToolConfiguration.filename)
             try """
-                {
-                  "repository": "example/service",
-                  "from": "",
-                  "tag": null
-                }
-                """.write(to: url, atomically: true, encoding: .utf8)
+            {
+              "repository": "example/service",
+              "from": "",
+              "tag": null
+            }
+            """
+            .write(to: url, atomically: true, encoding: .utf8)
 
             let config = try ContainerToolConfiguration.load(from: url)
             #expect(config.repository == "example/service")
