@@ -116,6 +116,8 @@ extension PluginError: CustomStringConvertible {
             + builtExecutables.map { $0.url.path }
             + extractor.remainingArguments
         let helperEnv = ProcessInfo.processInfo.environment.filter { $0.key.starts(with: "CONTAINERTOOL_") }
+        // Capture before entering the task group so the package directory is Sendable.
+        let packageDirectory = context.package.directoryURL
 
         let err = Pipe()
 
@@ -167,7 +169,14 @@ extension PluginError: CustomStringConvertible {
             }
 
             group.addTask {
-                try await run(command: helperURL, arguments: helperArgs, environment: helperEnv, errorPipe: err)
+                // Run from the package directory so project-local containertool.json is discovered.
+                try await run(
+                    command: helperURL,
+                    arguments: helperArgs,
+                    environment: helperEnv,
+                    currentDirectory: packageDirectory,
+                    errorPipe: err
+                )
             }
         }
     }

@@ -28,7 +28,7 @@ Wrap a binary in a container image and publish it.
   Destination image repository.
 
   If the repository path does not begin with a registry hostname, the default registry will be prepended to the path.
-  The destination repository must be specified, either by setting the `--repository` option or the `CONTAINERTOOL_REPOSITORY` environment variable.
+  The destination repository must be specified, either by setting the `--repository` option, the `CONTAINERTOOL_REPOSITORY` environment variable, or the `repository` field in `containertool.json`.
 
 - term  `--tag <tag>`:
   The tag to apply to the destination image.
@@ -91,6 +91,29 @@ Wrap a binary in a container image and publish it.
 - term  `-h, --help`:
   Show help information.
 
+
+### Configuration file
+
+`containertool` looks for a `containertool.json` file in the current working directory, then in parent directories.
+Values from this file supply defaults for options that are not set on the command line or by environment variables.
+
+Precedence is: command-line flags, then environment variables, then `containertool.json`, then built-in defaults.
+
+```json
+{
+  "defaultRegistry": "docker.io",
+  "repository": "registry.example.com/myservice",
+  "tag": "1.0.0",
+  "from": "swift:slim",
+  "architecture": "amd64",
+  "os": "linux",
+  "defaultUsername": "example",
+  "defaultPassword": "secret"
+}
+```
+
+All fields are optional.  Prefer `.netrc` or environment variables for credentials when possible.
+
 ### Environment
 
 - term `CONTAINERTOOL_DEFAULT_REGISTRY`:
@@ -101,7 +124,7 @@ Wrap a binary in a container image and publish it.
   The destination image repository.
 
   If the path does not begin with a registry hostname, the default registry will be prepended to the path.
-  The destination repository must be specified, either by setting the `--repository` option or the `CONTAINERTOOL_REPOSITORY` environment variable.
+  The destination repository must be specified, either by setting the `--repository` option, the `CONTAINERTOOL_REPOSITORY` environment variable, or the `repository` field in `containertool.json`.
 
 - term `CONTAINERTOOL_BASE_IMAGE`:
   Base image on which to layer the application.

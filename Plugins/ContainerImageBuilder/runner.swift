@@ -22,6 +22,7 @@ public enum ExitCode: Error { case rawValue(Int32) }
 ///   - command: The URL for the executable.
 ///   - arguments: An array of arguments to supply to the executable.
 ///   - environment: A dictionary of environment variables to supply to the executable.
+///   - currentDirectory: The directory in which to run the executable.
 ///   - outputPipe: A Pipe to which to send anything the executable writes to standard output.
 ///   - errorPipe: A Pipe to which to send anything the executable writes to standard error.
 /// - Throws: `ExitCode` if the process terminates because of an uncaught signal.
@@ -29,6 +30,7 @@ public func run(
     command: URL,
     arguments: [String],
     environment: [String: String]? = nil,
+    currentDirectory: URL? = nil,
     outputPipe: Pipe? = nil,
     errorPipe: Pipe? = nil
 ) async throws {
@@ -37,6 +39,7 @@ public func run(
     task.executableURL = command
     task.arguments = arguments
     task.environment = environment
+    if let currentDirectory { task.currentDirectoryURL = currentDirectory }
     if let outputPipe { task.standardOutput = outputPipe }
     if let errorPipe { task.standardError = errorPipe }
 

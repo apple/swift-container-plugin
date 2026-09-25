@@ -149,20 +149,49 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
 
     func run() async throws {
         // MARK: Apply defaults for unspecified configuration flags
+        // Precedence: command-line flags > environment variables > containertool.json > built-in defaults
 
         let env = ProcessInfo.processInfo.environment
+        let loadedConfig = try ContainerToolConfiguration.load()
+        let config = loadedConfig?.configuration ?? .empty
+        if verbose, let configURL = loadedConfig?.url {
+            log("Loaded configuration from \(configURL.path)")
+        }
 
-        let defaultRegistry = repositoryOptions.defaultRegistry ?? env["CONTAINERTOOL_DEFAULT_REGISTRY"] ?? "docker.io"
-        guard let repository = repositoryOptions.repository ?? env["CONTAINERTOOL_REPOSITORY"] else {
+        let defaultRegistry =
+            repositoryOptions.defaultRegistry
+            ?? env["CONTAINERTOOL_DEFAULT_REGISTRY"]
+            ?? config.defaultRegistry
+            ?? "docker.io"
+        guard
+            let repository = repositoryOptions.repository
+                ?? env["CONTAINERTOOL_REPOSITORY"]
+                ?? config.repository
+        else {
             throw ValidationError(
-                "Please specify the destination repository using --repository or CONTAINERTOOL_REPOSITORY"
+                "Please specify the destination repository using --repository, CONTAINERTOOL_REPOSITORY, or containertool.json"
             )
         }
 
-        let username = authenticationOptions.defaultUsername ?? env["CONTAINERTOOL_DEFAULT_USERNAME"]
-        let password = authenticationOptions.defaultPassword ?? env["CONTAINERTOOL_DEFAULT_PASSWORD"]
-        let from = repositoryOptions.from ?? env["CONTAINERTOOL_BASE_IMAGE"] ?? "swift:slim"
-        let os = imageConfigurationOptions.os ?? env["CONTAINERTOOL_OS"] ?? "linux"
+        let username =
+            authenticationOptions.defaultUsername
+            ?? env["CONTAINERTOOL_DEFAULT_USERNAME"]
+            ?? config.defaultUsername
+        let password =
+            authenticationOptions.defaultPassword
+            ?? env["CONTAINERTOOL_DEFAULT_PASSWORD"]
+            ?? config.defaultPassword
+        let from =
+            repositoryOptions.from
+            ?? env["CONTAINERTOOL_BASE_IMAGE"]
+            ?? config.from
+            ?? "swift:slim"
+        let os =
+            imageConfigurationOptions.os
+            ?? env["CONTAINERTOOL_OS"]
+            ?? config.os
+            ?? "linux"
+        let tag = repositoryOptions.tag ?? config.tag
 
         // Try to detect the architecture of the application executable so a suitable base image can be selected.
         // This reduces the risk of accidentally creating an image which stacks an aarch64 executable on top of an x86_64 base image.
@@ -172,6 +201,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         let architecture =
             imageConfigurationOptions.architecture
             ?? env["CONTAINERTOOL_ARCHITECTURE"]
+            ?? config.architecture
             ?? elfheader?.ISA.containerArchitecture
             ?? "amd64"
         if verbose { log("Base image architecture: \(architecture)") }
@@ -235,7 +265,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
             cmd: imageConfigurationOptions.cmd,
             additionalEnv: imageConfigurationOptions.env,
             resources: imageBuildOptions.resources,
-            tag: repositoryOptions.tag,
+            tag: tag,
             verbose: verbose,
             executableURL: executableURL
         )
