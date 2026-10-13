@@ -40,11 +40,13 @@ trap cleanup EXIT
 #
 # Build and package an x86_64 binary
 #
-swift build --package-path "$PKGPATH" --swift-sdk x86_64-swift-linux-musl
-FILETYPE=$(file "$PKGPATH/.build/x86_64-swift-linux-musl/debug/hello")
+SDK=x86_64-swift-linux-musl
+swift build --package-path "$PKGPATH" --swift-sdk "$SDK"
+BIN_PATH=$(swift build --package-path "$PKGPATH" --swift-sdk "$SDK" --show-bin-path)
+FILETYPE=$(file "$BIN_PATH/hello")
 log "Executable type: $FILETYPE"
 
-IMGREF=$(swift run containertool --repository localhost:5000/elf_test "$PKGPATH/.build/x86_64-swift-linux-musl/debug/hello" --from scratch)
+IMGREF=$(swift run containertool --repository localhost:5000/elf_test "$BIN_PATH/hello" --from scratch)
 $RUNTIME pull --platform=linux/amd64 "$IMGREF"
 IMGARCH=$($RUNTIME inspect "$IMGREF" --format "{{.Architecture}}")
 if [ "$IMGARCH" = "amd64" ] ; then
@@ -56,11 +58,13 @@ fi
 #
 # Build and package an aarch64 binary
 #
-swift build --package-path "$PKGPATH" --swift-sdk aarch64-swift-linux-musl
-FILETYPE=$(file "$PKGPATH/.build/x86_64-swift-linux-musl/debug/hello")
+SDK=aarch64-swift-linux-musl
+swift build --package-path "$PKGPATH" --swift-sdk "$SDK"
+BIN_PATH=$(swift build --package-path "$PKGPATH" --swift-sdk "$SDK" --show-bin-path)
+FILETYPE=$(file "$BIN_PATH/hello")
 log "Executable type: $FILETYPE"
 
-IMGREF=$(swift run containertool --repository localhost:5000/elf_test "$PKGPATH/.build/aarch64-swift-linux-musl/debug/hello" --from scratch)
+IMGREF=$(swift run containertool --repository localhost:5000/elf_test "$BIN_PATH/hello" --from scratch)
 $RUNTIME pull --platform=linux/arm64 "$IMGREF"
 IMGARCH=$($RUNTIME inspect "$IMGREF" --format "{{.Architecture}}")
 if [ "$IMGARCH" = "arm64" ] ; then
