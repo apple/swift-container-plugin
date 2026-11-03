@@ -49,6 +49,7 @@ jobs:
                   sed -i'.bak' -e "/swift-container-plugin/ s@(url:.*),@(path: \"$PWD\"),@" ${{ matrix.example }}/Package.swift   # Use plugin from this checkout
                   cat ${{ matrix.example }}/Package.swift
                   swift package \
+                      --build-system native \
                       --package-path ${{ matrix.example }} \
                       -Xswiftc -warnings-as-errors \
                       --swift-sdk x86_64-swift-linux-musl \
