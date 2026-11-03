@@ -45,7 +45,8 @@ jobs:
 
     elf-detection-test:
         name: Containertool ELF detection test
-        runs-on: ubuntu-latest
+        # https://github.com/swiftlang/swift-package-manager/issues/10535#issuecomment-6299156967
+        runs-on: ubuntu-24.04
         services:
             registry:
                 image: registry:2
@@ -64,9 +65,8 @@ jobs:
             - name: Install the static SDK
               run: |
                   swift sdk install \
-                      https://download.swift.org/swift-6.3.3-release/static-sdk/swift-6.3.3-RELEASE/swift-6.3.3-RELEASE_static-linux-0.1.0.artifactbundle.tar.gz \
-                      --checksum 87c3eaf908e67c0e13a84367119e12273cec1d2cd3d81f7d74bb36722d6b607b
-
+                      https://download.swift.org/swift-6.4.2-release/static-sdk/swift-6.4.2-RELEASE/swift-6.4.2-RELEASE_static-linux-0.1.0.artifactbundle.tar.gz \
+                      --checksum 3786b179936d9cc9e266dd506bd1654176358d7b25288e243359f4d17cc4dc5a
 
             # Run the test script
             - name: Test ELF detection
