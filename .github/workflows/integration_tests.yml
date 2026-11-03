@@ -16,7 +16,7 @@ jobs:
                 ports:
                     - 5000:5000
         container:
-            image: swift:6.0-noble
+            image: swift:6.4-resolute
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
