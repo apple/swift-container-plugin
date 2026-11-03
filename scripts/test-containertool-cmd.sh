@@ -41,8 +41,9 @@ trap cleanup EXIT
 # Build and package an aarch64 binary
 #
 swift build --package-path "$PKGPATH" --swift-sdk aarch64-swift-linux-musl
+BIN_PATH=$(swift build --package-path "$PKGPATH" --swift-sdk x86_64-swift-linux-musl --show-bin-path)
 
-IMGREF=$(swift run containertool --repository localhost:5000/elf_test "$PKGPATH/.build/aarch64-swift-linux-musl/debug/hello" --from scratch --cmd "arg1" "--option" "opt" "--flag")
+IMGREF=$(swift run containertool --repository localhost:5000/elf_test "$BIN_PATH/hello" --from scratch --cmd "arg1" "--option" "opt" "--flag")
 $RUNTIME pull "$IMGREF"
 CMD=$($RUNTIME inspect "$IMGREF" --format "{{.Config.Cmd}}")
 if [ "$CMD" = "[arg1 --option opt --flag]" ] ; then
