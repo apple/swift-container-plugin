@@ -102,6 +102,9 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         @Option(help: "The default password to use if the tool can't find a matching entry in .netrc")
         var defaultPassword: String?
 
+        @Flag(help: "Read the default password from standard input")
+        var defaultPasswordFromStdin: Bool = false
+
         @Flag(inversion: .prefixedEnableDisable, exclusivity: .exclusive, help: "Load credentials from a netrc file")
         var netrc: Bool = true
 
@@ -126,6 +129,19 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
                 defaultUsername = username
             }
 
+            if defaultPasswordFromStdin {
+                guard defaultPassword == nil else {
+                    throw ValidationError(
+                        "--default-password and --default-password-from-stdin cannot be specified together."
+                    )
+                }
+                guard password == nil else {
+                    throw ValidationError(
+                        "--password and --default-password-from-stdin cannot be specified together."
+                    )
+                }
+            }
+
             if password != nil {
                 guard defaultPassword == nil else {
                     throw ValidationError(
@@ -136,6 +152,21 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
                 log("Deprecation warning: --password is deprecated, please use --default-password instead.")
                 defaultPassword = password
             }
+        }
+
+        static func readPassword(from handle: FileHandle = .standardInput) throws -> String {
+            let data = try handle.readToEnd() ?? Data()
+            guard var password = String(data: data, encoding: .utf8) else {
+                throw ValidationError("Default password read from standard input is not valid UTF-8.")
+            }
+
+            while let last = password.unicodeScalars.last, last == "\n" || last == "\r" {
+                password.unicodeScalars.removeLast()
+            }
+            guard !password.isEmpty else {
+                throw ValidationError("Default password read from standard input cannot be empty.")
+            }
+            return password
         }
     }
 
@@ -177,8 +208,14 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
             authenticationOptions.defaultUsername
             ?? env["CONTAINERTOOL_DEFAULT_USERNAME"]
             ?? config.defaultUsername
+        let cliDefaultPassword: String?
+        if authenticationOptions.defaultPasswordFromStdin {
+            cliDefaultPassword = try AuthenticationOptions.readPassword()
+        } else {
+            cliDefaultPassword = authenticationOptions.defaultPassword
+        }
         let password =
-            authenticationOptions.defaultPassword
+            cliDefaultPassword
             ?? env["CONTAINERTOOL_DEFAULT_PASSWORD"]
             ?? config.defaultPassword
         let from =

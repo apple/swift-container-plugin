@@ -74,6 +74,9 @@ Wrap a binary in a container image and publish it.
   This password is used if there is no matching `.netrc` entry for the registry, there is no `.netrc` file, or the `--disable-netrc` option is set.
   The same password is used for the source and destination registries.
 
+- term  `--default-password-from-stdin`:
+  Read the default password from standard input. Cannot be used together with `--default-password`.
+
 - term  `--enable-netrc/--disable-netrc`:
   Load credentials from a netrc file (default: `--enable-netrc`)
 
