@@ -76,6 +76,10 @@ import Testing
         try withTemporaryDirectory { directory in
             let loaded = try ContainerToolConfiguration.load(startingAt: directory)
             #expect(loaded == nil)
+
+            let directoryURL = URL(fileURLWithPath: directory.path, isDirectory: true)
+            let loadedFromDirectoryURL = try ContainerToolConfiguration.load(startingAt: directoryURL)
+            #expect(loadedFromDirectoryURL == nil)
         }
     }
 
