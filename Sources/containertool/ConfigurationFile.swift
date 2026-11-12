@@ -98,7 +98,7 @@ struct ContainerToolConfiguration: Equatable, Sendable {
                 return candidate
             }
 
-            let parent = current.deletingLastPathComponent()
+            let parent = current.deletingLastPathComponent().standardizedFileURL
             if parent.path == current.path {
                 return nil
             }
