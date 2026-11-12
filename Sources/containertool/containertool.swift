@@ -225,7 +225,7 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         // MARK: Create registry clients
 
         let baseImage = try ImageReference(fromString: from, defaultRegistry: defaultRegistry)
-        let destinationImage = try ImageReference(fromString: repository, defaultRegistry: defaultRegistry)
+        let destinationImage = try Self.parseDestinationImage(repository, defaultRegistry: defaultRegistry)
 
         // The base image may be stored on a different registry to the final destination, so two clients are needed.
         // `scratch` is a special case and requires no source client.
@@ -271,5 +271,15 @@ enum AllowHTTP: String, ExpressibleByArgument, CaseIterable { case source, desti
         )
 
         print(finalImage)
+    }
+
+    static func parseDestinationImage(_ repository: String, defaultRegistry: String) throws -> ImageReference {
+        let destinationImage = try ImageReference(fromString: repository, defaultRegistry: defaultRegistry)
+        if destinationImage.reference is ImageReference.Digest {
+            throw ValidationError(
+                "Destination repository '\(repository)' cannot include a digest; specify a tag instead."
+            )
+        }
+        return destinationImage
     }
 }
