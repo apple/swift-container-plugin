@@ -52,7 +52,7 @@ extension UInt8 {
 // with bounds checks in place, can use unchecked arithmetic
 extension [UInt8] {
     mutating func writeString(_ string: String, inField field: Range<Int>, withTermination termination: Termination) {
-        precondition(string.count <= field.count)
+        precondition(string.utf8.count <= field.count)
         var i = field.lowerBound
         let bytes = string.utf8
         for b in bytes {
@@ -279,6 +279,12 @@ public struct TarHeader {
             throw TarError.invalidName(name)
         }
 
+        // The name and prefix fields have a fixed size in bytes.   Non-ASCII characters take more
+        // than one byte in UTF-8, so the length must be checked in bytes, not in characters.
+        guard name.utf8.count <= Field.name.count, prefix.utf8.count <= Field.prefix.count else {
+            throw TarError.invalidName(name)
+        }
+
         self.name = name
         self.mode = mode
         self.uid = uid
@@ -311,7 +317,9 @@ extension TarHeader {
         var bytes = [UInt8](repeating: 0, count: blockSize)
 
         // Construct a POSIX ustar header for the file
-        bytes.writeString(self.name, inField: Field.name, withTermination: .null)
+        // The name and prefix fields are only null-terminated if the value is shorter than the field.
+        // The header is filled with zeros, so no explicit terminator is needed.
+        bytes.writeString(self.name, inField: Field.name, withTermination: .none)
         bytes.writeString(octal6(self.mode), inField: Field.mode, withTermination: .spaceAndNull)
         bytes.writeString(octal6(self.uid), inField: Field.uid, withTermination: .spaceAndNull)
         bytes.writeString(octal6(self.gid), inField: Field.gid, withTermination: .spaceAndNull)
@@ -326,7 +334,7 @@ extension TarHeader {
         bytes.writeString(self.gname, inField: Field.gname, withTermination: .null)
         bytes.writeString(octal6(self.devmajor), inField: Field.devmajor, withTermination: .spaceAndNull)
         bytes.writeString(octal6(self.devminor), inField: Field.devminor, withTermination: .spaceAndNull)
-        bytes.writeString(self.prefix, inField: Field.prefix, withTermination: .null)
+        bytes.writeString(self.prefix, inField: Field.prefix, withTermination: .none)
 
         // Fill in the checksum.
         bytes.writeString(octal6(Tar.checksum(header: bytes)), inField: Field.chksum, withTermination: .nullAndSpace)
