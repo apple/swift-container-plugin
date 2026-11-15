@@ -107,6 +107,35 @@ let trailer = [UInt8](repeating: 0, count: trailerSize)
         }
     }
 
+    @Test func testNameTooLong() async throws {
+        // 60 characters, but 120 bytes when encoded as UTF-8
+        let name = String(repeating: "é", count: 60)
+        #expect(throws: TarError.invalidName(name)) {
+            let _ = try TarHeader(name: name, size: 0)
+        }
+
+        let asciiName = String(repeating: "a", count: 101)
+        #expect(throws: TarError.invalidName(asciiName)) {
+            let _ = try TarHeader(name: asciiName, size: 0)
+        }
+
+        #expect(throws: TarError.invalidName("filename")) {
+            let _ = try TarHeader(name: "filename", size: 0, prefix: String(repeating: "あ", count: 52))
+        }
+
+        // Non-ASCII names which fit in the field are accepted
+        let hdr = try TarHeader(name: String(repeating: "é", count: 10), size: 0)
+        #expect(hdr.bytes[Field.name].prefix(21) == ArraySlice(Array(String(repeating: "é", count: 10).utf8) + [0]))
+    }
+
+    @Test func testNameFillsField() async throws {
+        // POSIX ustar names are only null-terminated if they are shorter than the 100 byte field
+        let name = String(repeating: "é", count: 50)
+        let hdr = try TarHeader(name: name, size: 0, prefix: String(repeating: "p", count: 155))
+        #expect(Array(hdr.bytes[Field.name]) == Array(name.utf8))
+        #expect(Array(hdr.bytes[Field.prefix]) == Array(String(repeating: "p", count: 155).utf8))
+    }
+
     @Test func testSingleEmptyFileHeader() async throws {
         let hdr = try TarHeader(name: "filename", size: 0).bytes
         #expect(hdr.count == 512)
