@@ -30,6 +30,8 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
     entrypoint: String?,
     cmd: [String],
     additionalEnv: [String],
+    exposedPorts: [String],
+    labels: [String: String],
     resources: [String],
     tag: String?,
     verbose: Bool,
@@ -134,6 +136,22 @@ func publishContainerImage<Source: ImageSource, Destination: ImageDestination>(
         inheritedConfiguration.Env = env
     } else {
         inheritedConfiguration.Env = additionalEnv
+    }
+
+    if !exposedPorts.isEmpty {
+        var ports = inheritedConfiguration.ExposedPorts ?? [:]
+        for port in exposedPorts {
+            // Normalise: bare numbers get the default /tcp suffix.
+            let key = port.contains("/") ? port : "\(port)/tcp"
+            ports[key] = EmptyObject()
+        }
+        inheritedConfiguration.ExposedPorts = ports
+    }
+
+    if !labels.isEmpty {
+        var existingLabels = inheritedConfiguration.Labels ?? [:]
+        existingLabels.merge(labels) { _, new in new }
+        inheritedConfiguration.Labels = existingLabels
     }
 
     let configuration = ImageConfiguration(
