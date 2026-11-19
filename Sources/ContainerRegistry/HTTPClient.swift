@@ -23,7 +23,7 @@ import HTTPTypesFoundation
 ///
 /// The response to a `HEAD` request does not include a body so if an error is thrown, `data` will be `nil`
 public enum HTTPClientError: Error {
-    case unexpectedStatusCode(status: HTTPResponse.Status, response: HTTPResponse, data: Data?)
+    case unexpectedStatusCode(request: HTTPRequest, status: HTTPResponse.Status, response: HTTPResponse, data: Data?)
     case unexpectedContentType(String)
     case missingContentType
     case missingResponseHeader(String)
@@ -85,9 +85,9 @@ extension URLSession: HTTPClient {
 
             // A HEAD request has no response body and cannot be decoded
             if request.method == .head {
-                throw HTTPClientError.unexpectedStatusCode(status: response.status, response: response, data: nil)
+                throw HTTPClientError.unexpectedStatusCode(request: request, status: response.status, response: response, data: nil)
             }
-            throw HTTPClientError.unexpectedStatusCode(status: response.status, response: response, data: responseData)
+            throw HTTPClientError.unexpectedStatusCode(request: request, status: response.status, response: response, data: responseData)
         }
 
         return response
@@ -132,6 +132,32 @@ extension URLSession: HTTPClient {
             expectingStatus: success
         )
         return (responseData, httpResponse)
+    }
+}
+
+extension HTTPClientError: CustomStringConvertible {
+    /// Human-readable description of an HTTPClientError, including the registry hostname where available.
+    public var description: String {
+        switch self {
+        case let .unexpectedStatusCode(request, status, _, _):
+            let host = request.url?.host ?? "unknown registry"
+            if status == .unauthorized || status == .forbidden {
+                return "Authentication failed for registry \"\(host)\": the server returned HTTP \(status.code). Ensure your credentials are correct."
+            }
+            return "Registry \"\(host)\" returned an unexpected HTTP \(status.code) response."
+        case let .unexpectedContentType(type):
+            return "Unexpected content type: \(type)"
+        case .missingContentType:
+            return "Response is missing a content type"
+        case let .missingResponseHeader(header):
+            return "Response is missing the '\(header)' header"
+        case let .authenticationChallenge(_, request, _):
+            let host = request.url?.host ?? "unknown registry"
+            return "Registry \"\(host)\" requires authentication."
+        case let .unauthorized(request, _):
+            let host = request.url?.host ?? "unknown registry"
+            return "Authentication failed for registry \"\(host)\": credentials were rejected."
+        }
     }
 }
 

@@ -369,7 +369,7 @@ extension RegistryClient {
 
         do {
             return try await client.executeRequestThrowing(request, expectingStatus: success)
-        } catch HTTPClientError.unexpectedStatusCode(let status, _, let .some(responseData))
+        } catch HTTPClientError.unexpectedStatusCode(_, let status, _, let .some(responseData))
             where errors.contains(status)
         {
             // Try to decode as JSON; if that fails, throw a generic error with the raw response body
@@ -416,7 +416,7 @@ extension RegistryClient {
 
         do {
             return try await client.executeRequestThrowing(request, uploading: payload, expectingStatus: success)
-        } catch HTTPClientError.unexpectedStatusCode(let status, _, let .some(responseData))
+        } catch HTTPClientError.unexpectedStatusCode(_, let status, _, let .some(responseData))
             where errors.contains(status)
         {
             // Try to decode as JSON; if that fails, throw a generic error with the raw response body
